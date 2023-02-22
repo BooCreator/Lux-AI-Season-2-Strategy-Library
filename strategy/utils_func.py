@@ -29,13 +29,15 @@ def toPandas(mx:np.ndarray, name:str) -> bool:
 # -------         X [0, 0] X --------------------------------------------------------------------------------
 # -------         X  X  X  X --------------------------------------------------------------------------------
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-def getRect(X:int, Y:int, rad:int=1) -> tuple[list, list]:
+def getRect(X:int, Y:int, rad:int=1, borders:bool=True) -> tuple[list, list]:
     ''' Получить квадрат координат вокруг точки '''
     x, y = [], []
     for r in range(-rad, rad + 1):
         for k in range(-rad, rad + 1):
-            x.append(X-k)
-            y.append(Y-r)
+            ny, nx = X-k, Y-r
+            if not borders or nx > -1 and ny > -1:
+                x.append(X-k)
+                y.append(Y-r)
     return x, y
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ----- Получить круг координат вокруг точки ----------------------------------------------------------------
@@ -43,14 +45,16 @@ def getRect(X:int, Y:int, rad:int=1) -> tuple[list, list]:
 # -------         X [0, 0] X --------------------------------------------------------------------------------
 # -------            X  X    --------------------------------------------------------------------------------
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-def getRad(X:int, Y:int, rad:int=1) -> tuple[list, list]:
+def getRad(X:int, Y:int, rad:int=1, borders:bool=True) -> tuple[list, list]:
     ''' Получить круг координат вокруг точки '''
     x, y = [], []
     for r in range(-rad, rad + 1):
         for k in range(-rad, rad + 1):
             if abs(r)+abs(k) < (rad*rad)/2 + 1:
-                x.append(X-k)
-                y.append(Y-r)
+                ny, nx = X-k, Y-r
+                if not borders or nx > -1 and ny > -1:
+                    x.append(X-k)
+                    y.append(Y-r)
     return x, y
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ----- Распространение ячейки ------------------------------------------------------------------------------
