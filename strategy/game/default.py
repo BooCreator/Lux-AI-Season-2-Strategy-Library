@@ -3,7 +3,66 @@ from strategy.utils_func import *
 from math import ceil, floor
 
 class Eyes:
-    pass
+    ''' Класс "глазок", т.е. работа с информацией на карте. Сбор, преобразование и т.д.
+        * Матрицы: 1 - что-то есть, 0 - ничего нет'''
+    map_size: list[int] = [48, 48]
+    data: dict[str, np.ndarray] = None
+
+    def __init__(self, map_size:list[int]=None) -> None:
+        self.map_size = map_size if map_size is not None else [48, 48]
+        self.data = {}
+    
+    def update(self, name:str, index:list[int], value:int=1, *, check_keys:bool=True):
+        if name not in self.data.keys(): 
+            if check_keys: raise Exception(f'Field {name} not found!')
+            self.clear(name)
+        self.data[name][index[0], index[1]] = value
+
+    def clear(self, name:str, *, value:int=0, names:list[str]=None): # ['fields', 'fields'] or [{'fields': 1, 'fields': 0}]
+        shape = (self.map_size, self.map_size)
+        if names is not None:
+            for name in names:
+                if type(name) is str:
+                    self.data[name] = np.ones(shape, dtype=int) * value
+                elif type(name) is dict and len(name) > 0:
+                    self.data[name.keys()[0]] = np.ones(shape, dtype=int) * name.values()[0]
+        else:
+            self.data[name] = np.ones(shape, dtype=int) * value
+
+    def sum(self, names:list[str]) -> np.ndarray: # ['fields', 'fields', np.ndarray[48, 48]]
+        result = np.zeros((self.map_size, self.map_size))
+        for name in names:
+            if type(name) is str:
+                result = result + self.data.get(name) or np.zeros((self.map_size, self.map_size))
+            elif type(name) is np.ndarray:
+                result = result + name
+        return result
+    
+    def diff(self, names:list[str]) -> np.ndarray: # ['fields', 'fields', np.ndarray[48, 48]]
+        result = np.zeros((self.map_size, self.map_size))
+        for name in names:
+            if type(name) is str:
+                result = result - self.data.get(name) or np.zeros((self.map_size, self.map_size))
+            elif type(name) is np.ndarray:
+                result = result - name
+        return result
+
+    def get(self, name:str) -> np.ndarray:
+        return self.data.get(name)
+
+    def getLocketField(self, names:list[str]) -> np.ndarray:
+        ''' Получить матрицу запрещённых ходов
+            0 - блокирован проход, 1 - проход возможен '''
+        locked_field = np.ones((self.map_size, self.map_size), dtype=int)
+        energy = self.eyes['e_energy'] - self.eyes['u_energy']
+        energy = np.where(energy > 0, energy, 0)
+        if np.max(energy) > 0: energy /= np.max(energy)
+        locked_field = np.where(self.eyes['factories'] + self.eyes['units'] + energy > 0, locked_field, 1)
+        return locked_field
+
+
+
+
 
 class RobotData:
     ''' Класс данных робота '''
@@ -103,7 +162,7 @@ class GameStrategy:
     ''' Класс стратегии игры '''
     f_data:dict[str,FactoryData] = {}
     free_robots: list[str] = []
-    eyes: dict[str, np.ndarray] = {}
+    eyes: Eyes = None
     game_state = None
     env = None
     step = 0
@@ -111,7 +170,7 @@ class GameStrategy:
     def __init__(self, env) -> None:
         self.f_data = dict[str,FactoryData]()
         self.free_robots = list[str]()
-        self.eyes = dict[str, np.ndarray]()
+        self.eyes = Eyes(env.map_size)
         self.game_state = None
         self.env = env
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -199,26 +258,19 @@ class GameStrategy:
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def look(self, game_state, player: str):
         ''' Обновить карту юнитов '''
-        self.eyes = dict[str, np.ndarray]()
-        self.eyes['factories'] = np.zeros((self.env.map_size, self.env.map_size), dtype=int)
+        self.eyes.clear(names=['factories', 'units', 'enemy', 'e_energy', 'u_energy', 'resources'])
         for pl in game_state.factories:
             for factory in game_state.factories.get(pl).values():
                 for i in range(3):
                     for j in range(3):
-                        self.eyes['factories'][i+factory.pos[0]-1, j+factory.pos[1]-1] = 0 if pl == player else 1
-        
-        self.eyes['free_resources'] = np.ones((self.env.map_size, self.env.map_size), dtype=int)
-        self.eyes['units'] = np.zeros((self.env.map_size, self.env.map_size), dtype=int)
-        self.eyes['e_energy'] = np.zeros((self.env.map_size, self.env.map_size), dtype=int)
-        self.eyes['u_energy'] = np.zeros((self.env.map_size, self.env.map_size), dtype=int)
-        self.eyes['enemy'] = np.zeros((self.env.map_size, self.env.map_size), dtype=int)
+                        self.eyes.update('factories', [i+factory.pos[0]-1, j+factory.pos[1]-1], 0 if pl == player else 1)
         for pl in game_state.units:
             for unit in game_state.units.get(pl).values():
                 x, y = getRad(unit.pos[0], unit.pos[1])
                 for x, y in zip(x, y):
-                    self.eyes['u_energy' if pl == player else 'e_energy'][x, y] = unit.power
-                self.eyes['units' if pl == player else 'enemy'][unit.pos[0], unit.pos[1]] = 1
-                self.eyes['free_resources'][unit.pos[0], unit.pos[1]] = 0
+                    self.eyes.update('u_energy' if pl == player else 'e_energy', [x, y], unit.power)
+                self.eyes.update('units' if pl == player else 'enemy', [unit.pos[0], unit.pos[1]], 1)
+                self.eyes.update('resources', [unit.pos[0], unit.pos[1]], 1)
         
         # лишайник
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -320,8 +372,8 @@ class GameStrategy:
                             if len(points) > 0:
                                 if unit.power > move_cost + action_cost:
                                     actions[unit.unit_id].extend(m_actions[:1])
-                                    self.eyes['units'][unit.pos[0], unit.pos[1]] = 0
-                                    self.eyes['units'][points[0][0], points[0][1]] = 1
+                                    self.eyes.update('units', [unit.pos[0], unit.pos[1]], 0)
+                                    self.eyes.update('units', [points[0][0], points[0][1]], 1)
                                     robot.min_task += 1
                                 else:
                                     # --- иначе, копим энергию ---
@@ -379,8 +431,8 @@ class GameStrategy:
                             if len(points) > 0:
                                 if unit.power >= move_cost + action_cost:
                                     actions[unit.unit_id].extend(m_actions[:1])
-                                    self.eyes['units'][unit.pos[0], unit.pos[1]] = 0
-                                    self.eyes['units'][points[0][0], points[0][1]] = 1
+                                    self.eyes.update('units', [unit.pos[0], unit.pos[1]], 0)
+                                    self.eyes.update('units', [points[0][0], points[0][1]], 1)
                                 else:
                                     # --- иначе, копим энергию ---
                                     how_energy = move_cost + action_cost
