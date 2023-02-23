@@ -50,7 +50,7 @@ def cloneFolder(path, to):
 def toVideo(imgs, filename='_blank', *, return_=False, palette=cv2.COLOR_BGR2RGB):
     # использование cv2 для создания видео
     video_name = f'{filename}.mp4'
-    height, width, layers = imgs[0].shape
+    height, width, __ = imgs[0].shape
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     video = cv2.VideoWriter(video_name, fourcc, 10, (width,height))
 
@@ -59,3 +59,9 @@ def toVideo(imgs, filename='_blank', *, return_=False, palette=cv2.COLOR_BGR2RGB
         video.write(img)
     video.release()
     if return_: return Video(video_name)
+
+def toImage(imgs, filename='_blank', *, return_=False, palette=cv2.COLOR_BGR2RGB):
+    # использование cv2 для создания видео
+    filename = f'{filename}.png'
+    img = cv2.cvtColor(imgs, palette)
+    cv2.imwrite(filename, img)
