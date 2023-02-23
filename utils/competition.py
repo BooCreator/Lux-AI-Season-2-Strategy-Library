@@ -4,7 +4,7 @@ from luxai_s2.env import LuxAI_S2
 import numpy as np
 
 class LuxAI:
-
+    render_log_count = 5
     title = 'lux-ai-season-2'
     env = LuxAI_S2()
 
@@ -58,7 +58,7 @@ class LuxAI:
         # `real_env_steps` в состоянии окружения. Первая фаза заканчивается, когда `real_env_steps` становится равным 0 и используется ниже.
 
         # повторяем до тех пор, пока не закончится фаза 1
-        step = 0
+        n = 0
         while LuxAI.env.state.real_env_steps < 0:
             if step >= steps: break
             actions = {}
@@ -70,13 +70,14 @@ class LuxAI:
             obs, rewards, dones, infos = LuxAI.env.step(actions)
             frame = [LuxAI.env.render("rgb_array", width=640, height=640)]
             imgs += frame
-            step += 1
-            if step >= 5: step = 0
             full_path = ''
             for folder in ['log', 'render']:
                 full_path += folder + '/'
                 if not os.path.exists(full_path): os.mkdir(full_path)
-            toImage(frame[0], f'{full_path}frame_{step}')
+            toImage(frame[0], f'{full_path}frame_{n}')
+            n += 1
+            if n >= LuxAI.render_log_count: n = 0
+        n = 0
         done = False
         while not done:
             if step >= steps: break
@@ -87,7 +88,15 @@ class LuxAI:
                 actions[player] = a
             step += 1
             obs, rewards, dones, infos = LuxAI.env.step(actions)
-            imgs += [LuxAI.env.render("rgb_array", width=640, height=640)]
+            frame = [LuxAI.env.render("rgb_array", width=640, height=640)]
+            imgs += frame
+            full_path = ''
+            for folder in ['log', 'render']:
+                full_path += folder + '/'
+                if not os.path.exists(full_path): os.mkdir(full_path)
+            toImage(frame[0], f'{full_path}frame_{n}')
+            n += 1
+            if n >= LuxAI.render_log_count: n = 0
             done = dones["player_0"] and dones["player_1"]
         full_path = ''
         date = datetime.now()

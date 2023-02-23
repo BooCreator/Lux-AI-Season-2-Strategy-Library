@@ -212,8 +212,8 @@ class RobotData:
             return 0 if task_name == 'MINER' else 1
 
     robot = None
-    robot_type: TYPE = 0 
-    robot_task: TASK = 1
+    robot_type: TYPE = 0
+    robot_task: TASK = 0
     min_task: int = 0 # сколько раз, минимально, нужно выполнить task
     
     def __init__(self, robot) -> None:

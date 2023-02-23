@@ -63,5 +63,6 @@ def toVideo(imgs, filename='_blank', *, return_=False, palette=cv2.COLOR_BGR2RGB
 def toImage(imgs, filename='_blank', *, return_=False, palette=cv2.COLOR_BGR2RGB):
     # использование cv2 для создания видео
     filename = f'{filename}.png'
+    if os.path.exists(filename): os.remove(filename)
     img = cv2.cvtColor(imgs, palette)
     cv2.imwrite(filename, img)
