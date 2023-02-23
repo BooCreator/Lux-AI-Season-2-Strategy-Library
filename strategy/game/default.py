@@ -1,66 +1,192 @@
 import numpy as np
 from strategy.utils_func import *
 from math import ceil, floor
-
+# ===============================================================================================================
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+# ===============================================================================================================
 class Eyes:
     ''' Класс "глазок", т.е. работа с информацией на карте. Сбор, преобразование и т.д.
         * Матрицы: 1 - что-то есть, 0 - ничего нет'''
-    map_size: list[int] = [48, 48]
+    map_size: tuple[int, int] = (48, 48)
     data: dict[str, np.ndarray] = None
-
-    def __init__(self, map_size:list[int]=None) -> None:
-        self.map_size = map_size if map_size is not None else [48, 48]
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Конструктор -----------------------------------------------------------------------------------------
+    # ------- Примеры: 48, [48, 48], (48,48), 48,48 -------------------------------------------------------------
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    def __init__(self, axis:int|list[int]|tuple[int,int]=None, axis2:int=None) -> None:
+        ''' Примеры аргументов: 48; [ 48, 48 ]; ( 48,48 ); 48,48 '''
+        if axis is None:
+            self.map_size = (48,48)
+        elif type(axis) is int:
+            self.map_size = (axis, axis if axis2 is None else axis2)
+        elif type(axis) is tuple or type(axis) is list:
+            self.map_size = (axis[0], axis[1])
         self.data = {}
-    
-    def update(self, name:str, index:list[int], value:int=1, *, check_keys:bool=True):
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Очистить матрицу. Если не существует, то создать ----------------------------------------------------
+    # ------- name - название матрицы ----------------------------------------------------------------------------
+    # ------- Примеры аргументов: name='field', name=['field1', 'field2'], --------------------------------------
+    # --------------------------- name={'field1': 1, 'field2': 0}, name=['field1', {'field2': 3}] ---------------
+    # ------- value - значение, которым нужно заполнить матрицу -------------------------------------------------
+    # ------- Если name задан как словарь, то value игнорируется ------------------------------------------------
+    # ------- return -> self, чтобы можно было сразу создавать матрицы: Eves(10).clear(['field1', 'field2']) ----
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    def clear(self, name:str|dict[str, int]|list[str|dict[str, int]], value:int=0): # ['fields', 'fields'] or [{'fields': 1, 'fields': 0}]
+        ''' Очистить матрицу. Если не существует, то создать '''
+        if type(name) is str:
+            self.data[name] = np.ones(self.map_size, dtype=int) * value
+        elif type(name) is list:
+            for key in name:
+                if type(key) is str:
+                    self.data[key] = np.ones(self.map_size, dtype=int) * value
+                elif type(key) is dict and len(key) > 0:
+                    for key, value in key.items():
+                        self.data[key] = np.ones(self.map_size, dtype=int) * value
+        elif type(name) is dict:
+            for key, value in name.items():
+                self.data[key] = np.ones(self.map_size, dtype=int) * value
+        return self
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Обновить значения в матрице -------------------------------------------------------------------------
+    # ------- name - название матрицы ---------------------------------------------------------------------------
+    # ------- index - по каким координатам меняем ---------------------------------------------------------------
+    # ------- Примеры аргументов: index=[0,0], index=[[0,1], [1,1]], index=np.array([0,1]) ----------------------
+    # ------- value - значение для вставки, может быть матрицей -------------------------------------------------
+    # ------- check_keys - проверка названий. Если пытаемся обьновить не существующую матрицу, то будет ошика ---
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    def update(self, name:str, index:list[int|list[int]]|np.ndarray, value:int|np.ndarray=1, *, check_keys:bool=True):
+        ''' Установить значение {value} в таблице {name} в точках {index}'''
         if name not in self.data.keys(): 
             if check_keys: raise Exception(f'Field {name} not found!')
             self.clear(name)
-        self.data[name][index[0], index[1]] = value
-
-    def clear(self, name:str, *, value:int=0, names:list[str]=None): # ['fields', 'fields'] or [{'fields': 1, 'fields': 0}]
-        shape = (self.map_size, self.map_size)
-        if names is not None:
-            for name in names:
-                if type(name) is str:
-                    self.data[name] = np.ones(shape, dtype=int) * value
-                elif type(name) is dict and len(name) > 0:
-                    self.data[name.keys()[0]] = np.ones(shape, dtype=int) * name.values()[0]
-        else:
-            self.data[name] = np.ones(shape, dtype=int) * value
-
-    def sum(self, names:list[str]) -> np.ndarray: # ['fields', 'fields', np.ndarray[48, 48]]
-        result = np.zeros((self.map_size, self.map_size))
+        if type(index) is list and len(index) == 2 and type(index[0]) is int and type(index[1]) is int:
+            if type(value) is int:
+                if index[0] < self.data[name].shape[0] and index[1] < self.data[name].shape[1]:
+                    self.data[name][index[0], index[1]] = value
+            elif type(value) is np.ndarray:
+                for i in range(value.shape[0]):
+                    for j in range(value.shape[1]):
+                        if index[0]+i < self.data[name].shape[0] and index[1]+j < self.data[name].shape[1]:
+                            self.data[name][index[0]+i, index[1]+j] = value[i, j]
+        elif type(index) is np.ndarray and len(index) == 2:
+            if type(value) is int:
+                if index[0] < self.data[name].shape[0] and index[1] < self.data[name].shape[1]:
+                    self.data[name][index[0], index[1]] = value
+            elif type(value) is np.ndarray:
+                for i in range(value.shape[0]):
+                    for j in range(value.shape[1]):
+                        if index[0]+i < self.data[name].shape[0] and index[1]+j < self.data[name].shape[1]:
+                            self.data[name][index[0]+i, index[1]+j] = value[i, j]
+        elif type(index) is list:
+            for ind in index:
+                if type(ind) is list and len(ind) == 2 and type(ind[0]) is int and type(ind[1]) is int:
+                    if type(value) is int:
+                        if ind[0] < self.data[name].shape[0] and ind[1] < self.data[name].shape[1]:
+                            self.data[name][ind[0], ind[1]] = value
+                    elif type(value) is np.ndarray:
+                        for i in range(value.shape[0]):
+                            for j in range(value.shape[1]):
+                                if ind[0]+i < self.data[name].shape[0] and ind[1]+j < self.data[name].shape[1]:
+                                    self.data[name][ind[0]+i, ind[1]+j] = value[i, j]
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Сумировать матрицы ----------------------------------------------------------------------------------
+    # ------- names - массив матриц -----------------------------------------------------------------------------
+    # ------- Примеры аргументов: names['field1', np.array([[0,1],[1,1]]), Eyes.norm('field2')] -----------------
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    def sum(self, names:list[str|np.ndarray]) -> np.ndarray:
+        ''' Сумировать матрицы '''
+        result = np.zeros(self.map_size, dtype=int)
         for name in names:
             if type(name) is str:
-                result = result + self.data.get(name) or np.zeros((self.map_size, self.map_size))
+                if name in self.data.keys():
+                    result = result + self.data.get(name)
             elif type(name) is np.ndarray:
                 result = result + name
         return result
-    
-    def diff(self, names:list[str]) -> np.ndarray: # ['fields', 'fields', np.ndarray[48, 48]]
-        result = np.zeros((self.map_size, self.map_size))
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Разница матриц ----------------------------------------------------------------------------------
+    # ------- names - массив матриц -----------------------------------------------------------------------------
+    # ------- Примеры аргументов: names['field1', np.array([[0,1],[1,1]]), Eyes.norm('field2')] -----------------
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    def diff(self, names:list[str|np.ndarray]) -> np.ndarray:
+        ''' Разница матриц '''
+        result = None
         for name in names:
             if type(name) is str:
-                result = result - self.data.get(name) or np.zeros((self.map_size, self.map_size))
+                if name in self.data.keys():
+                    result = result - self.data.get(name) if result is not None else self.data.get(name)
             elif type(name) is np.ndarray:
                 result = result - name
         return result
-
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Получить вычисляемое значение матрицы (min, max) ----------------------------------------------------
+    # ------- matrix - матрица ----------------------------------------------------------------------------------
+    # ------- how - какой метод (min, max) ----------------------------------------------------------------------
+    # ------- default - значение по умолчанию -------------------------------------------------------------------
+    # ------- condition - функция проверки. Если ложно, то возвращаем default -----------------------------------
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    def getValue(self, matrix:str|np.ndarray, how:str, default:int=1, condition=lambda x: x is not None) -> int:
+        ''' Получить вычисляемое значение матрицы (min, max) '''
+        result = None
+        if type(matrix) is str:
+            if matrix not in self.data.keys():
+                return default
+            matrix = self.data[matrix]
+        if how == 'max':
+            result = np.max(matrix)
+        elif how == 'min':
+            result = np.min(matrix)
+        if condition is not None:
+            if not condition(result):
+                return default
+        return result if result is not None else default
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Нормализация матрицы --------------------------------------------------------------------------------
+    # ------- name - матрица ------------------------------------------------------------------------------------
+    # ------- to - до какого значения ---------------------------------------------------------------------------
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    def norm(self, name:str|np.ndarray, *, to:int=None) -> np.ndarray:
+        ''' Нормализация матрицы '''
+        result = None
+        if type(name) is str:
+            if name in self.data.keys():
+                result = self.data[name] / self.getValue(self.data[name], 'max', 1, lambda x: x != 0)
+        elif type(name) is np.ndarray:
+            result = name / self.getValue(name, 'max', 1, lambda x: x != 0)
+        return result * to if to is not None else result
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Обратить значения матрицы (0->1, 1->0) --------------------------------------------------------------
+    # ------- name - матрица ------------------------------------------------------------------------------------
+    # ------- func - функция обращения. По умолчанию обращает 0->1, x>0->0 --------------------------------------
+    # ------- find - какое значение -----------------------------------------------------------------------------
+    # ------- to - с каким --------------------------------------------------------------------------------------
+    # --------- При указании find и to func игнорируется
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    def neg(self, name: str|np.ndarray, *, func=lambda x: 1 if x == 0 else 0, find:int=None, to:int=None) -> np.ndarray:
+        ''' Обратить значения матрицы (0->1, 1->0) '''
+        result = None
+        if type(name) is str:
+            if name in self.data.keys():
+                result = self.data.get(name).copy()
+        elif type(name) is np.ndarray:
+            result = name.copy()
+        for i in range(result.shape[0]):
+            for j in range(result.shape[1]):
+                if find is not None and to is not None:
+                    if result[i, j] == find: result[i, j] = to
+                    elif result[i, j] == to: result[i, j] = find
+                else:
+                    result[i, j] = func(result[i, j])
+        return result
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Вернуть матрицу по названию -------------------------------------------------------------------------
+    # ------- name - название матрицы ------------------------------------------------------------------------------------
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def get(self, name:str) -> np.ndarray:
         return self.data.get(name)
-
-    def getLocketField(self, names:list[str]) -> np.ndarray:
-        ''' Получить матрицу запрещённых ходов
-            0 - блокирован проход, 1 - проход возможен '''
-        locked_field = np.ones((self.map_size, self.map_size), dtype=int)
-        energy = self.eyes['e_energy'] - self.eyes['u_energy']
-        energy = np.where(energy > 0, energy, 0)
-        if np.max(energy) > 0: energy /= np.max(energy)
-        locked_field = np.where(self.eyes['factories'] + self.eyes['units'] + energy > 0, locked_field, 1)
-        return locked_field
-
-
+# ===============================================================================================================
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+# ===============================================================================================================
 
 
 
@@ -258,7 +384,7 @@ class GameStrategy:
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def look(self, game_state, player: str):
         ''' Обновить карту юнитов '''
-        self.eyes.clear(names=['factories', 'units', 'enemy', 'e_energy', 'u_energy', 'resources'])
+        self.eyes.clear(['factories', 'units', 'enemy', 'e_energy', 'u_energy', 'resources'])
         for pl in game_state.factories:
             for factory in game_state.factories.get(pl).values():
                 for i in range(3):
@@ -269,8 +395,8 @@ class GameStrategy:
                 x, y = getRad(unit.pos[0], unit.pos[1])
                 for x, y in zip(x, y):
                     self.eyes.update('u_energy' if pl == player else 'e_energy', [x, y], unit.power)
-                self.eyes.update('units' if pl == player else 'enemy', [unit.pos[0], unit.pos[1]], 1)
-                self.eyes.update('resources', [unit.pos[0], unit.pos[1]], 1)
+                self.eyes.update('units' if pl == player else 'enemy', unit.pos, 1)
+                self.eyes.update('resources', unit.pos, 1)
         
         # лишайник
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -312,7 +438,7 @@ class GameStrategy:
                     # --- если робот - копатель ---
                     if robot.robot_task == RobotData.TASK.MINER:
                         # --- находим ближайший ресурс ---
-                        ct = findClosestTile(unit.pos, ice_map, free_resources=self.eyes['free_resources']) 
+                        ct = findClosestTile(unit.pos, ice_map, free_resources=self.eyes.neg('resources')) 
                         # --- если робот находится на блоке с фабрикой ---
                         if robot.on_position(item.factory.pos, size=3):
                             # --- если есть ресурсы, то выгружаем ресурсы ---
@@ -356,11 +482,8 @@ class GameStrategy:
                         # --- если робот где-то гуляет ---
                         else:
                             # --- выясняем куда мы можем шагнуть ---
-                            locked_field = np.zeros((self.env.map_size, self.env.map_size), dtype=int)
-                            energy = self.eyes['e_energy'] - self.eyes['u_energy']
-                            energy = np.where(energy > 0, energy, 0)
-                            if np.max(energy) > 0: energy /= np.max(energy)
-                            locked_field = np.where(self.eyes['factories'] + self.eyes['units'] + energy > 0, locked_field, 1)
+                            locked_field = np.zeros(self.eyes.map_size, dtype=int)
+                            locked_field = np.where(self.eyes.sum(['factories', 'units', self.eyes.norm(self.eyes.diff(['e_energy', 'u_energy']))]) > 0, locked_field, 1)
                             points = []
                             # --- если робот - идёт на базу ---
                             if unit.unit_id in self.return_robots:
@@ -372,8 +495,8 @@ class GameStrategy:
                             if len(points) > 0:
                                 if unit.power > move_cost + action_cost:
                                     actions[unit.unit_id].extend(m_actions[:1])
-                                    self.eyes.update('units', [unit.pos[0], unit.pos[1]], 0)
-                                    self.eyes.update('units', [points[0][0], points[0][1]], 1)
+                                    self.eyes.update('units', unit.pos, 0)
+                                    self.eyes.update('units', points[0], 1)
                                     robot.min_task += 1
                                 else:
                                     # --- иначе, копим энергию ---
@@ -416,10 +539,8 @@ class GameStrategy:
                         # --- если робот где-то гуляет ---
                         else:
                             # --- выясняем куда мы можем шагнуть ---
-                            locked_field = np.zeros((self.env.map_size, self.env.map_size), dtype=int)
-                            energy = self.eyes['e_energy'] - self.eyes['u_energy']
-                            energy = np.where(energy > 0, energy, 0) / np.max(energy)
-                            locked_field = np.where(self.eyes['factories'] + self.eyes['units'] + energy > 0, locked_field, 1)
+                            locked_field = np.zeros(self.eyes.map_size, dtype=int)
+                            locked_field = np.where(self.eyes.sum(['factories', 'units', self.eyes.norm(self.eyes.diff(['e_energy', 'u_energy']))]) > 0, locked_field, 1)
                             points = []
                             # --- если робот - идёт на базу ---
                             if unit.unit_id in self.return_robots:
@@ -431,8 +552,8 @@ class GameStrategy:
                             if len(points) > 0:
                                 if unit.power >= move_cost + action_cost:
                                     actions[unit.unit_id].extend(m_actions[:1])
-                                    self.eyes.update('units', [unit.pos[0], unit.pos[1]], 0)
-                                    self.eyes.update('units', [points[0][0], points[0][1]], 1)
+                                    self.eyes.update('units', unit.pos, 0)
+                                    self.eyes.update('units', points[0], 1)
                                 else:
                                     # --- иначе, копим энергию ---
                                     how_energy = move_cost + action_cost

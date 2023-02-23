@@ -58,6 +58,7 @@ class LuxAI:
         # `real_env_steps` в состоянии окружения. Первая фаза заканчивается, когда `real_env_steps` становится равным 0 и используется ниже.
 
         # повторяем до тех пор, пока не закончится фаза 1
+        step = 0
         while LuxAI.env.state.real_env_steps < 0:
             if step >= steps: break
             actions = {}
@@ -67,7 +68,15 @@ class LuxAI:
                 actions[player] = a
             step += 1
             obs, rewards, dones, infos = LuxAI.env.step(actions)
-            imgs += [LuxAI.env.render("rgb_array", width=640, height=640)]
+            frame = [LuxAI.env.render("rgb_array", width=640, height=640)]
+            imgs += frame
+            step += 1
+            if step >= 5: step = 0
+            full_path = ''
+            for folder in ['log', 'render']:
+                full_path += folder + '/'
+                if not os.path.exists(full_path): os.mkdir(full_path)
+            toImage(frame[0], f'{full_path}frame_{step}')
         done = False
         while not done:
             if step >= steps: break
@@ -81,8 +90,10 @@ class LuxAI:
             imgs += [LuxAI.env.render("rgb_array", width=640, height=640)]
             done = dones["player_0"] and dones["player_1"]
         full_path = ''
-        datename = str(datetime.now()).split('.')[0].replace(':', '-').replace(' ', '_')
-        for folder in ['replays', 'video']:
+        date = datetime.now()
+        datefolder = str(date.date()).replace(':', '-')
+        datename = str(date.time()).split('.')[0].replace(':', '-')
+        for folder in ['replays', 'video', datefolder]:
             full_path += folder + '/'
             if not os.path.exists(full_path): os.mkdir(full_path)
         full_path += datename + f'_s_{steps}'
