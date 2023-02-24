@@ -1,11 +1,9 @@
 import os
+import cv2
 import glob
-import zipfile
 import shutil
 import tarfile
-import cv2
-import string
-import random
+import zipfile
 import numpy as np
 from IPython.display import Video
 
