@@ -29,13 +29,15 @@ def toPandas(mx:np.ndarray, name:str) -> bool:
 # -------         X [0, 0] X --------------------------------------------------------------------------------
 # -------         X  X  X  X --------------------------------------------------------------------------------
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-def getRect(X:int, Y:int, rad:int=1) -> tuple[list, list]:
+def getRect(X:int, Y:int, rad:int=1, borders:bool=True) -> tuple[list, list]:
     ''' Получить квадрат координат вокруг точки '''
     x, y = [], []
     for r in range(-rad, rad + 1):
         for k in range(-rad, rad + 1):
-            x.append(X-k)
-            y.append(Y-r)
+            ny, nx = X-k, Y-r
+            if not borders or nx > -1 and ny > -1:
+                x.append(X-k)
+                y.append(Y-r)
     return x, y
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ----- Получить круг координат вокруг точки ----------------------------------------------------------------
@@ -43,14 +45,16 @@ def getRect(X:int, Y:int, rad:int=1) -> tuple[list, list]:
 # -------         X [0, 0] X --------------------------------------------------------------------------------
 # -------            X  X    --------------------------------------------------------------------------------
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-def getRad(X:int, Y:int, rad:int=1) -> tuple[list, list]:
+def getRad(X:int, Y:int, rad:int=1, borders:bool=True) -> tuple[list, list]:
     ''' Получить круг координат вокруг точки '''
     x, y = [], []
     for r in range(-rad, rad + 1):
         for k in range(-rad, rad + 1):
             if abs(r)+abs(k) < (rad*rad)/2 + 1:
-                x.append(X-k)
-                y.append(Y-r)
+                ny, nx = X-k, Y-r
+                if not borders or nx > -1 and ny > -1:
+                    x.append(X-k)
+                    y.append(Y-r)
     return x, y
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ----- Распространение ячейки ------------------------------------------------------------------------------
@@ -238,21 +242,54 @@ def findClosestFactory(pos:np.ndarray, factory_tiles:np.ndarray, factory_units:n
 def findClosestTile(pos:np.ndarray, tile_map:np.ndarray, *, free_resources:np.ndarray=None):
     ''' Найти ближайший тайл/ресурс '''
     if free_resources is None: free_resources = np.ones(tile_map.shape, dtype=int)
-    tile_locations = np.argwhere((tile_map * free_resources) == 1)
-    tile_distances = np.mean((tile_locations - pos) ** 2, 1)
-    closest_tile: np.ndarray = tile_locations[np.argmin(tile_distances)]
-    free_resources[closest_tile] = 0
-    return closest_tile, free_resources
+    closest_tile = pos
+    tile_locations = np.argwhere((tile_map * free_resources) > 0)
+    if len(tile_locations) > 0:
+        tile_distances = np.mean((tile_locations - pos) ** 2, 1)
+        closest_tile: np.ndarray = tile_locations[np.argmin(tile_distances)]
+    return closest_tile
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+# ----- Проверит что робот на ресурсе -----------------------------------------------------------------------
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+def onResourcePoint(pos:np.ndarray, tile_map:np.ndarray):
+    ''' Найти ближайший тайл/ресурс '''
+    return tile_map[pos[0], pos[1]] == 1
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ----- Рассчитать, сколько мы можем копнуть ----------------------------------------------------------------
-# ------- space - сколько мы хотим накопать, по умолчанию - грузоподъёмность робота -------------------------
-# ------- reserve_cost - сколько энергии мы резервируем -----------------------------------------------------
-# ------- on_factory - если мы можем взять энергию на фабрике, то указываем фабрику -------------------------
+# ------- count - сколько мы хотим накопать, по умолчанию и макс - грузоподъёмность робота ------------------
+# ------- has_energy - сколько энергии у нас есть -----------------------------------------------------------
+# ------- dig_type - тип копания ----------------------------------------------------------------------------
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-def calcDigCount(unit, *, count:int=None, on_factory=None, reserve_cost:int=0):
+class DIG_TYPES:
+    ''' Тип копания - RESOURCE - 0, RUBBLE = 1, LICHEN = 2 '''
+    RESOURCE = 0
+    RUBBLE = 1
+    LICHEN = 2
+def calcDigCount(unit, *, count:int=1000, has_energy:int=None, reserve_energy:int=0, dig_type:int = DIG_TYPES.RESOURCE):
     ''' Рассчитать, сколько мы можем копнуть '''
-    space = env.ROBOTS[unit.unit_type].CARGO_SPACE
-    free = space - (unit.cargo.ice + unit.cargo.ore + unit.cargo.water + unit.cargo.metal)
+    dig_cost = env.ROBOTS[unit.unit_type].DIG_COST
+    energy = min(env.ROBOTS[unit.unit_type].BATTERY_CAPACITY, has_energy or env.ROBOTS[unit.unit_type].BATTERY_CAPACITY) - reserve_energy
+    gain = 1
+    if dig_type == DIG_TYPES.LICHEN:
+        gain = env.ROBOTS[unit.unit_type].DIG_LICHEN_REMOVED
+    elif dig_type == DIG_TYPES.RUBBLE:
+        gain = env.ROBOTS[unit.unit_type].DIG_RUBBLE_REMOVED
+    # --- если копаем ресурс, то ограничиваем тем, сколько можем накопать ---
+    else: # elif dig_type == DIG_TYPES.RESOURCE:
+        space = env.ROBOTS[unit.unit_type].CARGO_SPACE
+        free = space - (unit.cargo.ice + unit.cargo.ore + unit.cargo.water + unit.cargo.metal)
+        count = min(free, count) if count is not None else min(free, space)
+        gain = env.ROBOTS[unit.unit_type].DIG_RESOURCE_GAIN
+    
+    dig_count = min(floor(energy/dig_cost), ceil(count/gain))
+    return dig_count, dig_count*dig_cost, dig_count*gain
+    
+def calcDigCountOld(unit, *, count:int=1000, on_factory=None, reserve_cost:int=0, dig_type:int = DIG_TYPES.RESOURCE):
+    ''' Рассчитать, сколько мы можем копнуть '''
+    free = 1000
+    if dig_type == DIG_TYPES.RESOURCE:
+        space = env.ROBOTS[unit.unit_type].CARGO_SPACE
+        free = space - (unit.cargo.ice + unit.cargo.ore + unit.cargo.water + unit.cargo.metal)
     count = min(free, count) if count is not None else min(free, space)
     gain = env.ROBOTS[unit.unit_type].DIG_RESOURCE_GAIN
     dig_cost = env.ROBOTS[unit.unit_type].DIG_COST
@@ -280,17 +317,22 @@ def getResFromState(game_state) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.
 # ----- Получить список действий движения со стоимостью по энергии ------------------------------------------
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 def getMoveActions(game_state, unit, *, path:list[dict]=None, dec:np.ndarray=None, to:np.ndarray=None, 
-                    locked_field:np.ndarray=None, repeat:int=0, n:int=1) -> tuple[list[list], int]:
-    ''' Получить список действий движения со стоимостью по энергии '''
+                    locked_field:np.ndarray=None, repeat:int=0, n:int=1, has_points: bool=False,
+                    steps:int=20) -> tuple[list[list], int, list[list[int]]]:
+    ''' Получить список действий движения со стоимостью по энергии 
+        * locked_field: 0 - lock, 1 - alloy '''
     actions = []
+    points = []
     move_cost = 0
     pos = unit.pos
-    if path is None: path = findPath(pos if dec is None else dec, pos if to is None else to, locked_field)
+    if path is None: path = findPath(pos if dec is None else dec, pos if to is None else to, locked_field, steps=steps)
     for direction in path:
         unit.pos = direction['loc']
         move_cost += unit.move_cost(game_state, direction['d']) or 0
         actions.append(unit.move(direction['d'], repeat=repeat, n=n))
-    return actions, move_cost
+        points.append(direction['loc'])
+    unit.pos = pos
+    return (actions, move_cost, points) if has_points else (actions, move_cost)
 
 
 
@@ -318,7 +360,8 @@ def getMoveActions(game_state, unit, *, path:list[dict]=None, dec:np.ndarray=Non
 #    ore.append(getRange(i, size))
 #ore = np.array(ore)
 #
-##print(ore)
+#print(ore)
+#print('-'*50)
 #
 #s, e = 0, 0
 #x, y = s, e
@@ -335,6 +378,7 @@ def getMoveActions(game_state, unit, *, path:list[dict]=None, dec:np.ndarray=Non
 #    elif step['d'] == 4:
 #        x -= 1
 #    ore[x, y] = 2
+#ore[9, 4] = 4
 #ore[s, e] = 3
 #ore[x, y] = 3
 ##print(np.transpose(ore))

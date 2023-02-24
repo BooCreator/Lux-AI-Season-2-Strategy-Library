@@ -316,15 +316,16 @@ def getResFromState(game_state) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ----- Получить список действий движения со стоимостью по энергии ------------------------------------------
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-def getMoveActions(game_state, unit, *, path:list[dict]=None, dec:np.ndarray=None, move_from:np.ndarray=None, to:np.ndarray=None, 
-                    locked_field:np.ndarray=None, repeat:int=0, n:int=1, has_points: bool=False) -> tuple[list[list], int, list[list[int]]]:
+def getMoveActions(game_state, unit, *, path:list[dict]=None, dec:np.ndarray=None, to:np.ndarray=None, 
+                    locked_field:np.ndarray=None, repeat:int=0, n:int=1, has_points: bool=False,
+                    steps:int=20) -> tuple[list[list], int, list[list[int]]]:
     ''' Получить список действий движения со стоимостью по энергии 
         * locked_field: 0 - lock, 1 - alloy '''
     actions = []
     points = []
     move_cost = 0
     pos = unit.pos
-    if path is None: path = findPath(pos if dec is None else dec, pos if to is None else to, locked_field)
+    if path is None: path = findPath(pos if dec is None else dec, pos if to is None else to, locked_field, steps=steps)
     for direction in path:
         unit.pos = direction['loc']
         move_cost += unit.move_cost(game_state, direction['d']) or 0

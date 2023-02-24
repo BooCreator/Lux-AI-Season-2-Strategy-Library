@@ -6,7 +6,12 @@ import tarfile
 import cv2
 import string
 import random
+import numpy as np
 from IPython.display import Video
+
+from utils.visualiser import Visualizer
+
+visualizer = Visualizer(48, 48)
 
 def unzip(filename, path='.'):
     with zipfile.ZipFile(filename, 'r') as zip_ref:
@@ -47,7 +52,7 @@ def initCompetition(name = '', use_gpu = False):
 def cloneFolder(path, to):
     os.system(f'xcopy {path} {to} /e /y')
 
-def toVideo(imgs, filename='_blank', *, return_=False, palette=cv2.COLOR_BGR2RGB):
+def toVideo(imgs:list[np.ndarray], filename:str='_blank', *, return_:bool=False, palette=cv2.COLOR_BGR2RGB):
     # использование cv2 для создания видео
     video_name = f'{filename}.mp4'
     height, width, __ = imgs[0].shape
@@ -60,9 +65,27 @@ def toVideo(imgs, filename='_blank', *, return_=False, palette=cv2.COLOR_BGR2RGB
     video.release()
     if return_: return Video(video_name)
 
-def toImage(imgs, filename='_blank', *, return_=False, palette=cv2.COLOR_BGR2RGB):
+def toImage(imgs:np.ndarray, filename:str='_blank', *, render:bool=False, return_:bool=False, palette=cv2.COLOR_BGR2RGB, frames:int=5):
     # использование cv2 для создания видео
-    filename = f'{filename}.png'
-    if os.path.exists(filename): os.remove(filename)
-    img = cv2.cvtColor(imgs, palette)
-    cv2.imwrite(filename, img)
+    frame = imgs.copy()
+    if render:
+        visualizer.update_scene(frame)
+        frame = visualizer._create_image_array(visualizer.surf, (640, 480))
+    while(True):
+        try:
+            if os.path.exists(f'{filename}_{0}.png'): os.remove(f'{filename}_{0}.png')
+            break
+        except: pass
+    for i in range(1, frames):
+        while(True):
+            try:
+                if os.path.exists(f'{filename}_{i}.png'): os.rename(f'{filename}_{i}.png', f'{filename}_{i-1}.png')
+                break
+            except: pass
+    while(True):
+        try:
+            if os.path.exists(f'{filename}_{frames-1}.png'): os.remove(f'{filename}_{frames-1}.png')
+            break
+        except: pass
+    img = cv2.cvtColor(frame, palette)
+    cv2.imwrite(f'{filename}_{frames-1}.png', img)

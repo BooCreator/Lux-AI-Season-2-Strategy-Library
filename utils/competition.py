@@ -48,9 +48,9 @@ class LuxAI:
             if not os.path.exists(full_path): os.mkdir(full_path)
         os.system(f'luxai-s2 {bots_path} -o "{full_path}/replay.html" --tournament -v 0 --tournament_cfg.concurrent=2')
 
-    def interact(agents, steps=1000, *, s=None):
+    def interact(agents, steps=1000, *, seed=None):
         # сбросить нашу среду
-        obs = LuxAI.env.reset(seed=s)
+        obs = LuxAI.env.reset(seed=seed)
         np.random.seed(0)
         imgs = []
         step = 0
@@ -58,7 +58,6 @@ class LuxAI:
         # `real_env_steps` в состоянии окружения. Первая фаза заканчивается, когда `real_env_steps` становится равным 0 и используется ниже.
 
         # повторяем до тех пор, пока не закончится фаза 1
-        n = 0
         while LuxAI.env.state.real_env_steps < 0:
             if step >= steps: break
             actions = {}
@@ -74,10 +73,7 @@ class LuxAI:
             for folder in ['log', 'render']:
                 full_path += folder + '/'
                 if not os.path.exists(full_path): os.mkdir(full_path)
-            toImage(frame[0], f'{full_path}frame_{n}')
-            n += 1
-            if n >= LuxAI.render_log_count: n = 0
-        n = 0
+            toImage(frame[0], f'{full_path}frame', frames=LuxAI.render_log_count)
         done = False
         while not done:
             if step >= steps: break
@@ -94,9 +90,7 @@ class LuxAI:
             for folder in ['log', 'render']:
                 full_path += folder + '/'
                 if not os.path.exists(full_path): os.mkdir(full_path)
-            toImage(frame[0], f'{full_path}frame_{n}')
-            n += 1
-            if n >= LuxAI.render_log_count: n = 0
+            toImage(frame[0], f'{full_path}frame', frames=LuxAI.render_log_count)
             done = dones["player_0"] and dones["player_1"]
         full_path = ''
         date = datetime.now()
