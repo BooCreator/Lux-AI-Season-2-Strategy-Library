@@ -96,7 +96,7 @@ class LuxAI:
         date = datetime.now()
         datefolder = str(date.date()).replace(':', '-')
         datename = str(date.time()).split('.')[0].replace(':', '-')
-        for folder in ['replays', 'video', datefolder]:
+        for folder in ['logs', 'video', datefolder]:
             full_path += folder + '/'
             if not os.path.exists(full_path): os.mkdir(full_path)
         full_path += datename + f'_s_{steps}'
