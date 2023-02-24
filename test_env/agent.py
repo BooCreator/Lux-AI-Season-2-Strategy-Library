@@ -23,7 +23,7 @@ class Agent():
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def early_setup(self, step: int, obs, remainingOverageTime: int = 60):
         if step == 0:
-            return dict(faction="AlphaStrike", bid=self.strategy.early.getBid())
+            return dict(faction="AlphaStrike", bid=self.strategy.getBid())
         else:
             game_state = obs_to_game_state(step, self.env_cfg, obs)
             # если ваша очередь ставить фабрику
@@ -33,9 +33,9 @@ class Agent():
                 # если фабрики есть для расстановки
                 if factories_to_place > 0:
                     # определяем сколько ресурсов давать фабрике
-                    metal, water = self.strategy.early.getResourcesForFactory(game_state, self.player, factories_to_place)
+                    metal, water = self.strategy.getResourcesForFactory(game_state, self.player, factories_to_place)
                     # получаем позицию для установки фабрики
-                    spawn_loc = self.strategy.early.getSpawnPos(game_state, step)
+                    spawn_loc = self.strategy.getSpawnPos(game_state, step)
                     return dict(spawn=spawn_loc, metal=metal, water=water)
             return dict()
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -49,11 +49,11 @@ class Agent():
         self.strategy.update(game_state, self.player, step)
 
         # получаем список действий для фабрик
-        for key, value in self.strategy.game.getFactoryActions(step).items():
+        for key, value in self.strategy.getFactoryActions(step).items():
             actions[key] = value
 
         # получаем список действий для роботов
-        for key, value in self.strategy.game.getRobotActions(step).items():
+        for key, value in self.strategy.getRobotActions(step).items():
             actions[key] = value
 
         return actions
