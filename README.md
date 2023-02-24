@@ -8,10 +8,10 @@
   * [example](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/bots/example) - пример бота от разработчиков
   * ... 
 * [cmd](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/cmd) - команды windows для работы с kaggle, вызываются из кода
-  * competition.cmd - загрузить competition
-  * dataset.cmd - загрузить dataset
-  * install.cmd - установить/обновить пакеты pythoon - kaggle, luxai
-  * submit.cmd - засылка
+  * _competition.cmd_ - загрузить competition
+  * _dataset.cmd_ - загрузить dataset
+  * _install.cmd_ - установить/обновить пакеты pythoon - kaggle, luxai
+  * _submit.cmd_ - засылка
 * [log](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/log) - папка для логов
   * [render](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/log/render) - последние N фреймов игры. используется при дебаге
   * [step](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/log/step) - таблицы текущего состояния из "глазок" (units, factories, e_energy и т.* 
@@ -28,15 +28,15 @@
 * [submissions](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/submissions) - архивы засылок
   * ...
 * [test_env](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/test_env) - файлы для локальнго запуска и тестов
-  * agent.py - файл агента для тестового запуска. При коздании нового агента использовать его
-  * main.py - файл главный файл агента
+  * __agent.py__ - файл агента для тестового запуска. При коздании нового агента использовать его
+  * __main.py__ - файл главный файл агента
 * [utils](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/utils) - различные функции для работы с соревнованием и окружением
-  * clear.py - удалить реплеи из папки с реплеями (не турнирные)
-  * competition.py - функции и классы для работы с соревнованием LuxAI
-  * create_bot.py - создать нового бота (копируется папка bots/example)
-  * tools.py - полезные функции
-  * visualiser.py - визуализатор матриц. Превращает матрицы в изображение
-* run.py
+  * __clear.py__ - удалить реплеи из папки с реплеями (не турнирные)
+  * __competition.py__ - функции и классы для работы с соревнованием LuxAI
+  * __create_bot.py__ - создать нового бота (копируется папка bots/example)
+  * __tools.py__ - полезные функции
+  * __visualiser.py__ - визуализатор матриц. Превращает матрицы в изображение
+* __run.py__
 
 
 # Как собирать ботов?
