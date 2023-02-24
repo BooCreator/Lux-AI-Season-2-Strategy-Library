@@ -6,7 +6,7 @@
 
 * [bots](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/bots) - боты проекта
   * [example](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/bots/example) - пример бота от разработчиков
-  * ...more
+  * _more..._
 * [cmd](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/cmd) - команды windows для работы с kaggle, вызываются из кода
   * _competition.cmd_ - загрузить competition
   * _dataset.cmd_ - загрузить dataset
@@ -17,7 +17,7 @@
   * [step](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/log/step) - таблицы текущего состояния из "глазок" (units, factories, e_energy и т.д) 
   * [video](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/log/video) - видеозаписи локальных игр
 * [lux](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/lux) - библиотека lux
-* [replays](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/replays) - реплеи игр в формате html
+* [replays](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/replays) - реплеи игр в формате .html
   * [tournament](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/replays/tornament) - турнирные реплеи
 * [strategy](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/strategy) - папка для разработки стратегий и локальной проверки
   * [early](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/strategy/early) - папка стратегий ранней игры
@@ -39,7 +39,7 @@
 # Как собирать ботов?
 
 1. Создаём папку бота внутри bots
-2. Копируем файлы __agent.py__ и __main.py__ из папки _test_env_ в папку с ботов
-3. Копируем папку _lux_ в папку с ботом
-4. Копируем папку _strategy_ в папку с ботом
+2. Копируем файлы __agent.py__ и __main.py__ из папки _[test_env](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/test_env)_ в папку с ботов
+3. Копируем папку _[lux](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/lux)_ в папку с ботом
+4. Копируем папку _[strategy](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/strategy)_ в папку с ботом
 5. В файле __agent.py__ заменяем _DefaultStrategy_ на Ваш класс стратегии
