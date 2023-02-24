@@ -17,6 +17,9 @@ class LuxAI:
         file = loadCompetition(LuxAI.title)
         unzip(file, 'bots/example')
         remove(file)
+        clearFolder('bots/example', ext='.ipynb')
+        clearFolder('bots/example', ext='._lux')
+        cloneFolder('bots/example/lux', 'lux')
 
     def buildSubmission(name:str):
         datename = str(datetime.now()).split('.')[0].replace(':', '-').replace(' ', '_')

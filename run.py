@@ -7,7 +7,7 @@ bots = [
     {'file':'./bots/second_bot/main.py', 'name':'second'},
 ]
 
-Lux.play(bots, s=None)
+#Lux.play(bots, s=None)
 #Lux.tornament('bots/')
 #Lux.buildSubmission('example')
 #Lux.sendSubmission('example_2023-02-09_15-38-21.tar.gz')

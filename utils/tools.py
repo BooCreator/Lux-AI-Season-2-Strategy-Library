@@ -14,43 +14,44 @@ except:
 
 visualizer = Visualizer(48, 48)
 
-def unzip(filename, path='.'):
+def unzip(filename:str, path:str='.'):
     with zipfile.ZipFile(filename, 'r') as zip_ref:
         zip_ref.extractall(path)
 
-def zip(path, filename):
+def zip(path:str, filename:str):
     if os.path.exists(path + '__pycache__'): 
         shutil.rmtree(path + '__pycache__')
     with tarfile.open(filename+'.tar.gz', "w:gz") as tar:
         tar.add(path, arcname=os.path.basename(path))
 
-def loadCompetition(name):
+def loadCompetition(name:str):
     os.system(f'kaggle competitions download -c {name}')
     return name + '.zip'
 
-def loadDataset(name):
+def loadDataset(name:str):
     os.system(f'kaggle datasets download -d {name}')
     return name + '.zip'
 
-def sendSubmission(competition, filename, message=''):
+def sendSubmission(competition:str, filename:str, message:str=''):
     os.system(f'kaggle competitions submit -c {competition} -f {filename} -m {message}')
 
-def remove(filename):
+def remove(filename:str):
     os.remove(filename)
     print('-- remove: ' + filename)
 
-def clearFolder(dir='', ext='.html',*, reg=None):
-    for file in glob.glob(f'{dir}/*{ext}' if glob is None else reg):
+def clearFolder(dir:str='', ext:str='.html',*, reg=None):
+    for file in glob.glob(f'{dir}/*{ext}' if reg is None else reg):
         remove(file)
 
-def initCompetition(name = '', use_gpu = False):
+def initCompetition(name:str='', use_gpu:bool=False):
     os.system(f'pip install --upgrade luxai_s2')
     if use_gpu: os.system(f'pip install juxai-s2')
     os.system(f'pip install --upgrade kaggle')
     if len(name) > 0: loadCompetition(name)
     return name + '.zip'
 
-def cloneFolder(path, to):
+def cloneFolder(path:str, to:str):
+    path, to = path.replace('/', '\\'), to.replace('/', '\\')
     os.system(f'xcopy {path} {to} /e /y')
 
 def toVideo(imgs:list[np.ndarray], filename:str='_blank', *, return_:bool=False, palette=cv2.COLOR_BGR2RGB):
