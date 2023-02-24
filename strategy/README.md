@@ -2,27 +2,32 @@
 1. [Структура окружения](#структура)
 2. [Описание стратегий](#описание-стратегий)
   * [Общие стратегии](#общие-стратегии)
+    * [общий класс базовых стратегий](#базовая-стратегия)
   * [Ранняя стадия](#ранняя-стадия)
+    * [базовая стратегия](#базовая-стратегия-ранней-игры)
   * [Основная стадия](#основная-стадия)
+    * [базовая стратегия](#базовая-стратегия-основной-стадии-игры)
 
 # Структура
 
 * [early](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/strategy/early) - стратегии ранней игры
-  * __[default.py](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/strategy/early/default.py)__ - базовая стратегия ранней игры
+  * __[default.py](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/strategy/early/default.py)__ - [базовая стратегия](#базовая-стратегия-ранней-игры)
 * [game](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/strategy/game) - стратегии основной фазы игры
-  * __[default.py](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/strategy/game/default.py)__ - базовая стратегия основной стадии игры
+  * __[default.py](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/strategy/game/default.py)__ - [базовая стратегия](#базовая-стратегия-основной-стадии-игры)
 * [kits](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/strategy/kits) - полезные классы и функции
   * __[eyes.py]()__ - класс "Глазки", с помощью которого можно отслеживать ситуацию в игре
   * __[factory.py]()__ - класс данных фабрики. Хранит всех роботов и имеет некоторые вычислительные функции
   * __[robot.py]()__ - класс данных робота. Имеет тип, задачу ,а также некоторые вычислительные функции
   * __[utils.py]()__ - полезные функции
-* __[basic.py](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/strategy/basic.py)__ - [общий класс стратегий](### Базовая стратегия)
+* __[basic.py](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/strategy/basic.py)__ - [общий класс базовых стратегий](#базовая-стратегия)
 
 # Описание стратегий
 
 ## Общие стратегии
 
 ### Базовая стратегия
+
+Базовая общая стратегия не выполняет никаких особенных действий.
 
 ## Ранняя стадия
 
