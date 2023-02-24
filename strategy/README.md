@@ -16,7 +16,7 @@
   * __[factory.py]()__ - класс данных фабрики. Хранит всех роботов и имеет некоторые вычислительные функции
   * __[robot.py]()__ - класс данных робота. Имеет тип, задачу ,а также некоторые вычислительные функции
   * __[utils.py]()__ - полезные функции
-* __[basic.py](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/strategy/basic.py)__ - общий класс стратегий
+* __[basic.py](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/strategy/basic.py)__ - [общий класс стратегий](### Базовая стратегия)
 
 # Описание стратегий
 
