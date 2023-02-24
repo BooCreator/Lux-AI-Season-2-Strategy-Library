@@ -1,5 +1,9 @@
 # Оглавление
-1. [Структура окружения](#структура-окружения)
+1. [Структура окружения](#структура)
+2. [Описание стратегий](#описание-стратегий)
+  1. [Общие стратегии](#общие-стратегии)
+  2. [Ранняя стадия](#ранняя-стадия)
+  3. [Основная стадия](#основная-стадия)
 
 # Структура
 
@@ -8,17 +12,16 @@
 * [game](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/strategy/game) - стратегии основной фазы игры
   * __[default.py](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/strategy/game/default.py)__ - базовая стратегия
 * [kits](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/strategy/kits) - полезные классы и функции
-  * [eyes.py]() - 
-  * [factory.py]() - 
-  * [robot.py]() - 
-  * [utils.py]() - 
-* __[basic.py]__(https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/strategy/basic.py) - общий класс стратегий
+  * __[eyes.py]()__ - класс "Глазки", с помощью которого можно отслеживать ситуацию в игре
+  * __[factory.py]()__ - класс данных фабрики. Хранит всех роботов и имеет некоторые вычислительные функции
+  * __[robot.py]()__ - класс данных робота. Имеет тип, задачу ,а также некоторые вычислительные функции
+  * __[utils.py]()__ - полезные функции
+* __[basic.py](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/strategy/basic.py)__ - общий класс стратегий
 
+# Описание стратегий
 
-# Как собирать ботов?
+## Общие стратегии
 
-1. Создаём папку бота внутри bots
-2. Копируем файлы __agent.py__ и __main.py__ из папки _test_env_ в папку с ботов
-3. Копируем папку _lux_ в папку с ботом
-4. Копируем папку _strategy_ в папку с ботом
-5. В файле __agent.py__ заменяем _DefaultStrategy_ на Ваш класс стратегии
+## Ранняя стадия
+
+## Основная стадия
