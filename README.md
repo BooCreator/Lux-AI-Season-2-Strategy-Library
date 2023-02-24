@@ -10,7 +10,7 @@
 * [cmd](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/cmd) - команды windows для работы с kaggle, вызываются из кода
   * _competition.cmd_ - загрузить competition
   * _dataset.cmd_ - загрузить dataset
-  * _install.cmd_ - установить/обновить пакеты pythoon - kaggle, luxai
+  * _install.cmd_ - установить/обновить пакеты python - kaggle, luxai_s2
   * _submit.cmd_ - засылка
 * [log](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/log) - папка для логов
   * [render](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/log/render) - последние N фреймов игры. используется при дебаге
