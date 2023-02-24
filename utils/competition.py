@@ -4,9 +4,9 @@ from luxai_s2.env import LuxAI_S2
 import numpy as np
 
 class LuxAI:
-    render_log_count = 5
-    title = 'lux-ai-season-2'
-    env = LuxAI_S2()
+    render_log_count = 5      # количество сохранённых псоледних кадров игры в логе
+    title = 'lux-ai-season-2' # название соревнования
+    env = LuxAI_S2()          # python окружение LuxAI
 
     def init(download=False, use_gpu=False):
         initCompetition(use_gpu=use_gpu)
@@ -31,20 +31,22 @@ class LuxAI:
         sendSubmission(LuxAI.title, 'submissions\\submission.tar.gz', message if len(message) > 0 else filename)
         remove('submissions\\submission.tar.gz')
 
-    def play(bots:list[dict],*, v:int=2, s=None):
-        if not os.path.exists('replays'):os.mkdir('replays')
+    def play(bots:list[dict], *, v:int=2, seed:int=None):
+        ''' Запуск игры между ботами '''
         replay = './replays/'
+        if not os.path.exists('replays'): os.mkdir('replays')
         datename = str(datetime.now()).split('.')[0].replace(':', '-').replace(' ', '_')
         if len(bots) == 1: 
             os.system(f'luxai-s2 {bots[0]["file"]} {bots[0]["file"]} -v {v} -o "{replay}{bots[0]["name"]}_self_{datename}.html"'
-                        + (f' -s {s}' if s is not None else ''))
+                        + (f' -s {seed}' if seed is not None else ''))
         elif len(bots) > 1:
             for i in range(0, len(bots)):
                 for j in range(i+1, len(bots)):
                     os.system(f'luxai-s2 {bots[i]["file"]} {bots[j]["file"]} -v {v} -o "{replay}{bots[i]["name"]}_{bots[j]["name"]}_{datename}.html"'
-                        + (f' -s {s}' if s is not None else ''))
+                        + (f' -s {seed}' if seed is not None else ''))
     
-    def tornament(bots_path):
+    def tornament(bots_path:str='bots/'):
+        ''' Запуск турнира между всеми ботами папки bots '''
         full_path = '.'
         datename = str(datetime.now()).split('.')[0].replace(':', '-').replace(' ', '_')
         for folder in ['replays', 'tornament', datename]:
@@ -52,15 +54,18 @@ class LuxAI:
             if not os.path.exists(full_path): os.mkdir(full_path)
         os.system(f'luxai-s2 {bots_path} -o "{full_path}/replay.html" --tournament -v 0 --tournament_cfg.concurrent=2')
 
-    def interact(agents, steps=1000, *, seed=None):
-        # сбросить нашу среду
+    def interact(agents:dict, steps:int=1000, *, seed:int=None, log:bool=True):
+        ''' Запуск локальной игры между агентами '''
+        # сбросить среду игры
         obs = LuxAI.env.reset(seed=seed)
         np.random.seed(0)
-        imgs = []
-        step = 0
+        log_path, imgs, step = '', [], 0
+        for folder in ['log', 'render']:
+            log_path += folder + '/'
+            if not os.path.exists(log_path): os.mkdir(log_path)
+
         # Обратите внимание, что поскольку среда состоит из двух фаз, мы также отслеживаем значение, называемое
         # `real_env_steps` в состоянии окружения. Первая фаза заканчивается, когда `real_env_steps` становится равным 0 и используется ниже.
-
         # повторяем до тех пор, пока не закончится фаза 1
         while LuxAI.env.state.real_env_steps < 0:
             if step >= steps: break
@@ -73,11 +78,9 @@ class LuxAI:
             obs, rewards, dones, infos = LuxAI.env.step(actions)
             frame = [LuxAI.env.render("rgb_array", width=640, height=640)]
             imgs += frame
-            full_path = ''
-            for folder in ['log', 'render']:
-                full_path += folder + '/'
-                if not os.path.exists(full_path): os.mkdir(full_path)
-            toImage(frame[0], f'{full_path}frame', frames=LuxAI.render_log_count)
+            if log: toImage(frame[0], f'{log_path}frame', frames=LuxAI.render_log_count)
+        
+        # обработка основной фазы игры
         done = False
         while not done:
             if step >= steps: break
@@ -90,12 +93,10 @@ class LuxAI:
             obs, rewards, dones, infos = LuxAI.env.step(actions)
             frame = [LuxAI.env.render("rgb_array", width=640, height=640)]
             imgs += frame
-            full_path = ''
-            for folder in ['log', 'render']:
-                full_path += folder + '/'
-                if not os.path.exists(full_path): os.mkdir(full_path)
-            toImage(frame[0], f'{full_path}frame', frames=LuxAI.render_log_count)
+            if log: toImage(frame[0], f'{log_path}frame', frames=LuxAI.render_log_count)
             done = dones["player_0"] and dones["player_1"]
+        
+        # сохраняем результаты игры
         full_path = ''
         date = datetime.now()
         datefolder = str(date.date()).replace(':', '-')

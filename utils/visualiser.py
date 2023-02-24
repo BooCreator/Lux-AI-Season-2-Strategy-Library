@@ -1,13 +1,11 @@
 import numpy as np
+from luxai_s2.state import State
 
 try:
     import pygame
     from pygame import gfxdraw
 except:
     print("No pygame installed, ignoring import")
-from luxai_s2.map.board import Board
-from luxai_s2.state import State
-from luxai_s2.unit import UnitType
 
 try:
     import matplotlib.pyplot as plt
