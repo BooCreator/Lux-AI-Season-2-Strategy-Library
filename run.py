@@ -1,6 +1,6 @@
 from utils.competition import LuxAI as Lux
 
-Lux.loadCompetition() # if not exists - load
+Lux.loadCompetition(rw=True) # if not exists - load
 
 bots = [
     #{'file':'./bots/example/main.py', 'name':'example'},

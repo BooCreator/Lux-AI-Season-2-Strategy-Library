@@ -12,25 +12,26 @@ class LuxAI:
         initCompetition(use_gpu=use_gpu)
         if download: LuxAI.loadCompetition()
 
-    def loadCompetition(rw=False):
+    def loadCompetition(rw=False, rm:bool=True):
         if not rw and os.path.exists('bots/example'): return
         file = loadCompetition(LuxAI.title)
         unzip(file, 'bots/example')
-        remove(file)
-        clearFolder('bots/example', ext='.ipynb')
-        clearFolder('bots/example', ext='._lux')
         cloneFolder('bots/example/lux', 'lux')
+        remove(file)
+        if rm:
+            remove('bots/example/._lux')
+            clearFolder('bots/example', ext='.ipynb')
 
     def buildSubmission(name:str):
         datename = str(datetime.now()).split('.')[0].replace(':', '-').replace(' ', '_')
         zip(f'bots/{name}/', f'submissions/{name}_{datename}')
 
-    def sendSubmission(filename, message=''):
+    def sendSubmission(filename:str, message:str=''):
         os.system(f'copy submissions\\{filename} submissions\\submission.tar.gz')
         sendSubmission(LuxAI.title, 'submissions\\submission.tar.gz', message if len(message) > 0 else filename)
         remove('submissions\\submission.tar.gz')
 
-    def play(bots:list[dict],*, v=2, s=None):
+    def play(bots:list[dict],*, v:int=2, s=None):
         if not os.path.exists('replays'):os.mkdir('replays')
         replay = './replays/'
         datename = str(datetime.now()).split('.')[0].replace(':', '-').replace(' ', '_')
