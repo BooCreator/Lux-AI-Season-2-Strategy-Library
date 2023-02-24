@@ -1,5 +1,11 @@
 import numpy as np
 
+try:
+    from utils.tools import toImage
+except: 
+    def toImage(*args, **kwargs):
+        pass
+
 # ===============================================================================================================
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ===============================================================================================================
@@ -53,40 +59,44 @@ class Eyes:
     # ------- value - значение для вставки, может быть матрицей -------------------------------------------------
     # ------- check_keys - проверка названий. Если пытаемся обьновить не существующую матрицу, то будет ошика ---
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def update(self, name:str, index:list[int|list[int]]|np.ndarray, value:int|np.ndarray=1, *, check_keys:bool=True):
+    def update(self, name:str|list[str]|np.ndarray, index:list[int|list[int]]|np.ndarray, value:int|np.ndarray=1, 
+                *, check_keys:bool=True) -> np.ndarray|list[np.ndarray]:
         ''' Установить значение {value} в таблице {name} в точках {index}'''
-        if name not in self.data.keys(): 
-            if check_keys: raise Exception(f'Field {name} not found!')
-            self.clear(name)
-        if type(index) is list and len(index) == 2 and type(index[0]) is int and type(index[1]) is int:
-            if type(value) is int:
-                if index[0] < self.data[name].shape[0] and index[1] < self.data[name].shape[1]:
-                    self.data[name][index[0], index[1]] = value
-            elif type(value) is np.ndarray:
-                for i in range(value.shape[0]):
-                    for j in range(value.shape[1]):
-                        if index[0]+i < self.data[name].shape[0] and index[1]+j < self.data[name].shape[1]:
-                            self.data[name][index[0]+i, index[1]+j] = value[i, j]
-        elif type(index) is np.ndarray and len(index) == 2:
-            if type(value) is int:
-                if index[0] < self.data[name].shape[0] and index[1] < self.data[name].shape[1]:
-                    self.data[name][index[0], index[1]] = value
-            elif type(value) is np.ndarray:
-                for i in range(value.shape[0]):
-                    for j in range(value.shape[1]):
-                        if index[0]+i < self.data[name].shape[0] and index[1]+j < self.data[name].shape[1]:
-                            self.data[name][index[0]+i, index[1]+j] = value[i, j]
-        elif type(index) is list:
-            for ind in index:
-                if type(ind) is list and len(ind) == 2 and type(ind[0]) is int and type(ind[1]) is int:
+        if type(name) is list:
+            result = []
+            for val in name:
+                result.append(self.update(val, index, value, check_keys=check_keys))
+                return result
+        elif type(name) is np.ndarray:
+            name[index[0], index[1]] = value
+            return name
+        elif type(name) is str:
+            if name not in self.data.keys(): 
+                if check_keys: raise Exception(f'Field {name} not found!')
+                self.clear(name)
+            if type(index) is list and len(index) == 2:
+                if type(index[0]) is list:
+                    for ind in index:
+                        self.update(name, ind, value, check_keys=check_keys)
+                else:
                     if type(value) is int:
-                        if ind[0] < self.data[name].shape[0] and ind[1] < self.data[name].shape[1]:
-                            self.data[name][ind[0], ind[1]] = value
+                        if index[0] < self.data[name].shape[0] and index[1] < self.data[name].shape[1]:
+                            self.data[name][index[0], index[1]] = value
                     elif type(value) is np.ndarray:
                         for i in range(value.shape[0]):
                             for j in range(value.shape[1]):
-                                if ind[0]+i < self.data[name].shape[0] and ind[1]+j < self.data[name].shape[1]:
-                                    self.data[name][ind[0]+i, ind[1]+j] = value[i, j]
+                                if index[0]+i < self.data[name].shape[0] and index[1]+j < self.data[name].shape[1]:
+                                    self.data[name][index[0]+i, index[1]+j] = value[i, j]
+            elif type(index) is np.ndarray and len(index) == 2:
+                if type(value) is int:
+                    if index[0] < self.data[name].shape[0] and index[1] < self.data[name].shape[1]:
+                        self.data[name][index[0], index[1]] = value
+                elif type(value) is np.ndarray:
+                    for i in range(value.shape[0]):
+                        for j in range(value.shape[1]):
+                            if index[0]+i < self.data[name].shape[0] and index[1]+j < self.data[name].shape[1]:
+                                self.data[name][index[0]+i, index[1]+j] = value[i, j]
+            return self.data[name]
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Сумировать матрицы ----------------------------------------------------------------------------------
     # ------- names - массив матриц -----------------------------------------------------------------------------
@@ -115,7 +125,7 @@ class Eyes:
                 if name in self.data.keys():
                     result = result - self.data.get(name) if result is not None else self.data.get(name)
             elif type(name) is np.ndarray:
-                result = result - name
+                result = result - name if result is not None else name
         return result
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Получить вычисляемое значение матрицы (min, max) ----------------------------------------------------
@@ -179,126 +189,28 @@ class Eyes:
         return result
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Вернуть матрицу по названию -------------------------------------------------------------------------
-    # ------- name - название матрицы ------------------------------------------------------------------------------------
+    # ------- name - название матрицы ---------------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def get(self, name:str) -> np.ndarray:
         return self.data.get(name)
-
-    #def getLocketField(self, names:list[str]=None) -> np.ndarray:
-    #    ''' Получить матрицу запрещённых ходов
-    #        0 - блокирован проход, 1 - проход возможен '''
-    #    locked_field = np.zeros(self.map_size, dtype=int)
-    #    energy = self.data['e_energy'] - self.data['u_energy'] # < 0 - у нас больше, > 0 - у противника больше
-    #    energy = np.where(energy > 0, energy, 0)
-    #    if np.max(energy) > 0: energy = energy / np.max(energy)
-    #    locked_field = np.where(self.data['factory'] + self.data['robots'] + energy > 0, locked_field, 1)
-    #    return self.neg(locked_field)
-    
-    #def getLockedField(self, names:list[str]=None) -> np.ndarray:
-    #    locked_field = np.zeros(self.map_size, dtype=int)
-    #    locked_field = np.where(self.sum(['factory', 'robots', self.norm(self.diff(['e_energy', 'u_energy']))]) > 0, locked_field, 1)
-    #    return locked_field
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Вернуть матрицу значений ----------------------------------------------------------------------------
+    # ------- value - значение для заполнения -------------------------------------------------------------------
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    def getFree(self, value:int=0) -> np.ndarray:
+        return np.ones(self.map_size, dtype=int) * value
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Сохранить матрицу как изображение -------------------------------------------------------------------
+    # ------- value - значение для заполнения -------------------------------------------------------------------
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    def log(self, name: str|list[str]|np.ndarray, path:str=''):
+        if type(name) is str:
+            toImage(self.get(name), f'{path}_{name}', render=True)
+        elif type(name) is np.ndarray:
+            toImage(name, f'{path}_{name}', render=True)
+        elif type(name) is list:
+            for table in name:
+                toImage(self.get(table), f'{path}_{table}', render=True)
 # ===============================================================================================================
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ===============================================================================================================
-
-def getRect(X:int, Y:int, rad:int=1, borders:bool=True) -> tuple[list, list]:
-    ''' Получить квадрат координат вокруг точки '''
-    x, y = [], []
-    for r in range(-rad, rad + 1):
-        for k in range(-rad, rad + 1):
-            ny, nx = X-k, Y-r
-            if not borders or nx > -1 and ny > -1:
-                x.append(X-k)
-                y.append(Y-r)
-    return x, y
-
-def getRange(pos=[], size=10):
-    res = [0 for i in range(size)]
-    if len(pos) > 0:
-        for i in pos: res[i] = 1
-    return res
-
-size=10
-ev = Eyes(10, 10).clear('new1')
-fabric = []
-for i in [  [               ],
-            [               ],
-            [ 1,2,3         ],
-            [ 1,2,3,  6,7,8 ],
-            [ 1,2,3,  6,7,8 ],
-            [         6,7,8 ],
-            [               ],
-            [               ],
-            [               ],
-            [               ]
-        ]:
-    fabric.append(getRange(i, size))
-fabric = np.array(fabric)
-print('-'*50)
-robots = []
-for i in [  [           7   ],
-            [               ],
-            [               ],
-            [          6    ],
-            [   2           ],
-            [               ],
-            [               ],
-            [            8  ],
-            [               ],
-            [1              ]
-        ]:
-    robots.append(getRange(i, size))
-robots = np.array(robots)
-print('-'*50)
-enemies = []
-for i in [  [        4      ],
-            [               ],
-            [               ],
-            [        4      ],
-            [               ],
-            [               ],
-            [   2           ],
-            [               ],
-            [               ],
-            [    3          ]
-        ]:
-    enemies.append(getRange(i, size))
-enemies = np.array(enemies)
-
-ev.clear(['factory', 'robots', 'enemy', 'u_energy', 'e_energy'])
-
-
-for i in range(fabric.shape[0]):
-    for j in range(fabric.shape[1]):
-        if fabric[i, j] == 1:
-            ev.update('factory', [i, j])
-
-for i in range(robots.shape[0]):
-    for j in range(robots.shape[1]):
-        if robots[i, j] == 1:
-            ev.update('robots', [i, j])
-            x, y = getRect(i, j)
-            en = np.random.random_integers(15, 125)
-            for x, y in zip(x, y):
-                ev.update('u_energy', [x, y], en)
-
-for i in range(enemies.shape[0]):
-    for j in range(enemies.shape[1]):
-        if enemies[i, j] == 1:
-            ev.update('enemy', [i, j])
-            x, y = getRect(i, j)
-            en = np.random.random_integers(35, 150)
-            for x, y in zip(x, y):
-                ev.update('e_energy', [x, y], en)
-
-
-#for name in ['factory', 'robots', 'enemy', 'u_energy', 'e_energy']:
-#    print('--', name,'-'*(46-len(name)),'\n', ev.get(name))
-
-#print('--', 'locked Field','-'*(46-len('locked Field')),'\n', ev.getLockedFieldMax() + ev.get('robots')*3 + ev.get('enemy')*4)
-
-#print('--', 'negate','-'*(46-len('negate')),'\n', ev.neg('u_energy'))
-
-ev.update('fact', [[1,1], [-4,-4]], value=np.ones((3,3),dtype=int), check_keys=False)
-print('--', 'fact','-'*(46-len('fact')),'\n', ev.get('fact'))

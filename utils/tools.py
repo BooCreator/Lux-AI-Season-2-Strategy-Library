@@ -9,7 +9,10 @@ import random
 import numpy as np
 from IPython.display import Video
 
-from utils.visualiser import Visualizer
+try:
+    from utils.visualiser import Visualizer
+except:
+    from visualiser import Visualizer
 
 visualizer = Visualizer(48, 48)
 

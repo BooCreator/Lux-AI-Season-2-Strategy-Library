@@ -239,11 +239,11 @@ def findClosestFactory(pos:np.ndarray, factory_tiles:np.ndarray, factory_units:n
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ----- Найти ближайший тайл/ресурс -------------------------------------------------------------------------
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-def findClosestTile(pos:np.ndarray, tile_map:np.ndarray, *, free_resources:np.ndarray=None):
+def findClosestTile(pos:np.ndarray, tile_map:np.ndarray, *, lock_map:np.ndarray=None):
     ''' Найти ближайший тайл/ресурс '''
-    if free_resources is None: free_resources = np.ones(tile_map.shape, dtype=int)
+    if lock_map is None: lock_map = np.ones(tile_map.shape, dtype=int)
     closest_tile = pos
-    tile_locations = np.argwhere((tile_map * free_resources) > 0)
+    tile_locations = np.argwhere((tile_map * lock_map) > 0)
     if len(tile_locations) > 0:
         tile_distances = np.mean((tile_locations - pos) ** 2, 1)
         closest_tile: np.ndarray = tile_locations[np.argmin(tile_distances)]
