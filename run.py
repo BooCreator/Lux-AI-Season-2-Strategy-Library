@@ -1,6 +1,6 @@
 from utils.competition import LuxAI as Lux
 
-Lux.loadCompetition(rw=True) # if not exists - load
+Lux.loadCompetition() # if not exists - load
 
 bots = [
     #{'file':'./bots/example/main.py', 'name':'example'},
@@ -9,14 +9,14 @@ bots = [
 
 #Lux.play(bots, s=None)
 #Lux.tornament('bots/')
-#Lux.buildSubmission('example')
-#Lux.sendSubmission('example_2023-02-09_15-38-21.tar.gz')
+#zip_name = Lux.buildSubmission('example') # zip_name == 'example_2023-02-09_15-38-21.tar.gz'
+#Lux.sendSubmission(zip_name)
 
-#from test_env.agent import Agent
-#from strategy.basic import DefaultStrategy
-#
-#Lux.render_log_count=10
-#Lux.env.reset()
-#agents = {player: Agent(player, Lux.env.state.env_cfg) for player in Lux.env.agents}
-#
-#Lux.interact(agents, 100, seed=41)
+from test_env.agent import Agent
+from strategy.basic import DefaultStrategy
+
+Lux.render_log_count=10
+Lux.env.reset()
+agents = {player: Agent(player, Lux.env.state.env_cfg) for player in Lux.env.agents}
+
+Lux.interact(agents, 100, seed=41)

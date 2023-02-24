@@ -22,9 +22,11 @@ class LuxAI:
             remove('bots/example/._lux')
             clearFolder('bots/example', ext='.ipynb')
 
-    def buildSubmission(name:str):
+    def buildSubmission(name:str)->str:
+        ''' Zip file to .tar.gz format'''
         datename = str(datetime.now()).split('.')[0].replace(':', '-').replace(' ', '_')
         zip(f'bots/{name}/', f'submissions/{name}_{datename}')
+        return f'submissions/{name}_{datename}.tar.gz'
 
     def sendSubmission(filename:str, message:str=''):
         os.system(f'copy submissions\\{filename} submissions\\submission.tar.gz')
