@@ -39,17 +39,17 @@ class DefaultStrategy:
     # ------- Если мы сделали ставку и выиграли, то ресурсов будет меньше чем 150 для фабрики -------------------
     # ------- Суть функции для указания количества ресурсов для фабрик - 150, 150, 50 или 117, 117, 116 ---------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def getResourcesForFactory(self, game_state, player:str, n_factories:int) -> tuple[int, int]:
+    def getResourcesForFactory(self, game_state, player:str, n_factories:int):
         return self.early.getResourcesForFactory(game_state, player, n_factories)
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Получить массив действий для фабрик -----------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def getFactoryActions(self, step:int) -> dict[str|list[int]]:
+    def getFactoryActions(self, step:int):
         return self.game.getFactoryActions(step)
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Получить массив действий для роботов ----------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def getRobotActions(self, step:int) -> dict[str|list[int]]:
+    def getRobotActions(self, step:int):
         return self.game.getRobotActions(step)
 # ===============================================================================================================
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =

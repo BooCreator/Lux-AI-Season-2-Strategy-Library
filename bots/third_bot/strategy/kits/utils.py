@@ -29,7 +29,7 @@ def toPandas(mx:np.ndarray, name:str) -> bool:
 # -------         X [0, 0] X --------------------------------------------------------------------------------
 # -------         X  X  X  X --------------------------------------------------------------------------------
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-def getRect(X:int, Y:int, rad:int=1, borders:bool=True) -> tuple[list, list]:
+def getRect(X:int, Y:int, rad:int=1, borders:bool=True):
     ''' Получить квадрат координат вокруг точки '''
     x, y = [], []
     for r in range(-rad, rad + 1):
@@ -45,7 +45,7 @@ def getRect(X:int, Y:int, rad:int=1, borders:bool=True) -> tuple[list, list]:
 # -------         X [0, 0] X --------------------------------------------------------------------------------
 # -------            X  X    --------------------------------------------------------------------------------
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-def getRad(X:int, Y:int, rad:int=1, borders:bool=True) -> tuple[list, list]:
+def getRad(X:int, Y:int, rad:int=1, borders:bool=True):
     ''' Получить круг координат вокруг точки '''
     x, y = [], []
     for r in range(-rad, rad + 1):
@@ -123,7 +123,7 @@ def direction_to(src:np.ndarray, target:np.ndarray, block=None) -> int:
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ----- Получить маршрут движения для робота по навправлениям [left, up, up, right, ...] --------------------
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-def getPath(dec:list[int], to:list[int], locked_field:np.ndarray=None, steps:int=20) -> list[dict]:
+def getPath(dec:np.ndarray, to:np.ndarray, locked_field:np.ndarray=None, steps:int=20):
     ''' Получить маршрут движения для робота по навправлениям
         * [4 (left), 1 (up), 1 (up), 2 (right), ...] '''
     path, block, n = [], [], 0
@@ -152,7 +152,7 @@ def getPath(dec:list[int], to:list[int], locked_field:np.ndarray=None, steps:int
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ----- Поиск маршрута движения для робота по навправлениям [left, up, up, right, ...] ----------------------
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-def checkMove(x:int, y: int, size:tuple[int,int]) -> bool:
+def checkMove(x:int, y: int, size=(3,3)) -> bool:
     return not (x < 0 or y < 0 or x >= size[0] or y >= size[1])
 class Path:
     paths = []
@@ -209,7 +209,7 @@ class Path:
             self.result = paths[min_path][:min_pos+1]
         return self.result
 
-def findPath(dec:list[int], to:list[int], locked_field:np.ndarray=None, steps:int=20) -> list[dict]:
+def findPath(dec:np.ndarray, to:np.ndarray, locked_field:np.ndarray=None, steps:int=20):
     ''' Получить маршрут движения для робота по навправлениям
         * [4 (left), 1 (up), 1 (up), 2 (right), ...] '''
     paths = Path(dec)
@@ -301,7 +301,7 @@ def calcDigCountOld(unit, *, count:int=1000, on_factory=None, reserve_cost:int=0
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ----- Объединить списки -----------------------------------------------------------------------------------
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-def extended(arr:list[list]) -> list:
+def extended(arr:list) -> list:
     ''' Объединить списки '''
     res = []
     for item in arr: 
@@ -310,15 +310,15 @@ def extended(arr:list[list]) -> list:
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ----- Получить из игровой среди все массивы с данными -----------------------------------------------------
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-def getResFromState(game_state) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+def getResFromState(game_state):
     ''' Получить из игровой среди все массивы с данными '''
     return game_state.board.ice, game_state.board.ore, game_state.board.rubble, game_state.board.valid_spawns_mask.astype(int)
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ----- Получить список действий движения со стоимостью по энергии ------------------------------------------
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-def getMoveActions(game_state, unit, *, path:list[dict]=None, dec:np.ndarray=None, to:np.ndarray=None, 
+def getMoveActions(game_state, unit, *, path:list=None, dec:np.ndarray=None, to:np.ndarray=None, 
                     locked_field:np.ndarray=None, repeat:int=0, n:int=1, has_points: bool=False,
-                    steps:int=20) -> tuple[list[list], int, list[list[int]]]:
+                    steps:int=20):
     ''' Получить список действий движения со стоимостью по энергии 
         * locked_field: 0 - lock, 1 - alloy '''
     actions = []

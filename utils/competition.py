@@ -29,9 +29,10 @@ class LuxAI:
         return f'submissions/{name}_{datename}.tar.gz'
 
     def sendSubmission(filename:str, message:str=''):
-        os.system(f'copy submissions\\{filename} submissions\\submission.tar.gz')
-        sendSubmission(LuxAI.title, 'submissions\\submission.tar.gz', message if len(message) > 0 else filename)
-        remove('submissions\\submission.tar.gz')
+        filename = filename.replace("/", "\\")
+        #os.system(f'copy {filename} submissions\\submission.tar.gz')
+        sendSubmission(LuxAI.title, filename, message if len(message) > 0 else filename)
+        #os.remove('submissions\\submission.tar.gz')
 
     def play(bots:list[dict], *, v:int=2, seed:int=None):
         ''' Запуск игры между ботами '''

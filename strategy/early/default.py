@@ -50,7 +50,7 @@ class EarlyStrategy:
     # ------- Если мы сделали ставку и выиграли, то ресурсов будет меньше чем 150 для фабрики -------------------
     # ------- Суть функции для указания количества ресурсов для фабрик - 150, 150, 50 или 117, 117, 116 ---------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def getResourcesForFactory(self, game_state, player:str, n_factories:int) -> tuple[int, int]:
+    def getResourcesForFactory(self, game_state, player:str, n_factories:int):
         ''' Получить ресурсы для каждой фабрики '''
         metal_left:int = ceil(game_state.teams[player].metal / n_factories)
         water_left:int = ceil(game_state.teams[player].water / n_factories)

@@ -10,8 +10,8 @@ from strategy.kits.factory import FactoryData
 # ===============================================================================================================
 class GameStrategy:
     ''' Класс стратегии игры '''
-    f_data:dict[str,FactoryData] = {}
-    free_robots: list[str] = []
+    f_data = {}
+    free_robots = []
     eyes: Eyes = None
     game_state = None
     player = None
@@ -19,8 +19,8 @@ class GameStrategy:
     step = 0
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def __init__(self, env) -> None:
-        self.f_data = dict[str,FactoryData]()
-        self.free_robots = list[str]()
+        self.f_data = {}
+        self.free_robots = []
         self.eyes = Eyes(env.map_size)
         self.game_state = None
         self.env = env
@@ -73,12 +73,12 @@ class GameStrategy:
     # ------- Удаляем робота, если он не существует -------------------------------------------------------------
     # ------- Если фабрик нет - заполняем массив ----------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def checkRobots(self, robots:dict[str]):
+    def checkRobots(self, robots:dict):
         ''' Проверить роботов в данных стратегии '''
 
         # убираем удалённых роботов
         for item in self.f_data.values():
-            has_robots = dict[str, RobotData]()
+            has_robots = {}
             for unit in robots.values():
                 if unit.unit_id in item.robots.keys():
                     has_robots[unit.unit_id] = item.robots.get(unit.unit_id)
@@ -97,7 +97,7 @@ class GameStrategy:
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Получить информацию о фабриках (factory_tiles, factory_units) ---------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def getFactoryInfo(self) -> tuple[list[list],list]:
+    def getFactoryInfo(self):
         ''' Получить информацию о фабриках '''
         factory_tiles = []
         factory_units = []

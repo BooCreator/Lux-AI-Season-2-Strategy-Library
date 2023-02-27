@@ -9,9 +9,9 @@ bots = [
 ]
 
 #Lux.play(bots, seed=None)
-Lux.tornament('bots/')
-#zip_name = Lux.buildSubmission('example') # zip_name == 'example_2023-02-09_15-38-21.tar.gz'
-#Lux.sendSubmission(zip_name)
+#Lux.tornament('bots/')
+zip_name = Lux.buildSubmission('third_bot') # zip_name == 'example_2023-02-09_15-38-21.tar.gz'
+#Lux.sendSubmission(zip_name, 'third bot')
 
 #from test_env.agent import Agent
 #from strategy.basic import DefaultStrategy

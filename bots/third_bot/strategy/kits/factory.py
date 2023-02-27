@@ -7,7 +7,7 @@ from strategy.kits.robot import RobotData
 class FactoryData:
     ''' Класс данных фабрики '''
     factory = None
-    robots: dict[str, RobotData] = []
+    robots = []
     alive = False
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Конструктор -----------------------------------------------------------------------------------------
@@ -15,14 +15,14 @@ class FactoryData:
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def __init__(self, factory) -> None:
         self.factory = factory
-        self.robots = dict[str, RobotData]()
+        self.robots = {}
         self.alive = True
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Выбрать роботов фабрики по условию ------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def getRobots(self, *, type_is:int=-1, task_is:int=-1, condition=lambda x: x == x) -> list[RobotData]:
+    def getRobots(self, *, type_is:int=-1, task_is:int=-1, condition=lambda x: x == x):
         ''' Выбрать роботов фабрики по условию '''
-        result = list[RobotData]()
+        result = []
         if type(type_is) is str: type_is = RobotData.TYPE.getType(type_is)
         if type(task_is) is str: task_is = RobotData.TASK.getTask(task_is)
         if type_is > -1 and task_is > -1:

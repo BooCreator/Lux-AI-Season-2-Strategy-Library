@@ -12,13 +12,13 @@ except:
 class Eyes:
     ''' Класс "глазок", т.е. работа с информацией на карте. Сбор, преобразование и т.д.
         * Матрицы: 1 - что-то есть, 0 - ничего нет'''
-    map_size: tuple[int, int] = (48, 48)
-    data: dict[str, np.ndarray] = None
+    map_size = (48, 48)
+    data = None
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Конструктор -----------------------------------------------------------------------------------------
     # ------- Примеры: 48, [48, 48], (48,48), 48,48 -------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def __init__(self, axis:int|list[int]|tuple[int,int]=None, axis2:int=None) -> None:
+    def __init__(self, axis:int=None, axis2:int=None) -> None:
         ''' Примеры аргументов: 48; [ 48, 48 ]; ( 48,48 ); 48,48 '''
         if axis is None:
             self.map_size = (48,48)
@@ -36,7 +36,7 @@ class Eyes:
     # ------- Если name задан как словарь, то value игнорируется ------------------------------------------------
     # ------- return -> self, чтобы можно было сразу создавать матрицы: Eves(10).clear(['field1', 'field2']) ----
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def clear(self, name:str|dict[str, int]|list[str|dict[str, int]], value:int=0): # ['fields', 'fields'] or [{'fields': 1, 'fields': 0}]
+    def clear(self, name:str, value:int=0):
         ''' Очистить матрицу. Если не существует, то создать '''
         if type(name) is str:
             self.data[name] = np.ones(self.map_size, dtype=int) * value
@@ -59,8 +59,8 @@ class Eyes:
     # ------- value - значение для вставки, может быть матрицей -------------------------------------------------
     # ------- check_keys - проверка названий. Если пытаемся обьновить не существующую матрицу, то будет ошика ---
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def update(self, name:str|list[str]|np.ndarray, index:list[int|list[int]]|np.ndarray, value:int|np.ndarray=1, 
-                *, check_keys:bool=True) -> np.ndarray|list[np.ndarray]:
+    def update(self, name:str, index:np.ndarray, value:int=1, 
+                *, check_keys:bool=True):
         ''' Установить значение {value} в таблице {name} в точках {index}'''
         if type(name) is list:
             result = []
@@ -102,7 +102,7 @@ class Eyes:
     # ------- names - массив матриц -----------------------------------------------------------------------------
     # ------- Примеры аргументов: names['field1', np.array([[0,1],[1,1]]), Eyes.norm('field2')] -----------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def sum(self, names:list[str|np.ndarray]) -> np.ndarray:
+    def sum(self, names:list) -> np.ndarray:
         ''' Сумировать матрицы '''
         result = np.zeros(self.map_size, dtype=int)
         for name in names:
@@ -117,7 +117,7 @@ class Eyes:
     # ------- names - массив матриц -----------------------------------------------------------------------------
     # ------- Примеры аргументов: names['field1', np.array([[0,1],[1,1]]), Eyes.norm('field2')] -----------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def diff(self, names:list[str|np.ndarray]) -> np.ndarray:
+    def diff(self, names:list) -> np.ndarray:
         ''' Разница матриц '''
         result = None
         for name in names:
@@ -134,7 +134,7 @@ class Eyes:
     # ------- default - значение по умолчанию -------------------------------------------------------------------
     # ------- condition - функция проверки. Если ложно, то возвращаем default -----------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def getValue(self, matrix:str|np.ndarray, how:str, default:int=1, condition=lambda x: x is not None) -> int:
+    def getValue(self, matrix:str, how:str, default:int=1, condition=lambda x: x is not None) -> int:
         ''' Получить вычисляемое значение матрицы (min, max) '''
         result = None
         if type(matrix) is str:
@@ -154,7 +154,7 @@ class Eyes:
     # ------- name - матрица ------------------------------------------------------------------------------------
     # ------- to - до какого значения ---------------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def norm(self, name:str|np.ndarray, *, to:int=None) -> np.ndarray:
+    def norm(self, name:str, *, to:int=None) -> np.ndarray:
         ''' Нормализация матрицы '''
         result = None
         if type(name) is str:
@@ -171,7 +171,7 @@ class Eyes:
     # ------- to - с каким --------------------------------------------------------------------------------------
     # --------- При указании find и to func игнорируется
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def neg(self, name: str|np.ndarray, *, func=lambda x: 1 if x == 0 else 0, find:int=None, to:int=None) -> np.ndarray:
+    def neg(self, name: str, *, func=lambda x: 1 if x == 0 else 0, find:int=None, to:int=None) -> np.ndarray:
         ''' Обратить значения матрицы (0->1, 1->0) '''
         result = None
         if type(name) is str:
@@ -203,7 +203,7 @@ class Eyes:
     # ----- Сохранить матрицу как изображение -------------------------------------------------------------------
     # ------- value - значение для заполнения -------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def log(self, name: str|list[str]|np.ndarray, path:str=''):
+    def log(self, name: str, path:str=''):
         if type(name) is str:
             toImage(self.get(name), f'{path}_{name}', render=True)
         elif type(name) is np.ndarray:
