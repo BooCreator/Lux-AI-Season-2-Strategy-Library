@@ -1,25 +1,19 @@
-from strategy.early.default import EarlyStrategy
-from strategy.game.default import GameStrategy
+import numpy as np
+from strategy.kits.utils import *
+from math import ceil
 
 # ===============================================================================================================
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ===============================================================================================================
-class DefaultStrategy:
-    ''' Базовый общий класс для стратегий. Объединяет в себя обе стратегии. '''
-    early: EarlyStrategy = None
-    game: GameStrategy = None
+class EarlyStrategy:
+    ''' Класс стратегии ранней игры '''
+    spreadRubble = 3  # распространение уровня щебня для повышения важности
+    spreadResource = 3
+    factory_size = (3,3)
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def __init__(self, env_cfg, early:EarlyStrategy=None, game:GameStrategy=None) -> None:
-        self.early = EarlyStrategy() if early is None else (early() if type(early) is type else early)
-        self.game  = GameStrategy(env_cfg) if game is None else (game(env_cfg) if type(game) is type else game)
-    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    # ----- Обновить состояние стратегии ------------------------------------------------------------------------
-    # ------- Можно изменять стратегии в процессе игры ----------------------------------------------------------
-    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def update(self, game_state, player, step, early=False):
-        ''' Обновить состояние стратегии '''
-        strategy = self.early if early else self.game
-        strategy.update(game_state, player, step)
+    def __init__(self) -> None:
+        self.spreadResource = 9
+        self.spreadRubble = 9
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Ставка для выбора позиции ---------------------------------------------------------------------------
     # ------- Если ставка == 0, то очередь по умолчанию. Ресурсы не тратятся ------------------------------------
@@ -27,30 +21,40 @@ class DefaultStrategy:
     # ------- Если ставка < 0, то ставим на второй ход. Ресурсы тратятся ----------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def getBid(self) -> int:
-        return self.early.getBid()
+        ''' Ставка для выбора позиции '''
+        return 0
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Обновить состояние стратегии ------------------------------------------------------------------------
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    def update(self, game_state, player:str, step:int):
+        pass
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Получить позицию расположения фабрики ---------------------------------------------------------------
     # ------- Возвращаем массив из двух значений ----------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def getSpawnPos(self, game_state, step:int):
-        return self.early.getSpawnPos(game_state, step)
+    def getSpawnPos(self, game_state, step:int) -> np.ndarray:
+        ''' Получить позицию расположения фабрики '''
+        ice, ore, rubble, valid = getResFromState(game_state)
+        resource = spreadCell(ice, self.spreadResource, max=self.spreadResource*2)
+        r_ore = spreadCell(ore, self.spreadResource, max=self.spreadResource*2)
+        rubble = normalize(rubble, np.max(resource)/self.spreadRubble)
+        rubble = spreadCell(rubble, self.spreadRubble, find=0, val=-1)
+        res = resource - r_ore - rubble
+        res = res * valid + valid
+        res = conv(res, self.factory_size)
+        potential_spawns = np.array(list(zip(*np.where(res==np.max(res)))))
+        spawn_loc = potential_spawns[np.random.randint(0, len(potential_spawns))]
+        return spawn_loc
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Получить ресурсы для каждой фабрики -----------------------------------------------------------------
     # ------- Если мы сделали ставку и выиграли, то ресурсов будет меньше чем 150 для фабрики -------------------
     # ------- Суть функции для указания количества ресурсов для фабрик - 150, 150, 50 или 117, 117, 116 ---------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def getResourcesForFactory(self, game_state, player:str, n_factories:int) -> tuple[int, int]:
-        return self.early.getResourcesForFactory(game_state, player, n_factories)
-    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    # ----- Получить массив действий для фабрик -----------------------------------------------------------------
-    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def getFactoryActions(self, step:int) -> dict[str|list[int]]:
-        return self.game.getFactoryActions(step)
-    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    # ----- Получить массив действий для роботов ----------------------------------------------------------------
-    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def getRobotActions(self, step:int) -> dict[str|list[int]]:
-        return self.game.getRobotActions(step)
+        ''' Получить ресурсы для каждой фабрики '''
+        metal_left:int = ceil(game_state.teams[player].metal / n_factories)
+        water_left:int = ceil(game_state.teams[player].water / n_factories)
+        return metal_left, water_left
 # ===============================================================================================================
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ===============================================================================================================

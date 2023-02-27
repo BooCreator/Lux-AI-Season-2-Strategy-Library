@@ -12,12 +12,12 @@ class Agent():
     ''' Агент для игры '''
     strategy: Strategy = None # стратегия игры, общая (включающая в себя early и game стратегии)
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def __init__(self, player: str, env_cfg: EnvConfig, *, strategy=None) -> None:
+    def __init__(self, player: str, env_cfg: EnvConfig, *, strategy: Strategy=None, early=None, game=None) -> None:
         self.player = player
         self.opp_player = "player_1" if self.player == "player_0" else "player_0"
         np.random.seed(0)
         self.env_cfg: EnvConfig = env_cfg
-        self.strategy = strategy if strategy is not None else Strategy(env_cfg)
+        self.strategy = Strategy(env_cfg, early, game) if strategy is None else (strategy(env_cfg, early, game) if type(strategy) is type else strategy)
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Фаза расстановки фабрик -----------------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =

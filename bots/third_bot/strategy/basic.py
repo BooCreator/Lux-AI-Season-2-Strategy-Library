@@ -1,5 +1,5 @@
 from strategy.early.default import EarlyStrategy
-from strategy.game.default import GameStrategy
+from strategy.game.cautious import GameStrategy
 
 # ===============================================================================================================
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
