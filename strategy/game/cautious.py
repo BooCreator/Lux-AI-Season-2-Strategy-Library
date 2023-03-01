@@ -5,6 +5,8 @@ from strategy.kits.eyes import Eyes
 from strategy.kits.robot import RobotData
 from strategy.kits.factory import FactoryData
 
+from strategy.game.factory.default import FactoryStrategy
+
 # ===============================================================================================================
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ===============================================================================================================
@@ -24,6 +26,7 @@ class GameStrategy:
         self.eyes = Eyes(env.map_size)
         self.game_state = None
         self.env = env
+        self.factoryStrategy = FactoryStrategy()
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Обновить состояние стратегии (фабрики, роботы) ------------------------------------------------------
     # ------- Инициализация происходит только при первом запуск -------------------------------------------------

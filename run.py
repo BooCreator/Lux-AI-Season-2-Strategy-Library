@@ -5,21 +5,21 @@ Lux.loadCompetition() # if not exists - load
 bots = [
     #{'file':'./bots/example/main.py', 'name':'example'},
     {'file':'./bots/second_bot/main.py', 'name':'second'},
-    {'file':'./bots/third_bot/main.py', 'name':'third'},
+    #{'file':'./bots/third_bot/main.py', 'name':'third'},
 ]
 
 #Lux.play(bots, seed=None)
 #Lux.tornament('bots/')
-zip_name = Lux.buildSubmission('third_bot') # zip_name == 'example_2023-02-09_15-38-21.tar.gz'
+#zip_name = Lux.buildSubmission('third_bot') # zip_name == 'example_2023-02-09_15-38-21.tar.gz'
 #Lux.sendSubmission(zip_name, 'third bot')
 
-#from test_env.agent import Agent
-#from strategy.basic import DefaultStrategy
-#from strategy.game.cautious import GameStrategy as CautiousStrategy
-#
-#Lux.render_log_count=10
-#Lux.env.reset()
-#env = Lux.env.state.env_cfg
-#agents = {player: Agent(player, env, game=CautiousStrategy) for player in Lux.env.agents}
-#
-#Lux.interact(agents, 1000, seed=41)
+from test_env.agent import Agent
+from strategy.basic import DefaultStrategy
+from strategy.game.cautious import GameStrategy as CautiousStrategy
+
+Lux.render_log_count=10
+Lux.env.reset()
+env = Lux.env.state.env_cfg
+agents = {player: Agent(player, env) for player in Lux.env.agents}
+
+Lux.interact(agents, 100, seed=41)
