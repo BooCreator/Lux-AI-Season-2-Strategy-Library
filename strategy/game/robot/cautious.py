@@ -6,7 +6,10 @@ from strategy.kits.robot import RobotData
 from strategy.kits.factory import FactoryData
 
 class RobotStrategy:
+    ''' Убегающая стратегия для роботов '''
+
     def getActions(self, step:int, env, game_state, **kwargs):
+        ''' Получить список действий для роботов '''
         f_data = kwargs.get('f_data')
         eyes = kwargs.get('eyes')
         return_robots = kwargs.get('return_robots')

@@ -1,5 +1,8 @@
 class FactoryStrategy:
+    ''' Класс для стратегии фабрик на стадии игры '''
+
     def getActions(self, step:int, env, game_state, **kwargs):
+        ''' Получить список действий для фабрик '''
         f_data = kwargs.get('f_data')
         if f_data is None:
             raise Exception('f_data is not found in args')
