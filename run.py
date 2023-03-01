@@ -15,11 +15,16 @@ bots = [
 
 from test_env.agent import Agent
 from strategy.basic import DefaultStrategy
+from strategy.game.default import GameStrategy
+
+from strategy.game.robot.cautious import RobotStrategy as CautiousRobots
 from strategy.game.cautious import GameStrategy as CautiousStrategy
+
 
 Lux.render_log_count=10
 Lux.env.reset()
 env = Lux.env.state.env_cfg
-agents = {player: Agent(player, env) for player in Lux.env.agents}
+#agents = {player: Agent(player, env, game=GameStrategy(env, robotStrategy=CautiousRobots)) for player in Lux.env.agents}
+agents = {player: Agent(player, env, game=CautiousStrategy) for player in Lux.env.agents}
 
 Lux.interact(agents, 100, seed=41)

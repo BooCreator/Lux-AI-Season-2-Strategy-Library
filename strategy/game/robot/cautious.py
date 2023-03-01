@@ -5,38 +5,30 @@ from strategy.kits.eyes import Eyes
 from strategy.kits.robot import RobotData
 from strategy.kits.factory import FactoryData
 
-from strategy.game.default import GameStrategy as DefaultStrategy
-
-# ===============================================================================================================
-# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-# ===============================================================================================================
-class GameStrategy(DefaultStrategy):
-    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def __init__(self, env) -> None:
-        super().__init__(env, None, None)
-    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    # ----- Получить массив действий для роботов ----------------------------------------------------------------
-    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    return_robots = []
-    clean_robots = []
-    def getRobotActions(self, step:int) -> dict:
+class RobotStrategy:
+    def getActions(self, step:int, env, game_state, **kwargs):
+        f_data = kwargs.get('f_data')
+        eyes = kwargs.get('eyes')
+        return_robots = kwargs.get('return_robots')
+        if f_data is None or eyes is None or return_robots is None:
+            raise Exception('f_data, eyes or return_robots not found in args')
         actions = {}
-        ice_map = self.game_state.board.ice
-        rubble_map = self.game_state.board.rubble
-        for __, item in self.f_data.items():
+        ice_map = game_state.board.ice
+        rubble_map = game_state.board.rubble
+        for __, item in f_data.items():
             for robot in item.robots.values():
                 unit = robot.robot
                 # по умолчанию берём макс энергии
                 take_energy = min(unit.unit_cfg.BATTERY_CAPACITY - unit.power, item.factory.power)
                 actions[unit.unit_id] = []
                 # --- определяем цену одной смены задачи ---
-                action_cost = unit.action_queue_cost(self.game_state)
+                action_cost = unit.action_queue_cost(game_state)
                 # если у робота пустая очередь
                 if len(unit.action_queue) == 0:
                     # --- если робот - копатель ---
                     if robot.robot_task == RobotData.TASK.MINER:
                         # --- находим ближайший ресурс ---
-                        ct = findClosestTile(unit.pos, ice_map, lock_map=self.eyes.neg(self.eyes.sum([self.eyes.getFree(1) - ice_map, 'units'])))
+                        ct = findClosestTile(unit.pos, ice_map, lock_map=eyes.neg(eyes.sum([eyes.getFree(1) - ice_map, 'units'])))
                         # --- если робот находится на блоке с фабрикой ---
                         if robot.on_position(item.factory.pos, size=3):
                             # --- если есть ресурсы, то выгружаем ресурсы ---
@@ -54,7 +46,7 @@ class GameStrategy(DefaultStrategy):
                                 robot.robot_task = RobotData.TASK.CLEANER
                             else:
                                 # --- строим маршрут к ресурсу ---
-                                m_actions, move_cost = getMoveActions(self.game_state, unit, to=ct, steps=25)
+                                m_actions, move_cost = getMoveActions(game_state, unit, to=ct, steps=25)
                                 if len(m_actions) <= 20:
                                     # --- определяем сколько будем копать ---
                                     __, dig_cost, __ = calcDigCount(unit, reserve_energy=(move_cost + action_cost)*2)
@@ -72,27 +64,27 @@ class GameStrategy(DefaultStrategy):
                                 else:
                                     robot.robot_task = RobotData.TASK.CLEANER
                             # --- если робот вернулся от куда-то - убираем из массива ---
-                            if unit.unit_id in self.return_robots: 
-                                self.return_robots.remove(unit.unit_id)
+                            if unit.unit_id in return_robots: 
+                                return_robots.remove(unit.unit_id)
                         # --- если робот находится на блоке с ресурсом ---
-                        if onResourcePoint(unit.pos, ice_map) and unit.unit_id not in self.return_robots:
+                        if onResourcePoint(unit.pos, ice_map) and unit.unit_id not in return_robots:
                             # --- выясняем куда может ли на нас шагнуть противник ---
-                            locked_field = self.eyes.diff(['e_energy', 'u_energy'])
+                            locked_field = eyes.diff(['e_energy', 'u_energy'])
                             # --- ищем ближайшего противника ---
-                            enemy_pos = findClosestTile(unit.pos, self.eyes.get('enemy'))
+                            enemy_pos = findClosestTile(unit.pos, eyes.get('enemy'))
                             # --- считаем за сколько он до нас дойдёт ---
-                            e_actions, __ = getMoveActions(self.game_state, unit, to=enemy_pos)
+                            e_actions, __ = getMoveActions(game_state, unit, to=enemy_pos)
                             # --- если нас не задавят, то копаем ---
                             if locked_field[unit.pos[0], unit.pos[1]] <= 0:
                                 # --- строим маршрут к фабрике ---
-                                m_actions, move_cost = getMoveActions(self.game_state, unit, to=item.factory.pos)
+                                m_actions, move_cost = getMoveActions(game_state, unit, to=item.factory.pos)
                                 # --- определяем сколько будем копать ---
                                 dig_count, __, __ = calcDigCount(unit, has_energy=unit.power, reserve_energy=move_cost+action_cost)
                                 # --- копаем столько, чтобы успеть докопать, если робот идёт к нам ---
                                 dig_count = min(dig_count, len(e_actions)-1)
                                 # --- если накопали сколько нужно или макс, то идём на базу ---
                                 if robot.min_task <= 0 or unit.cargo.ice == unit.unit_cfg.CARGO_SPACE:
-                                    self.return_robots.append(unit.unit_id)
+                                    return_robots.append(unit.unit_id)
                                 # --- если ещё не накопали и можем капнуть больше чем 0 ---
                                 elif dig_count > 0:
                                     # --- добавляем действие "копать" ---
@@ -100,22 +92,22 @@ class GameStrategy(DefaultStrategy):
                                     robot.min_task -= dig_count
                                 else:
                                     # --- иначе, идём на базу ---
-                                    self.return_robots.append(unit.unit_id)
+                                    return_robots.append(unit.unit_id)
                             # --- если могут задавить - отходим ---
                             else:
                                 # --- выясняем куда мы можем шагнуть ---
-                                locked_field = np.zeros(self.eyes.map_size, dtype=int)
-                                locked_field = np.where(self.eyes.sum(['factories', 'units', self.eyes.norm(self.eyes.diff(['e_energy', 'u_energy']))]) > 0, locked_field, 1)
+                                locked_field = np.zeros(eyes.map_size, dtype=int)
+                                locked_field = np.where(eyes.sum(['factories', 'units', eyes.norm(eyes.diff(['e_energy', 'u_energy']))]) > 0, locked_field, 1)
                                 points = []
                                 # строим маршрут побега
                                 run_pos = findClosestTile(unit.pos, locked_field)
-                                m_actions, move_cost, points = getMoveActions(self.game_state, unit, to=run_pos, locked_field=locked_field, has_points=True)
+                                m_actions, move_cost, points = getMoveActions(game_state, unit, to=run_pos, locked_field=locked_field, has_points=True)
                                 # --- делаем один шаг, если можем сделать шаг ---
                                 if len(points) > 0:
                                     if unit.power > move_cost + action_cost:
                                         actions[unit.unit_id].extend(m_actions[:1])
-                                        self.eyes.update('units', unit.pos, 0)
-                                        self.eyes.update('units', points[0], 1)
+                                        eyes.update('units', unit.pos, 0)
+                                        eyes.update('units', points[0], 1)
                                         robot.min_task += 1
                                     else:
                                         # --- иначе, копим энергию ---
@@ -124,26 +116,26 @@ class GameStrategy(DefaultStrategy):
                         # --- если робот где-то гуляет ---
                         else:
                             # --- выясняем куда мы можем шагнуть ---
-                            norm = self.eyes.norm(self.eyes.diff(['e_energy', 'u_energy']))
+                            norm = eyes.norm(eyes.diff(['e_energy', 'u_energy']))
                             norm = np.where(norm < 0, 0, norm)
-                            locked_field = np.where(self.eyes.sum(['factories', 'units', norm]) > 0, 0, 1)
-                            #self.eyes.log(['factories', 'units', 'e_energy', 'u_energy', locked_field],f'log/step/{self.player}')
+                            locked_field = np.where(eyes.sum(['factories', 'units', norm]) > 0, 0, 1)
+                            #eyes.log(['factories', 'units', 'e_energy', 'u_energy', locked_field],f'log/step/{player}')
                             points = []
                             # --- если робот - идёт на базу ---
-                            if unit.unit_id in self.return_robots:
-                                m_actions, move_cost, points = getMoveActions(self.game_state, unit, to=item.getNeareastPoint(unit.pos), locked_field=locked_field, has_points=True)
+                            if unit.unit_id in return_robots:
+                                m_actions, move_cost, points = getMoveActions(game_state, unit, to=item.getNeareastPoint(unit.pos), locked_field=locked_field, has_points=True)
                             # --- иначе - идём к ресурсу ---
                             else:
-                                m_actions, move_cost, points = getMoveActions(self.game_state, unit, to=ct, locked_field=locked_field, has_points=True)
+                                m_actions, move_cost, points = getMoveActions(game_state, unit, to=ct, locked_field=locked_field, has_points=True)
                                 # --- если идти больше чем 20 ходов, то идём на базу ---
                                 if len(m_actions) >= 20:
-                                    m_actions, move_cost, points = getMoveActions(self.game_state, unit, to=item.getNeareastPoint(unit.pos), locked_field=locked_field, has_points=True)
+                                    m_actions, move_cost, points = getMoveActions(game_state, unit, to=item.getNeareastPoint(unit.pos), locked_field=locked_field, has_points=True)
                             # --- делаем один шаг, если можем сделать шаг ---
                             if len(points) > 0:
                                 if unit.power > move_cost + action_cost:
                                     actions[unit.unit_id].extend(m_actions[:1])
-                                    self.eyes.update('units', unit.pos, 0)
-                                    self.eyes.update('units', points[0], 1)
+                                    eyes.update('units', unit.pos, 0)
+                                    eyes.update('units', points[0], 1)
                                     robot.min_task += 1
                                 else:
                                     # --- иначе, копим энергию ---
@@ -152,7 +144,7 @@ class GameStrategy(DefaultStrategy):
                     # --- если робот - чистильщик ---
                     elif robot.robot_task == RobotData.TASK.CLEANER:
                         # --- находим ближайший щебень ---
-                        ct = findClosestTile(item.factory.pos, rubble_map, lock_map=self.eyes.update(self.eyes.neg('units'), unit.pos, 1)*rubble_map)
+                        ct = findClosestTile(item.factory.pos, rubble_map, lock_map=eyes.update(eyes.neg('units'), unit.pos, 1)*rubble_map)
                         # --- если робот находится на блоке с фабрикой ---
                         if robot.on_position(item.factory.pos, size=3):
                             # --- если у фабрики нет роботов копателей, а высаживать лишайник ещё рано - идём копать ---
@@ -160,7 +152,7 @@ class GameStrategy(DefaultStrategy):
                                 robot.robot_task = RobotData.TASK.MINER
                             else:
                                 # --- строим маршрут к щебню ---
-                                m_actions, move_cost = getMoveActions(self.game_state, unit, to=ct)
+                                m_actions, move_cost = getMoveActions(game_state, unit, to=ct)
                                 # --- определяем сколько будем копать ---
                                 dig_count, dig_cost, __ = calcDigCount(unit, count=rubble_map[ct[0]][ct[1]], 
                                                                         reserve_energy=(move_cost*2)*action_cost, dig_type=DIG_TYPES.RUBBLE)
@@ -169,12 +161,12 @@ class GameStrategy(DefaultStrategy):
                                 # --- добавляем действие "взять энергию" ---
                                 if take_energy > action_cost:
                                     actions[unit.unit_id].append(unit.pickup(RES.energy, take_energy))
-                            if unit.unit_id in self.return_robots: 
-                                self.return_robots.remove(unit.unit_id)
+                            if unit.unit_id in return_robots: 
+                                return_robots.remove(unit.unit_id)
                         # --- если робот находится на блоке с щебнем ---
-                        if robot.on_position(ct, size=1) and unit.unit_id not in self.return_robots:
+                        if robot.on_position(ct, size=1) and unit.unit_id not in return_robots:
                             # --- определяем сколько энергии нужно для того, чтобы вернуться ---
-                            __, move_cost = getMoveActions(self.game_state, unit, to=item.getNeareastPoint(unit.pos))
+                            __, move_cost = getMoveActions(game_state, unit, to=item.getNeareastPoint(unit.pos))
                             # --- определяем сколько будем копать ---
                             dig_count, dig_cost, __ = calcDigCount(unit, count=rubble_map[ct[0]][ct[1]], 
                                                                     has_energy=unit.power, reserve_energy=move_cost+action_cost, dig_type=DIG_TYPES.RUBBLE)
@@ -186,27 +178,27 @@ class GameStrategy(DefaultStrategy):
                                 rubble_map[ct[0]][ct[1]] = 0
                             # --- если нет, то идём на базу ---
                             else:
-                                self.return_robots.append(unit.unit_id)
+                                return_robots.append(unit.unit_id)
                         # --- если робот где-то гуляет ---
                         else:
                             # --- выясняем куда мы можем шагнуть ---
-                            locked_field = np.zeros(self.eyes.map_size, dtype=int)
-                            norm = self.eyes.norm(self.eyes.diff(['e_energy', 'u_energy']))
+                            locked_field = np.zeros(eyes.map_size, dtype=int)
+                            norm = eyes.norm(eyes.diff(['e_energy', 'u_energy']))
                             norm = np.where(norm < 0, 0, norm)
-                            locked_field = np.where(self.eyes.sum(['factories', 'units', norm]) > 0, locked_field, 1)
+                            locked_field = np.where(eyes.sum(['factories', 'units', norm]) > 0, locked_field, 1)
                             points = []
                             # --- если робот - идёт на базу ---
-                            if unit.unit_id in self.return_robots:
-                                m_actions, move_cost, points = getMoveActions(self.game_state, unit, to=item.getNeareastPoint(unit.pos), locked_field=locked_field, has_points=True)
+                            if unit.unit_id in return_robots:
+                                m_actions, move_cost, points = getMoveActions(game_state, unit, to=item.getNeareastPoint(unit.pos), locked_field=locked_field, has_points=True)
                             # --- иначе - идём к щебню ---
                             else:
-                                m_actions, move_cost, points = getMoveActions(self.game_state, unit, to=ct, locked_field=locked_field, has_points=True)
+                                m_actions, move_cost, points = getMoveActions(game_state, unit, to=ct, locked_field=locked_field, has_points=True)
                             # --- делаем один шаг, если можем сделать шаг ---
                             if len(points) > 0:
                                 if unit.power >= move_cost + action_cost:
                                     actions[unit.unit_id].extend(m_actions[:1])
-                                    self.eyes.update('units', unit.pos, 0)
-                                    self.eyes.update('units', points[0], 1)
+                                    eyes.update('units', unit.pos, 0)
+                                    eyes.update('units', points[0], 1)
                                 else:
                                     # --- иначе, копим энергию ---
                                     how_energy = move_cost + action_cost
@@ -219,6 +211,3 @@ class GameStrategy(DefaultStrategy):
                 if (unit.unit_id in actions.keys() and len(actions[unit.unit_id]) == 0) or (unit.power < action_cost): 
                     if unit.unit_id in actions.keys(): del actions[unit.unit_id]
         return actions
-# ===============================================================================================================
-# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-# ===============================================================================================================
