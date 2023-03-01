@@ -1,3 +1,4 @@
+
 class FactoryStrategy:
     ''' Класс для стратегии фабрик на стадии игры '''
 
@@ -9,20 +10,16 @@ class FactoryStrategy:
         actions = {}
         for unit_id, item in f_data.items():
             fact_free_loc = item.getFreeLocation()
-            if step < 500 and fact_free_loc[1][1] == 1:
-                if item.factory.power >= env.ROBOTS["LIGHT"].POWER_COST and \
-                    item.factory.cargo.metal >= env.ROBOTS["LIGHT"].METAL_COST and item.getCount(type_is='LIGHT') < 3:
-                    actions[unit_id] = item.factory.build_light()
+            if fact_free_loc[1][1] == 1:
                 if item.factory.power >= env.ROBOTS["HEAVY"].BATTERY_CAPACITY and \
                     item.factory.cargo.metal >= env.ROBOTS["HEAVY"].METAL_COST and item.getCount(type_is='HEAVY') < 1:
                     actions[unit_id] = item.factory.build_heavy()
-            elif step > 500 and fact_free_loc[1][1] == 1:
-                if item.factory.power >= env.ROBOTS["HEAVY"].BATTERY_CAPACITY and \
-                    item.factory.cargo.metal >= env.ROBOTS["HEAVY"].METAL_COST and item.getCount(type_is='HEAVY') < 3:
-                    actions[unit_id] = item.factory.build_heavy()
-                if item.factory.power >= env.ROBOTS["LIGHT"].POWER_COST and \
-                    item.factory.cargo.metal >= env.ROBOTS["LIGHT"].METAL_COST and item.getCount(type_is='LIGHT') < 5:
+                    continue
+                elif item.factory.power >= env.ROBOTS["LIGHT"].POWER_COST and \
+                    item.factory.cargo.metal >= env.ROBOTS["LIGHT"].METAL_COST and item.getCount(type_is='LIGHT') < 3:
                     actions[unit_id] = item.factory.build_light()
-            elif item.factory.water_cost(game_state) <= item.factory.cargo.water / 5 - 200:
-                actions[unit_id] = item.factory.water()
+                    continue
+            if step > 500:
+                if item.factory.water_cost(game_state) <= item.factory.cargo.water-(1000-step):
+                    actions[unit_id] = item.factory.water()
         return actions

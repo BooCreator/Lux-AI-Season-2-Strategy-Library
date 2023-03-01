@@ -3,16 +3,25 @@ from datetime import datetime
 from luxai_s2.env import LuxAI_S2
 import numpy as np
 
+# ===============================================================================================================
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+# ===============================================================================================================
 class LuxAI:
     render_log_count = 5      # количество сохранённых псоледних кадров игры в логе
     title = 'lux-ai-season-2' # название соревнования
     env = LuxAI_S2()          # python окружение LuxAI
-
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Обновить состояние стратегии ------------------------------------------------------------------------
+    # ------- Можно изменять стратегии в процессе игры ----------------------------------------------------------
     def init(download=False, use_gpu=False):
         initCompetition(use_gpu=use_gpu)
         if download: LuxAI.loadCompetition()
-
-    def loadCompetition(rw=False, rm:bool=True):
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Загрузить данные соревнования -----------------------------------------------------------------------
+    # ------- rw - перезаписать, rm - удалить лишние файлы ------------------------------------------------------
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    def loadCompetition(rw:bool=False, rm:bool=True):
+        ''' Загрузить данные соревнования '''
         if not rw and os.path.exists('bots/example'): return
         file = loadCompetition(LuxAI.title)
         unzip(file, 'bots/example')
@@ -21,33 +30,46 @@ class LuxAI:
         if rm:
             remove('bots/example/._lux')
             clearFolder('bots/example', ext='.ipynb')
-
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Собрать архив засылки -------------------------------------------------------------------------------
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def buildSubmission(name:str)->str:
-        ''' Zip file to .tar.gz format'''
+        ''' Собрать архив засылки. Zip file to .tar.gz format '''
         datename = str(datetime.now()).split('.')[0].replace(':', '-').replace(' ', '_')
         zip(f'bots/{name}/', f'submissions/{name}_{datename}')
         return f'submissions/{name}_{datename}.tar.gz'
-
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Отправить засылку -----------------------------------------------------------------------------------
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def sendSubmission(filename:str, message:str=''):
+        ''' Отправить засылку '''
         filename = filename.replace("/", "\\")
-        #os.system(f'copy {filename} submissions\\submission.tar.gz')
         sendSubmission(LuxAI.title, filename, message if len(message) > 0 else filename)
-        #os.remove('submissions\\submission.tar.gz')
-
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Запустить игры между ботами -------------------------------------------------------------------------
+    # ------- bots - список ботов -------------------------------------------------------------------------------
+    # ------- seed - генерация карты, None - каждый раз новая ---------------------------------------------------
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def play(bots:list[dict], *, v:int=2, seed:int=None):
         ''' Запуск игры между ботами '''
-        replay = './replays/'
-        if not os.path.exists('replays'): os.mkdir('replays')
-        datename = str(datetime.now()).split('.')[0].replace(':', '-').replace(' ', '_')
+        full_path = './'
+        date = datetime.now()
+        datefolder = str(date.date()).replace(':', '-')
+        datename = str(date.time()).split('.')[0].replace(':', '-')
+        for folder in ['replays', datefolder]:
+            full_path += folder + '/'
+            if not os.path.exists(full_path): os.mkdir(full_path)
         if len(bots) == 1: 
-            os.system(f'luxai-s2 {bots[0]["file"]} {bots[0]["file"]} -v {v} -o "{replay}{bots[0]["name"]}_self_{datename}.html"'
+            os.system(f'luxai-s2 {bots[0]["file"]} {bots[0]["file"]} -v {v} -o "{full_path}{bots[0]["name"]}_self_{datename}.html"'
                         + (f' -s {seed}' if seed is not None else ''))
         elif len(bots) > 1:
             for i in range(0, len(bots)):
                 for j in range(i+1, len(bots)):
-                    os.system(f'luxai-s2 {bots[i]["file"]} {bots[j]["file"]} -v {v} -o "{replay}{bots[i]["name"]}_{bots[j]["name"]}_{datename}.html"'
+                    os.system(f'luxai-s2 {bots[i]["file"]} {bots[j]["file"]} -v {v} -o "{full_path}{bots[i]["name"]}_{bots[j]["name"]}_{datename}.html"'
                         + (f' -s {seed}' if seed is not None else ''))
-    
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Запуск турнира между всеми ботами папки bots --------------------------------------------------------
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def tornament(bots_path:str='bots/'):
         ''' Запуск турнира между всеми ботами папки bots '''
         full_path = '.'
@@ -56,7 +78,12 @@ class LuxAI:
             full_path += '/' + folder
             if not os.path.exists(full_path): os.mkdir(full_path)
         os.system(f'luxai-s2 {bots_path} -o "{full_path}/replay.html" --tournament -v 0 --tournament_cfg.concurrent=2')
-
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Запуск локальной игры между агентами ----------------------------------------------------------------
+    # ------- steps - количество шагов игры ---------------------------------------------------------------------
+    # ------- seed - генерация карты, None - каждый раз новая ---------------------------------------------------
+    # ------- log - сохранять ли в папку log каждый кадр игры ---------------------------------------------------
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def interact(agents:dict, steps:int=1000, *, seed:int=None, log:bool=True):
         ''' Запуск локальной игры между агентами '''
         # сбросить среду игры
@@ -109,3 +136,6 @@ class LuxAI:
             if not os.path.exists(full_path): os.mkdir(full_path)
         full_path += datename + f'_s_{steps}'
         return toVideo(imgs, full_path)
+# ===============================================================================================================
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+# ===============================================================================================================
