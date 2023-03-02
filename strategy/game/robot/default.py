@@ -57,7 +57,7 @@ class RobotStrategy:
                                     return_robots.remove(unit.unit_id)
                                 robot.min_task = 0
                             # --- Если ближайших ресурсов нет, то идём чистить ---
-                            else:
+                            elif robot.robot_type != RobotData.TYPE.HEAVY:
                                 robot.robot_task = RobotData.TASK.CLEANER
                         # --- если робот находится на блоке с ресурсом ---
                         if onResourcePoint(robot.robot.pos, ice_map) and unit.unit_id not in return_robots:
@@ -161,6 +161,8 @@ class RobotStrategy:
                                     how_energy = move_cost + action_cost
                                     actions[unit.unit_id].append(unit.recharge(x=how_energy))
                     # --- если у робота нет задачи, то назначаем её ---
+                    elif robot.robot_type == RobotData.TYPE.HEAVY:
+                        robot.robot_task = RobotData.TASK.MINER
                     else:
                         robot.robot_task = RobotData.TASK.MINER if step < 500 else RobotData.TASK.CLEANER
                 # если действий для робота нет - удаляем массив действий, чтобы не тратить энергию
