@@ -115,17 +115,19 @@ class GameStrategy:
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def look(self, game_state, player: str):
         ''' Обновить карту юнитов '''
-        self.eyes.clear(['factories', 'units', 'enemy', 'e_energy', 'u_energy'])
+        self.eyes.clear(['factories', 'units', 'enemy', 'e_energy', 'u_energy', 'u_move', 'e_move'])
         for pl in game_state.factories:
             if pl != player:
                 for factory in game_state.factories.get(pl).values():
                     self.eyes.update('factories', factory.pos-1, np.ones((3,3), dtype=int))
         for pl in game_state.units:
             for unit in game_state.units.get(pl).values():
+                unit_type = RobotData.TYPE.getType(unit.unit_type)+1
                 x, y = getRad(unit.pos[0], unit.pos[1])
                 for x, y in zip(x, y):
                     self.eyes.update('u_energy' if pl == player else 'e_energy', [x, y], unit.power)
-                self.eyes.update('units' if pl == player else 'enemy', unit.pos, 1)
+                self.eyes.update('units' if pl == player else 'enemy', unit.pos, unit_type)
+                self.eyes.update('u_move' if pl == player else 'e_move', getNextMovePos(unit), unit_type)
         
         # лишайник
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
