@@ -19,7 +19,7 @@ class FactoryStrategy:
                     item.factory.cargo.metal >= env.ROBOTS["LIGHT"].METAL_COST and item.getCount(type_is='LIGHT') < 3:
                     actions[unit_id] = item.factory.build_light()
                     continue
-            if step > 500:
+            if step > 700:
                 if item.factory.water_cost(game_state) <= item.factory.cargo.water-(1000-step):
                     actions[unit_id] = item.factory.water()
         return actions
