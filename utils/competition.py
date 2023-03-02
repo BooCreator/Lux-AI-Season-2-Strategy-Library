@@ -109,6 +109,7 @@ class LuxAI:
             frame = [LuxAI.env.render("rgb_array", width=640, height=640)]
             imgs += frame
             if log: toImage(frame[0], f'{log_path}frame', frames=LuxAI.render_log_count)
+            print('\r', 'step:', step, 'of', steps, end='   ')
         
         # обработка основной фазы игры
         done = False
@@ -125,6 +126,7 @@ class LuxAI:
             imgs += frame
             if log: toImage(frame[0], f'{log_path}frame', frames=LuxAI.render_log_count)
             done = dones["player_0"] and dones["player_1"]
+            print('\r', 'step:', step, 'of', steps, end='   ')
         
         # сохраняем результаты игры
         full_path = ''
