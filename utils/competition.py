@@ -136,7 +136,7 @@ class LuxAI:
         for folder in ['log', 'video', datefolder]:
             full_path += folder + '/'
             if not os.path.exists(full_path): os.mkdir(full_path)
-        full_path += datename + f'_s_{steps}_e_{step}'
+        full_path += datename + f'_s_{seed}_e_{step}_of_{steps}'
         return toVideo(imgs, full_path)
 # ===============================================================================================================
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
