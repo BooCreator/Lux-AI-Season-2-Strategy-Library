@@ -44,8 +44,9 @@ class RobotStrategy:
                             if unit.cargo.water > 0:
                                 actions[unit.unit_id].append(unit.transfer(0, RES.water, unit.cargo.water))
                             # --- если у фабрики нет 2 роботов чистильщиков, а уже пора высаживать лишайник - идём чистить ---
-                            if item.getCount(task_is=RobotData.TASK.CLEANER) == 0 or \
-                                step > 700 and item.getCount(task_is=RobotData.TASK.CLEANER) < 2:
+                            if robot.robot_type != RobotData.TYPE.HEAVY and \
+                                (item.getCount(task_is=RobotData.TASK.CLEANER) == 0 or \
+                                step > 700 and item.getCount(task_is=RobotData.TASK.CLEANER) < 2):
                                 robot.robot_task = RobotData.TASK.CLEANER
                             else:
                                 # --- строим маршрут к ресурсу ---
@@ -59,12 +60,12 @@ class RobotStrategy:
                                     if need_energy <= take_energy:
                                         actions[unit.unit_id].append(unit.pickup(RES.energy, take_energy))
                                     # --- если энергии нам не хватит - идём чистить ---
-                                    else:
+                                    elif robot.robot_type != RobotData.TYPE.HEAVY:
                                         robot.robot_task = RobotData.TASK.CLEANER
                                     # --- убираем ---
                                     robot.min_task = 0
                                 # --- Если ближайших ресурсов нет, то идём чистить ---
-                                else:
+                                elif robot.robot_type != RobotData.TYPE.HEAVY:
                                     robot.robot_task = RobotData.TASK.CLEANER
                             # --- если робот вернулся от куда-то - убираем из массива ---
                             if unit.unit_id in return_robots: 
@@ -207,6 +208,8 @@ class RobotStrategy:
                                     how_energy = move_cost + action_cost
                                     actions[unit.unit_id].append(unit.recharge(x=how_energy))
                     # --- если у робота нет задачи, то назначаем её ---
+                    elif robot.robot_type == RobotData.TYPE.HEAVY:
+                        robot.robot_task = RobotData.TASK.MINER
                     else:
                         robot.robot_task = RobotData.TASK.MINER if step < 500 else RobotData.TASK.CLEANER
                 # если действий для робота нет - удаляем массив действий, чтобы не тратить энергию
