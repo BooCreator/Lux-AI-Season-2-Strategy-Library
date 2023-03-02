@@ -4,6 +4,8 @@ from lux.config import EnvConfig
 import numpy as np
 
 from strategy.basic import DefaultStrategy as Strategy
+from strategy.game.default import GameStrategy
+from strategy.game.robot.cautious import RobotStrategy
 
 # ===============================================================================================================
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -17,7 +19,7 @@ class Agent():
         self.opp_player = "player_1" if self.player == "player_0" else "player_0"
         np.random.seed(0)
         self.env_cfg: EnvConfig = env_cfg
-        self.strategy = Strategy(env_cfg, early, game) if strategy is None else (strategy(env_cfg, early, game) if type(strategy) is type else strategy)
+        self.strategy = Strategy(env_cfg, early, game=GameStrategy(env_cfg, robotStrategy=RobotStrategy)) if strategy is None else (strategy(env_cfg, early, game) if type(strategy) is type else strategy)
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Фаза расстановки фабрик -----------------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
