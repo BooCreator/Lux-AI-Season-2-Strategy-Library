@@ -123,12 +123,18 @@ class GameStrategy:
                     self.eyes.update('factories', factory.pos-1, np.ones((3,3), dtype=int))
         for pl in game_state.units:
             for unit in game_state.units.get(pl).values():
-                unit_type = RobotData.TYPE.getType(unit.unit_type)+1
-                x, y = getRad(unit.pos[0], unit.pos[1])
-                for x, y in zip(x, y):
-                    self.eyes.update('u_energy' if pl == player else 'e_energy', [x, y], unit.power)
-                self.eyes.update('units' if pl == player else 'enemy', unit.pos, unit_type)
-                self.eyes.update('u_move' if pl == player else 'e_move', getNextMovePos(unit), unit_type)
+                px, py = getRad(unit.pos[0], unit.pos[1])
+                unit_type = RobotData.TYPE.getType(unit.unit_type)
+                if pl == player:
+                    self.eyes.update('units', getNextMovePos(unit), unit_type)
+                    for x, y in zip(px, py):
+                        self.eyes.update('u_move', [x, y], unit_type)
+                        self.eyes.update('u_energy', [x, y], unit.power)
+                else:
+                    self.eyes.update('enemy', getNextMovePos(unit), unit_type)
+                    for x, y in zip(px, py):
+                        self.eyes.update('e_move', [x, y], unit_type)
+                        self.eyes.update('e_energy', [x, y], unit.power)
         
         # лишайник
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
