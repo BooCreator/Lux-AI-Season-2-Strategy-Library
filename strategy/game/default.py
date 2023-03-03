@@ -60,6 +60,7 @@ class GameStrategy:
         for unit_id, factory in factories.items():
             if unit_id in self.f_data.keys():
                 self.f_data[unit_id].alive = True
+                self.f_data[unit_id].water.append(factory.cargo.water - self.f_data[unit_id].factory.cargo.water)
                 self.f_data[unit_id].factory = factory
             else:
                 self.f_data[unit_id] = FactoryData(factory)
