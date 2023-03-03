@@ -7,12 +7,12 @@ class RobotData:
     ''' Класс данных робота '''
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     class TYPE:
-        ''' Тип робота LIGHT - 0, HEAVY - 1 '''
-        LIGHT = 0
-        HEAVY = 1
+        ''' Тип робота LIGHT - 1, HEAVY - 2 '''
+        LIGHT = 1
+        HEAVY = 2
 
         def getType(type_name:str) -> int:
-            return 0 if type_name == 'LIGHT' else 1
+            return 1 if type_name == 'LIGHT' else 2
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     class TASK:
         ''' Тип работы робота: MINER - 0, CLEANER - 1'''
