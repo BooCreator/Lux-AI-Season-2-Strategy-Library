@@ -73,21 +73,22 @@ def toImage(imgs:np.ndarray, filename:str='_blank', *, render:bool=False, return
     if render:
         visualizer.update_scene(frame)
         frame = visualizer._create_image_array(visualizer.surf, (640, 480))
-    while(True):
-        try:
-            if os.path.exists(f'{filename}_{0}.png'): os.remove(f'{filename}_{0}.png')
-            break
-        except: pass
-    for i in range(1, frames):
+    if frames > 0:
         while(True):
             try:
-                if os.path.exists(f'{filename}_{i}.png'): os.rename(f'{filename}_{i}.png', f'{filename}_{i-1}.png')
+                if os.path.exists(f'{filename}_{0}.png'): os.remove(f'{filename}_{0}.png')
                 break
             except: pass
-    while(True):
-        try:
-            if os.path.exists(f'{filename}_{frames-1}.png'): os.remove(f'{filename}_{frames-1}.png')
-            break
-        except: pass
-    img = cv2.cvtColor(frame, palette)
-    cv2.imwrite(f'{filename}_{frames-1}.png', img)
+        for i in range(1, frames):
+            while(True):
+                try:
+                    if os.path.exists(f'{filename}_{i}.png'): os.rename(f'{filename}_{i}.png', f'{filename}_{i-1}.png')
+                    break
+                except: pass
+        while(True):
+            try:
+                if os.path.exists(f'{filename}_{frames-1}.png'): os.remove(f'{filename}_{frames-1}.png')
+                break
+            except: pass
+        img = cv2.cvtColor(frame, palette)
+        cv2.imwrite(f'{filename}_{frames-1}.png', img)
