@@ -57,10 +57,11 @@ class Eyes:
     # ------- index - по каким координатам меняем ---------------------------------------------------------------
     # ------- Примеры аргументов: index=[0,0], index=[[0,1], [1,1]], index=np.array([0,1]) ----------------------
     # ------- value - значение для вставки, может быть матрицей -------------------------------------------------
-    # ------- check_keys - проверка названий. Если пытаемся обьновить не существующую матрицу, то будет ошика ---
+    # ------- collision - функция решения коллизий, по умолчанию заменяет новым значением -----------------------
+    # ------- check_keys - проверка названий. Если пытаемся обьновить не существующую матрицу, то будет ошибка --
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def update(self, name:str, index:np.ndarray, value:int=1, 
-                *, check_keys:bool=True):
+                *, check_keys:bool=True, collision=lambda a,b: b):
         ''' Установить значение {value} в таблице {name} в точках {index}'''
         if type(name) is list:
             result = []
@@ -68,7 +69,7 @@ class Eyes:
                 result.append(self.update(val, index, value, check_keys=check_keys))
                 return result
         elif type(name) is np.ndarray:
-            name[index[0], index[1]] = value
+            name[index[0], index[1]] = collision(name[index[0], index[1]], value)
             return name
         elif type(name) is str:
             if name not in self.data.keys(): 
@@ -81,21 +82,21 @@ class Eyes:
                 else:
                     if type(value) is int:
                         if index[0] < self.data[name].shape[0] and index[1] < self.data[name].shape[1]:
-                            self.data[name][index[0], index[1]] = value
+                            self.data[name][index[0], index[1]] = collision(self.data[name][index[0], index[1]],value)
                     elif type(value) is np.ndarray:
                         for i in range(value.shape[0]):
                             for j in range(value.shape[1]):
                                 if index[0]+i < self.data[name].shape[0] and index[1]+j < self.data[name].shape[1]:
-                                    self.data[name][index[0]+i, index[1]+j] = value[i, j]
+                                    self.data[name][index[0]+i, index[1]+j] = collision(self.data[name][index[0]+i, index[1]+j], value[i, j])
             elif type(index) is np.ndarray and len(index) == 2:
                 if type(value) is int:
                     if index[0] < self.data[name].shape[0] and index[1] < self.data[name].shape[1]:
-                        self.data[name][index[0], index[1]] = value
+                        self.data[name][index[0], index[1]] = collision(self.data[name][index[0], index[1]], value)
                 elif type(value) is np.ndarray:
                     for i in range(value.shape[0]):
                         for j in range(value.shape[1]):
                             if index[0]+i < self.data[name].shape[0] and index[1]+j < self.data[name].shape[1]:
-                                self.data[name][index[0]+i, index[1]+j] = value[i, j]
+                                self.data[name][index[0]+i, index[1]+j] = collision(self.data[name][index[0]+i, index[1]+j], value[i, j])
             return self.data[name]
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Сумировать матрицы ----------------------------------------------------------------------------------

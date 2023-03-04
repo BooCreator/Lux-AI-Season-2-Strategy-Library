@@ -116,26 +116,22 @@ class GameStrategy:
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def look(self, game_state, player: str):
         ''' Обновить карту юнитов '''
-        self.eyes.clear(['factories', 'units', 'enemy', 'e_energy', 'u_energy', 'u_move', 'e_move'])
+        self.eyes.clear(['factories', 'units', 'enemy', 'e_energy', 'e_move'])
         for pl in game_state.factories:
             if pl != player:
                 for factory in game_state.factories.get(pl).values():
                     self.eyes.update('factories', factory.pos-1, np.ones((3,3), dtype=int))
         for pl in game_state.units:
             for unit in game_state.units.get(pl).values():
-                px, py = getRad(unit.pos[0], unit.pos[1])
                 unit_type = RobotData.TYPE.getType(unit.unit_type)
                 if pl == player:
                     self.eyes.update('units', getNextMovePos(unit), unit_type)
-                    for x, y in zip(px, py):
-                        self.eyes.update('u_move', [x, y], unit_type)
-                        self.eyes.update('u_energy', [x, y], unit.power)
                 else:
                     self.eyes.update('enemy', getNextMovePos(unit), unit_type)
+                    px, py = getRad(unit.pos[0], unit.pos[1])
                     for x, y in zip(px, py):
-                        self.eyes.update('e_move', [x, y], unit_type)
-                        self.eyes.update('e_energy', [x, y], unit.power)
-        
+                        self.eyes.update('e_move', [x, y], unit_type, collision=lambda a,b: max(a,b))
+                        self.eyes.update('e_energy', [x, y], unit.power, collision=lambda a,b: max(a,b))
         # лишайник
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Получить массив действий для фабрик -----------------------------------------------------------------
@@ -146,11 +142,9 @@ class GameStrategy:
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Получить массив действий для роботов ----------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    return_robots = []
-    clean_robots = []
     def getRobotActions(self, step:int) -> dict:
         actions = self.robotStrategy.getActions(step, self.env, self.game_state, f_data=self.f_data, 
-                                                eyes=self.eyes, return_robots=self.return_robots)
+                                                eyes=self.eyes)
         return actions
 # ===============================================================================================================
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
