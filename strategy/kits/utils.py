@@ -29,33 +29,51 @@ def toPandas(mx:np.ndarray, name:str) -> bool:
 # -------         X [0, 0] X --------------------------------------------------------------------------------
 # -------         X  X  X  X --------------------------------------------------------------------------------
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-def getRect(X:int, Y:int, rad:int=1, borders:bool=True):
+def getRect(X:int, Y:int=None, rad:int=1, borders:bool=True, as_matrix:bool=False):
     ''' Получить квадрат координат вокруг точки '''
-    x, y = [], []
-    for r in range(-rad, rad + 1):
-        for k in range(-rad, rad + 1):
-            ny, nx = X-k, Y-r
-            if not borders or nx > -1 and ny > -1:
-                x.append(X-k)
-                y.append(Y-r)
-    return x, y
+    if Y is None and (type(X) is np.ndarray or type(X) is list):
+        X, Y = X[0], X[1]
+    if as_matrix:
+        res = np.zeros((rad*2+1, rad*2+1),dtype=int)
+        x,y = getRect(1, 1, rad=rad, borders=borders, as_matrix=False)
+        for x,y in zip(x, y):
+            res[x, y] = 1
+        return res
+    else:
+        x, y = [], []
+        for r in range(-rad, rad + 1):
+            for k in range(-rad, rad + 1):
+                ny, nx = X-k, Y-r
+                if not borders or nx > -1 and ny > -1:
+                    x.append(X-k)
+                    y.append(Y-r)
+        return x, y
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ----- Получить круг координат вокруг точки ----------------------------------------------------------------
 # ------- Пример:    X  X    --------------------------------------------------------------------------------
 # -------         X [0, 0] X --------------------------------------------------------------------------------
 # -------            X  X    --------------------------------------------------------------------------------
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-def getRad(X:int, Y:int, rad:int=1, borders:bool=True):
+def getRad(X:int, Y:int=None, rad:int=1, borders:bool=True, as_matrix:bool=False):
     ''' Получить круг координат вокруг точки '''
-    x, y = [], []
-    for r in range(-rad, rad + 1):
-        for k in range(-rad, rad + 1):
-            if abs(r)+abs(k) < (rad*rad)/2 + 1:
-                ny, nx = X-k, Y-r
-                if not borders or nx > -1 and ny > -1:
-                    x.append(X-k)
-                    y.append(Y-r)
-    return x, y
+    if Y is None and (type(X) is np.ndarray or type(X) is list):
+        X, Y = X[0], X[1]
+    if as_matrix:
+        res = np.zeros((rad*2+1, rad*2+1),dtype=int)
+        x,y = getRad(1, 1, rad=rad, borders=borders, as_matrix=False)
+        for x,y in zip(x, y):
+            res[x, y] = 1
+        return res
+    else:
+        x, y = [], []
+        for r in range(-rad, rad + 1):
+            for k in range(-rad, rad + 1):
+                if abs(r)+abs(k) < (rad*rad)/2 + 1:
+                    ny, nx = X-k, Y-r
+                    if not borders or nx > -1 and ny > -1:
+                        x.append(X-k)
+                        y.append(Y-r)
+        return x, y
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ----- Распространение ячейки ------------------------------------------------------------------------------
 # ------- Пример:    3  3    --- ищем find = 1 --------------------------------------------------------------
@@ -318,7 +336,7 @@ def getResFromState(game_state):
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 def getMoveActions(game_state, unit, *, path:list=None, dec:np.ndarray=None, to:np.ndarray=None, 
                     locked_field:np.ndarray=None, repeat:int=0, n:int=1, has_points: bool=False,
-                    steps:int=20):
+                    steps:int=25):
     ''' Получить список действий движения со стоимостью по энергии 
         * locked_field: 0 - lock, 1 - alloy '''
     actions = []
