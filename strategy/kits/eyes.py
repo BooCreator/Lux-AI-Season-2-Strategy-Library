@@ -204,17 +204,19 @@ class Eyes:
     # ----- Сохранить матрицу как изображение -------------------------------------------------------------------
     # ------- value - значение для заполнения -------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def log(self, name: str, path:str=''):
+    def log(self, name: str, path:str='log/step/', frames:int=1):
         if type(name) is str:
             toImage(self.get(name), f'{path}_{name}', render=True)
         elif type(name) is np.ndarray:
             toImage(name, f'{path}_{name}', render=True)
         elif type(name) is list:
+            tid = 0
             for table in name:
                 if type(table) is str:
-                    toImage(self.get(table), f'{path}_{table}', render=True)
+                    toImage(self.get(table), f'{path}_{table}', render=True, frames=frames)
                 elif type(table) is np.ndarray:
-                    toImage(table, f'{path}_table', render=True)
+                    toImage(table, f'{path}_table_{tid}', render=True, frames=frames)
+                    tid += 1
 # ===============================================================================================================
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ===============================================================================================================
