@@ -220,7 +220,7 @@ class Path:
             min_path, min_pos, min_len = 0, 0, 10_000
             for i, path in enumerate(paths):
                 for j, xy in enumerate(path):
-                    vec = np.array([xy[0] - to[0], xy[1] - to[1]])
+                    vec = np.array([xy[0] - to[0], xy[1] - to[1]], dtype=np.int32)
                     vec_len = sqrt(vec[0]*vec[0] + vec[1]*vec[1])
                     if vec_len < min_len:
                         min_path, min_pos, min_len = i, j, vec_len

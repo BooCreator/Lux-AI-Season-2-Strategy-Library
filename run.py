@@ -38,4 +38,4 @@ agents = {player: Agent(player, env_cfg, game=GameStrategy(env_cfg, robotStrateg
 #from bots.seven_bot.agent import Agent
 #agents = {player: Agent(player, env) for player in Lux.env.agents}
 
-Lux.interact(agents, None, 1000, seed=41)
+Lux.interact(agents, None, 1000, seed=41, log=False)

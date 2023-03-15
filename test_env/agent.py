@@ -1,5 +1,6 @@
 from lux.utils import my_turn_to_place_factory
-from lux.kit import obs_to_game_state
+from strategy.kits.lux import obs_to_game_state
+#from lux.kit import obs_to_game_state
 from lux.config import EnvConfig
 import numpy as np
 
