@@ -72,7 +72,7 @@ def toImage(imgs:np.ndarray, filename:str='_blank', *, render:bool=False, return
     frame = imgs.copy()
     if render:
         visualizer.update_scene(frame)
-        frame = visualizer._create_image_array(visualizer.surf, (640, 480))
+        frame = visualizer._create_image_array(visualizer.surf, (480, 480))
     if frames > 0:
         while(True):
             try:
