@@ -110,16 +110,7 @@ class LuxAI:
     # ------- steps - количество шагов игры ---------------------------------------------------------------------
     # ------- seed - генерация карты, None - каждый раз новая ---------------------------------------------------
     # ------- log - сохранять ли в папку log каждый кадр игры ---------------------------------------------------
-    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def bidFunc(env, obs, agents, step, log:bool=False):
-        actions = {}
-        for player in env.agents:
-            o = obs[player]
-            a = agents[player].early_setup(step, o)
-            actions[player] = a
-        return actions
-    
-    
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =   
     def interact(agents:dict, env=None, steps:int=1000, *, seed:int=None, log:list=True):
         ''' Запуск локальной игры между агентами '''
         step, imgs, mean_s, mean_o = 0, [], [], []
