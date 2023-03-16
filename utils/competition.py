@@ -3,6 +3,33 @@ from datetime import datetime
 from luxai_s2.env import LuxAI_S2
 import numpy as np
 
+
+class Log:
+    get_video:bool = True
+    get_frames:bool = True
+    mean_step_time:bool = True
+    mean_obs_time:bool = True
+    def __init__(self, video=True, frames=True, step_time=True, obs_time=True) -> None:
+        self.get_video=video
+        self.get_frames=frames
+        self.mean_step_time=step_time
+        self.mean_obs_time=obs_time
+    
+    def getLog(self)->list:
+        return [self.get_video, self.get_frames, self.mean_step_time, self.mean_obs_time]
+
+
+def timed(func=lambda x: 0):
+    time = datetime.now()
+    res = func()
+    return datetime.now()-time, res
+
+def createFolder(arr:list):
+    res_path = ''
+    for folder in arr:
+        res_path += folder + '/'
+        if not os.path.exists(res_path): os.mkdir(res_path)
+    return res_path
 # ===============================================================================================================
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ===============================================================================================================
@@ -84,61 +111,90 @@ class LuxAI:
     # ------- seed - генерация карты, None - каждый раз новая ---------------------------------------------------
     # ------- log - сохранять ли в папку log каждый кадр игры ---------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def interact(agents:dict, env=None, steps:int=1000, *, seed:int=None, log:bool=True):
+    def bidFunc(env, obs, agents, step, log:bool=False):
+        actions = {}
+        for player in env.agents:
+            o = obs[player]
+            a = agents[player].early_setup(step, o)
+            actions[player] = a
+        return actions
+    
+    
+    def interact(agents:dict, env=None, steps:int=1000, *, seed:int=None, log:list=True):
         ''' Запуск локальной игры между агентами '''
+        step, imgs, mean_s, mean_o = 0, [], [], []
+        log_path = createFolder(['log', 'render'])
+        
         if env is None: env = LuxAI.env
         obs = env.reset(seed=seed)
         np.random.seed(0)
-        log_path, imgs, step, mean = '', [], 0, []
-        for folder in ['log', 'render']:
-            log_path += folder + '/'
-            if not os.path.exists(log_path): os.mkdir(log_path)
+        
         gtime = datetime.now()
         while env.state.real_env_steps < 0:
             if step >= steps: break
             actions = {}
             for player in env.agents:
                 o = obs[player]
-                a = agents[player].early_setup(step, o)
+                if log==True or log[2]==True:
+                    time_s, a = timed(lambda: agents[player].early_setup(step, o))
+                    mean_s.append(time_s.microseconds)
+                else:
+                    a = agents[player].early_setup(step, o)
                 actions[player] = a
-            time = datetime.now()
-            obs, rewards, dones, infos = env.step(actions)
-            time = datetime.now() - time
-            if log:
+            if log==True or log[3]==True:
+                time_o, (obs, rewards, dones, infos) = timed(lambda: env.step(actions))
+                mean_o.append(time_o.microseconds)
+            else:
+                obs, rewards, dones, infos = env.step(actions)
+            if log==True or log[1]==True:
                 frame = env.render("rgb_array", width=640, height=640)
                 imgs += [frame]
                 toImage(frame, f'{log_path}frame', frames=LuxAI.render_log_count)
             step += 1
-            print('\r', 'step:', step, 'of', steps, time, end='   ')
+            print_str = f'\r step: {step} of {steps} '
+            if log==True or log[2]:
+                print_str += f'time_s: {time_s} mean_s: {round(sum(mean_s)/len(mean_s)/1_000_000, 4)} s '
+            if log==True or log[3]:
+                print_str += f'time_o: {time_o} mean_o: {round(sum(mean_o)/len(mean_o)/1_000_000, 4)} s '
+            print(print_str, end='   ')
+        
         # обработка основной фазы игры
         while True:
             if step >= steps: break
             actions = {}
             for player in LuxAI.env.agents:
                 o = obs[player]
-                a = agents[player].act(step, o)
+                if log==True or log[2]==True:
+                    time_s, a = timed(lambda: agents[player].act(step, o))
+                    mean_s.append(time_s.microseconds)
+                else:
+                    a = agents[player].early_setup(step, o)
                 actions[player] = a
-            time = datetime.now()
-            obs, rewards, dones, infos = LuxAI.env.step(actions)
-            time = datetime.now() - time
-            mean.append(time.microseconds)
+            if log==True or log[3]==True:
+                time_o, (obs, rewards, dones, infos) = timed(lambda: env.step(actions))
+                mean_o.append(time_o.microseconds)
+            else:
+                obs, rewards, dones, infos = env.step(actions)
             if log:
                 frame = LuxAI.env.render("rgb_array", width=640, height=640)
                 imgs += [frame]
                 toImage(frame, f'{log_path}frame', frames=LuxAI.render_log_count)
             step += 1
-            print('\r', 'step:', step, 'of', steps, 'time:', time, 'mean:', round(sum(mean)/len(mean)/1_000_000, 4), 's', end='   ')
+            print_str = f'\r step: {step} of {steps} '
+            if log==True or log[2]:
+                print_str += f'time_s: {time_s} mean_s: {round(sum(mean_s)/len(mean_s)/1_000_000, 4)} s '
+            if log==True or log[3]:
+                print_str += f'time_o: {time_o} mean_o: {round(sum(mean_o)/len(mean_o)/1_000_000, 4)} s '
+            print(print_str, end='   ')
             if dones["player_0"] and dones["player_1"]: break
-        print('\r\n all time:', datetime.now()-gtime)
+
+        print('\r\n session time:', datetime.now()-gtime)
         
-        if log:
-            full_path = ''
+        if log==True or log[0]==True:
             date = datetime.now()
             datefolder = str(date.date()).replace(':', '-')
             datename = str(date.time()).split('.')[0].replace(':', '-')
-            for folder in ['log', 'video', datefolder]:
-                full_path += folder + '/'
-                if not os.path.exists(full_path): os.mkdir(full_path)
+            full_path = createFolder(['log', 'video', datefolder])
             full_path += datename + f'_s_{seed}_e_{step}_of_{steps}'
             return toVideo(imgs, full_path)
 # ===============================================================================================================
