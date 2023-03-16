@@ -38,17 +38,20 @@ class Visualizer:
         pygame.display.init()
         self.screen = pygame.display.set_mode(self.WINDOW_SIZE)
 
-    def rubble_color(self, rubble):
-        max_r = np.max(rubble)
+    def rubble_color(self, rubble, max_r):
         opacity = (0.2 + min(rubble / max_r, 1) * 0.8) if max_r > 0 else 0
-        return [239, 120, 79, opacity * 255]
+        if opacity >= 0:
+            return [239, 120, 79, opacity * 255]
+        else:
+            return [79, 120, 239, -opacity * 255]
 
-    def update_scene(self, state: State):
+    def update_scene(self, state):
         self.surf.fill([200, 200, 200, 255])
+        max_val = np.max(np.abs(state))
         for x in range(self.width):
             for y in range(self.height):
                 rubble_amt = state[x][y]
-                rubble_color = self.rubble_color(rubble_amt)
+                rubble_color = self.rubble_color(rubble_amt, max_val)
                 gfxdraw.box(
                     self.surf,
                     (
