@@ -52,19 +52,12 @@ class EarlyStrategy:
     def calcWeightedMatrix(self):
         # получаем массивы ресурсов
         ice, ore, rubble, valid = getResFromState(self.game_state)
-        #toImage(ice, 'log/1_ice_s', render=True, frames=1)
-        #toImage(ore, 'log/3_ore_s', render=True, frames=1)
-        #toImage(rubble, 'log/5_rubble_s', render=True, frames=1)
         # получаем позицию для установки фабрики
         resource = spreadCell(ice, self.spreadResource, max=self.spreadResource*2)
         r_ore = spreadCell(ore, self.spreadResource, max=self.spreadResource*2)
         rubble = normalize(rubble, np.max(resource)/self.spreadRubble)
         rubble = spreadCell(rubble, self.spreadRubble, find=0, val=-1)
-        #toImage(resource, 'log/2_spread_ice_s', render=True, frames=1)
-        #toImage(r_ore, 'log/4_spread_ore_s', render=True, frames=1)
-        #toImage(rubble, 'log/7_spread_rubble_s', render=True, frames=1)
         res = resource - r_ore - rubble
-        #toImage(res, 'log/res_1_s', render=True, frames=1)
         self.weighted = res
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Получить позицию расположения фабрики ---------------------------------------------------------------
@@ -77,15 +70,13 @@ class EarlyStrategy:
         n_factories = self.game_state.teams[self.player].factories_to_place
         if n_factories > 0:
             # получаем массивы ресурсов
-            ice, ore, rubble, valid = getResFromState(self.game_state)
+            valid = self.game_state.board.valid_spawns_mask.astype(int)
             # определяем сколько ресурсов давать фабрике
             metal = ceil(self.game_state.teams[self.player].metal / n_factories)
             water = ceil(self.game_state.teams[self.player].water / n_factories)
             # получаем позицию для установки фабрики
             res = self.weighted * valid + valid
-            #toImage(res, 'log/res_2_s', render=True, frames=1)
             res = conv(res, self.factory_size)
-            #toImage(res, 'log/res_3_s', render=True, frames=1)
             potential_spawns = np.array(list(zip(*np.where(res==np.max(res)))))
             spawn_loc = potential_spawns[np.random.randint(0, len(potential_spawns))]
             return dict(spawn=spawn_loc, metal=metal, water=water)
