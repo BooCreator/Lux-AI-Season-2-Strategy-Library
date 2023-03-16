@@ -1,4 +1,4 @@
-from utils.competition import LuxAI as Lux
+from utils.competition import Log, LuxAI as Lux
 
 #Lux.loadCompetition(rw=True) # if not exists - load
 
@@ -17,6 +17,7 @@ bots = [
 
 from test_env.agent import Agent
 from strategy.basic import DefaultStrategy
+from strategy.early.default import EarlyStrategy
 from strategy.game.default import GameStrategy
 
 from strategy.game.robot.cautious import RobotStrategy as CautiousRobots
@@ -24,11 +25,18 @@ from strategy.game.robot.curious import RobotStrategy as CuriousRobots
 from strategy.game.factory.mean_water import FactoryStrategy as MeanWaterStrategy
 from strategy.game.cautious import GameStrategy as CautiousStrategy
 
+ddf = {
+    'basic': DefaultStrategy,
+    'early': EarlyStrategy,
+    'game': GameStrategy,
+    'robot': CuriousRobots,
+    'factory': MeanWaterStrategy
+}
 
 Lux.render_log_count=10
 Lux.env.reset()
 env_cfg = Lux.env.state.env_cfg
-agents = {player: Agent(player, env_cfg, game=GameStrategy(env_cfg, robotStrategy=CuriousRobots, factoryStrategy=MeanWaterStrategy)) for player in Lux.env.agents}
+agents = {player: Agent(player, env_cfg, strategy=ddf) for player in Lux.env.agents}
 #agents = {
 #    'player_0': Agent('player_0', env, game=GameStrategy(env, robotStrategy=CautiousRobots)),
 #    'player_1': Agent('player_1', env, game=GameStrategy(env, robotStrategy=CautiousRobots))
@@ -38,4 +46,5 @@ agents = {player: Agent(player, env_cfg, game=GameStrategy(env_cfg, robotStrateg
 #from bots.seven_bot.agent import Agent
 #agents = {player: Agent(player, env) for player in Lux.env.agents}
 
-Lux.interact(agents, None, 1000, seed=41, log=False)
+log = Log(video=True, frames=False, step_time=True, obs_time=False)
+Lux.interact(agents, None, 100, seed=41, log=log.getLog())

@@ -275,13 +275,15 @@ def setPathType(arr):
         elif hasattr(arr[0], 'x') and hasattr(arr[0], 'y'):
             return [[item.x, item.y] for item in arr]
     return []
+def toLuxlist(arr):
+    return [arr[1], arr[0]]
 def findPath(dec:np.ndarray, to:np.ndarray, locked_field:np.ndarray=None, steps:int=20):
     ''' Получить маршрут движения для робота по навправлениям
         * [4 (left), 1 (up), 1 (up), 2 (right), ...] '''
     field = locked_field.copy() if locked_field is not None else np.ones((env.map_size, env.map_size), dtype=int)
     field[dec[0], dec[1]] = 0
 
-    grid = Grid(matrix=field)
+    grid = Grid(matrix=field.transpose())
     start = grid.node(dec[1], dec[0])
     end = grid.node(to[1], to[0])
     finder = Finder(diagonal_movement=DiagonalMovement.never)
@@ -291,10 +293,10 @@ def findPath(dec:np.ndarray, to:np.ndarray, locked_field:np.ndarray=None, steps:
         tmp = []
         if type(result[0]) is tuple or type(result[0]) is list:
             for i in range(1, len(result)):
-                tmp.append({'d': direction_to(np.array(result[i-1]), np.array(result[i])), 'loc': np.array(result[i])})
-        elif hasattr(result[0], 'x') and hasattr(result[0], 'y'):
-            for i in range(1, len(result)):
-                tmp.append({'d': direction_to(np.array([result[i-1].x, result[i-1].y]), np.array([result[i].x, result[i].y])), 'loc': np.array([result[i].x, result[i].y])})
+                tmp.append({'d': direction_to(np.array(toLuxlist(result[i-1])), np.array(toLuxlist(result[i]))), 'loc': np.array(toLuxlist(result[i]))})
+        #elif hasattr(result[0], 'x') and hasattr(result[0], 'y'):
+        #    for i in range(1, len(result)):
+        #        tmp.append({'d': direction_to(np.array([result[i-1].x, result[i-1].y]), np.array([result[i].x, result[i].y])), 'loc': np.array([result[i].x, result[i].y])})
         result = tmp
     return result
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -396,7 +398,7 @@ def getMoveActions(game_state, unit, *, path:list=None, dec:np.ndarray=None, to:
     points = []
     move_cost = 0
     pos = unit.pos
-    if path is None: path = findPath(pos if dec is None else dec, pos if to is None else to, locked_field, steps=steps)
+    if path is None: path = findPathOld(pos if dec is None else dec, pos if to is None else to, locked_field, steps=steps)
     for direction in path:
         unit.pos = direction['loc']
         move_cost += unit.move_cost(game_state, direction['d']) or 0
@@ -455,7 +457,7 @@ def getNextMovePos(unit) -> np.ndarray:
 ## 1 - up, 2 - right, 3 - down, 4 - left
 ## [2, 3, 3, 2, 2, 1, 2, 2, 2]
 #
-#for step in findPath(dec=[x, y], to=[8, 4], locked_field=np.ones((size, size), dtype=int)-ore, steps=1000):
+#for step in findPathOld(dec=[x, y], to=[9, 4], locked_field=np.ones((size, size), dtype=int)-ore, steps=1000):
 #    if step['d'] == 1:
 #        y -= 1
 #    elif step['d'] == 2:
@@ -473,6 +475,7 @@ def getNextMovePos(unit) -> np.ndarray:
 #
 #
 #
+#size=10
 #s, e = 0, 0
 #x, y = s, e
 #matrix = []
@@ -491,9 +494,9 @@ def getNextMovePos(unit) -> np.ndarray:
 #
 #grid = Grid(matrix=matrix)
 #start = grid.node(x, y)
-#end = grid.node(4, 8)
+#end = grid.node(4, 9)
 #
-#finder = AStarFinder(diagonal_movement=DiagonalMovement.never)
+#finder = Finder(diagonal_movement=DiagonalMovement.never)
 #time = datetime.now()
 #path, runs = finder.find_path(start, end, grid)
 #print('time:', datetime.now()-time)

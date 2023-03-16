@@ -8,6 +8,8 @@ from strategy.kits.factory import FactoryData
 from strategy.game.factory.default import FactoryStrategy
 from strategy.game.robot.default import RobotStrategy
 
+from lux.kit import GameState
+
 # ===============================================================================================================
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ===============================================================================================================
@@ -35,20 +37,21 @@ class GameStrategy:
     # ------- Сама функция вызывается на каждом ходу ------------------------------------------------------------
     # ------- В случае смены стратегии инициализация должна происходить -----------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def update(self, game_state, player:str, step:int):
+    def update(self, game_state, step:int):
         ''' Обновить состояние стратегии (фабрики, роботы) '''
-        self.checkFactories(game_state.factories[player])
-        self.checkRobots(game_state.units[player])
+        self.game_state = game_state
+        self.step = step
+        self.checkFactories(game_state.factories[self.player])
+        self.checkRobots(game_state.units[self.player])
         ft, fu = self.getFactoryInfo()
         for unit_id in self.free_robots:
-            unit = game_state.units[player].get(unit_id)
+            unit = game_state.units[self.player].get(unit_id)
             if unit is not None:
                 cf, __ = findClosestFactory(unit.pos, factory_tiles=ft, factory_units=fu)
                 self.f_data[cf.unit_id].robots[unit_id] = RobotData(unit)
         self.free_robots.clear()
-        self.look(game_state, player)
+        self.look(game_state, self.player)
         self.game_state = game_state
-        self.player = player
         self.step = step
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Проверить фабрики в данных стратегии ----------------------------------------------------------------
@@ -136,16 +139,22 @@ class GameStrategy:
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Получить массив действий для фабрик -----------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def getFactoryActions(self, step:int) -> dict:
-        actions = self.factoryStrategy.getActions(step, self.env, self.game_state, f_data=self.f_data)
+    def getFactoryActions(self) -> dict:
+        actions = self.factoryStrategy.getActions(self.step, self.env, self.game_state, f_data=self.f_data)
         return actions
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Получить массив действий для роботов ----------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def getRobotActions(self, step:int) -> dict:
-        actions = self.robotStrategy.getActions(step, self.env, self.game_state, f_data=self.f_data, 
+    def getRobotActions(self) -> dict:
+        actions = self.robotStrategy.getActions(self.step, self.env, self.game_state, f_data=self.f_data, 
                                                 eyes=self.eyes)
         return actions
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Обновить игрока для стратегии -----------------------------------------------------------------------
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    def setPlayer(self, player:str):
+        self.player = player
+        return self
 # ===============================================================================================================
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ===============================================================================================================

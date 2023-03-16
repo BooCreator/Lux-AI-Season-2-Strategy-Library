@@ -1,10 +1,27 @@
 from lux.utils import my_turn_to_place_factory
 from strategy.kits.lux import obs_to_game_state
-#from lux.kit import obs_to_game_state
 from lux.config import EnvConfig
 import numpy as np
 
 from strategy.basic import DefaultStrategy as Strategy
+from strategy.early.default import EarlyStrategy as Early
+from strategy.game.default import GameStrategy as Game
+
+from strategy.game.robot.default import RobotStrategy as Robot
+from strategy.game.factory.default import FactoryStrategy as Factory
+
+def initStrategy(env_cfg, strategy:dict)->Strategy:
+    #return Strategy(early, game) if strategy is None else (strategy(early, game) if type(strategy) is type else strategy)
+    if strategy is None: return Strategy()
+    elif type(strategy) is type: return strategy()
+    elif type(strategy) is dict:
+        basic = strategy.get('basic', Strategy)
+        early = strategy.get('early', Early)
+        game = strategy.get('game', Game)
+        robot = strategy.get('robot', Robot)
+        factory = strategy.get('factory', Factory)
+        return basic(env_cfg, early=early(), game=game(env_cfg, robotStrategy=robot, factoryStrategy=factory))
+    else: return strategy
 
 # ===============================================================================================================
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -13,51 +30,31 @@ class Agent():
     ''' Агент для игры '''
     strategy: Strategy = None # стратегия игры, общая (включающая в себя early и game стратегии)
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def __init__(self, player: str, env_cfg: EnvConfig, *, strategy: Strategy=None, early=None, game=None) -> None:
+    def __init__(self, player:str, env_cfg:EnvConfig, *, strategy:dict=None) -> None:
         self.player = player
         self.opp_player = "player_1" if self.player == "player_0" else "player_0"
+        self.env_cfg = env_cfg
+        self.strategy = initStrategy(env_cfg, strategy)
+        self.strategy.setPlayer(self.player)
         np.random.seed(0)
-        self.env_cfg: EnvConfig = env_cfg
-        self.strategy = Strategy(env_cfg, early, game) if strategy is None else (strategy(env_cfg, early, game) if type(strategy) is type else strategy)
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Фаза расстановки фабрик -----------------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def early_setup(self, step: int, obs, remainingOverageTime: int = 60):
-        if step == 0:
-            return dict(faction="AlphaStrike", bid=self.strategy.getBid())
+        if step == 0: return self.strategy.getBid()
         else:
             game_state = obs_to_game_state(step, self.env_cfg, obs)
-            # если ваша очередь ставить фабрику
             if my_turn_to_place_factory(game_state.teams[self.player].place_first, step):
-                self.strategy.update(game_state, self.player, step, early=True)
-                factories_to_place = game_state.teams[self.player].factories_to_place
-                # если фабрики есть для расстановки
-                if factories_to_place > 0:
-                    # определяем сколько ресурсов давать фабрике
-                    metal, water = self.strategy.getResourcesForFactory(game_state, self.player, factories_to_place)
-                    # получаем позицию для установки фабрики
-                    spawn_loc = self.strategy.getSpawnPos(game_state, step)
-                    return dict(spawn=spawn_loc, metal=metal, water=water)
+                self.strategy.update(game_state, step, early=True)
+                return self.strategy.getSpawnPos()
             return dict()
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Фаза игры -------------------------------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def act(self, step: int, obs, remainingOverageTime: int = 60):
-        actions = dict()
         game_state = obs_to_game_state(step, self.env_cfg, obs)
-
-        # обновляем данные стратегии
-        self.strategy.update(game_state, self.player, step)
-
-        # получаем список действий для фабрик
-        for key, value in self.strategy.getFactoryActions(step).items():
-            actions[key] = value
-
-        # получаем список действий для роботов
-        for key, value in self.strategy.getRobotActions(step).items():
-            actions[key] = value
-
-        return actions
+        self.strategy.update(game_state, step)
+        return self.strategy.getActions()
 # ===============================================================================================================
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ===============================================================================================================
