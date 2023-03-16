@@ -1,14 +1,6 @@
 import numpy as np
 from math import ceil, floor, sqrt
 from datetime import datetime
-def timed(func):
-    from datetime import datetime
-    def wrapper(**kwargs):
-        time = datetime.now()
-        res = func(**kwargs)
-        print('time:', datetime.now()-time)
-        return res
-    return wrapper
 
 from pathfinding.core.diagonal_movement import DiagonalMovement
 from pathfinding.core.grid import Grid
