@@ -1,6 +1,8 @@
 from strategy.early.default import EarlyStrategy
 from strategy.game.default import GameStrategy
 
+from strategy.kits.decorators import time_wrapper
+
 # ===============================================================================================================
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ===============================================================================================================
@@ -10,7 +12,7 @@ class DefaultStrategy:
     game: GameStrategy = None
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def __init__(self, env_cfg, early:EarlyStrategy=None, game:GameStrategy=None) -> None:
-        self.early = EarlyStrategy() if early is None else (early() if type(early) is type else early)
+        self.early = EarlyStrategy(env_cfg) if early is None else (early(env_cfg) if type(early) is type else early)
         self.game  = GameStrategy(env_cfg) if game is None else (game(env_cfg) if type(game) is type else game)
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Обновить состояние стратегии ------------------------------------------------------------------------
@@ -32,11 +34,14 @@ class DefaultStrategy:
     # ----- Получить позицию расположения фабрики ---------------------------------------------------------------
     # ------- Возвращаем массив из двух значений ----------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # --> "getSpawnPos" time: 0:00:00.612942
+    @time_wrapper('getSpawnPos')
     def getSpawnPos(self) -> dict:
         return self.early.getSpawnPos()
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Получить массив действий для фабрик -----------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    @time_wrapper('getActions')
     def getActions(self) -> dict:
         actions = dict()
         # получаем список действий для фабрик

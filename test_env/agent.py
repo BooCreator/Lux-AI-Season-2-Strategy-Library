@@ -20,7 +20,7 @@ def initStrategy(env_cfg, strategy:dict)->Strategy:
         game = strategy.get('game', Game)
         robot = strategy.get('robot', Robot)
         factory = strategy.get('factory', Factory)
-        return basic(env_cfg, early=early(), game=game(env_cfg, robotStrategy=robot, factoryStrategy=factory))
+        return basic(env_cfg, early=early(env_cfg), game=game(env_cfg, robotStrategy=robot, factoryStrategy=factory))
     else: return strategy
 
 # ===============================================================================================================

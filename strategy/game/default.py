@@ -23,14 +23,14 @@ class GameStrategy:
     env = None
     step = 0
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def __init__(self, env, factoryStrategy=None, robotStrategy=None) -> None:
+    def __init__(self, env_cfg, factoryStrategy=None, robotStrategy=None) -> None:
         self.f_data = {}
         self.free_robots = []
-        self.eyes = Eyes(env.map_size)
+        self.eyes = Eyes(env_cfg.map_size)
         self.factoryStrategy = FactoryStrategy() if factoryStrategy is None else (factoryStrategy() if type(factoryStrategy) is type else factoryStrategy)
         self.robotStrategy = RobotStrategy() if robotStrategy is None else (robotStrategy() if type(robotStrategy) is type else robotStrategy)
         self.game_state = None
-        self.env = env
+        self.env = env_cfg
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Обновить состояние стратегии (фабрики, роботы) ------------------------------------------------------
     # ------- Инициализация происходит только при первом запуск -------------------------------------------------
