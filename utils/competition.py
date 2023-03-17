@@ -111,7 +111,7 @@ class LuxAI:
     # ------- seed - генерация карты, None - каждый раз новая ---------------------------------------------------
     # ------- log - сохранять ли в папку log каждый кадр игры ---------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =   
-    def interact(agents:dict, env=None, steps:int=1000, *, seed:int=None, log:list=True):
+    def interact(agents:dict, env=None, steps:int=1000, *, seed:int=None, log:list=True, show_steps:bool=True):
         ''' Запуск локальной игры между агентами '''
         step, imgs, mean_s, mean_o = 0, [], [], []
         log_path = createFolder(['log', 'render'])
@@ -147,7 +147,7 @@ class LuxAI:
                 print_str += f'time_s: {time_s} mean_s: {round(sum(mean_s)/len(mean_s)/1_000_000, 4)} s '
             if log==True or log[3]:
                 print_str += f'time_o: {time_o} mean_o: {round(sum(mean_o)/len(mean_o)/1_000_000, 4)} s '
-            #print(print_str, end='   ')
+            if show_steps: print(print_str, end='   ')
         
         # обработка основной фазы игры
         while True:
@@ -176,7 +176,7 @@ class LuxAI:
                 print_str += f'time_s: {time_s} mean_s: {round(sum(mean_s)/len(mean_s)/1_000_000, 4)} s '
             if log==True or log[3]:
                 print_str += f'time_o: {time_o} mean_o: {round(sum(mean_o)/len(mean_o)/1_000_000, 4)} s '
-            #print(print_str, end='   ')
+            if show_steps: print(print_str, end='   ')
             if dones["player_0"] and dones["player_1"]: break
 
         print('\r\n session time:', datetime.now()-gtime)
