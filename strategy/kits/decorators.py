@@ -6,7 +6,7 @@ def time_wrapper(title):
             time = datetime.now()
             result = func(*args, **kwargs)
             time = datetime.now() - time
-            print(f'--> "{title}" time:', time)
+            print(f'--> "{title}" time:', time, '<--')
             return result
         return wrapper
     return decorator

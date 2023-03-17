@@ -1,13 +1,15 @@
 import numpy as np
 from strategy.kits.utils import *
-from strategy.kits.robot import RobotData
+from strategy.kits.robot_struct import ROBOT_TASK, ROBOT_TYPE
+
+from lux.factory import Factory
 # ===============================================================================================================
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ===============================================================================================================
 class FactoryData:
     ''' Класс данных фабрики '''
-    factory = None
-    robots:list = []
+    factory:Factory = None
+    robots:dict = {}
     alive:bool = False
     params:dict = {}
     water:list = []
@@ -15,7 +17,7 @@ class FactoryData:
     # ----- Конструктор -----------------------------------------------------------------------------------------
     # -------- factory - экземпляр фабрики из Lux ---------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def __init__(self, factory) -> None:
+    def __init__(self, factory:Factory) -> None:
         self.factory = factory
         self.robots = {}
         self.alive = True
@@ -34,8 +36,8 @@ class FactoryData:
     def getRobots(self, *, type_is:int=-1, task_is:int=-1, condition=lambda x: x == x):
         ''' Выбрать роботов фабрики по условию '''
         result = []
-        if type(type_is) is str: type_is = RobotData.TYPE.getType(type_is)
-        if type(task_is) is str: task_is = RobotData.TASK.getTask(task_is)
+        if type(type_is) is str: type_is = ROBOT_TYPE.getType(type_is)
+        if type(task_is) is str: task_is = ROBOT_TASK.getTask(task_is)
         if type_is > -1 and task_is > -1:
             condition = lambda x: x.robot_type == type_is and x.robot_task == task_is
         elif type_is > -1:

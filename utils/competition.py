@@ -147,7 +147,7 @@ class LuxAI:
                 print_str += f'time_s: {time_s} mean_s: {round(sum(mean_s)/len(mean_s)/1_000_000, 4)} s '
             if log==True or log[3]:
                 print_str += f'time_o: {time_o} mean_o: {round(sum(mean_o)/len(mean_o)/1_000_000, 4)} s '
-            print(print_str, end='   ')
+            #print(print_str, end='   ')
         
         # обработка основной фазы игры
         while True:
@@ -159,7 +159,7 @@ class LuxAI:
                     time_s, a = timed(lambda: agents[player].act(step, o))
                     mean_s.append(time_s.microseconds)
                 else:
-                    a = agents[player].early_setup(step, o)
+                    a = agents[player].act(step, o)
                 actions[player] = a
             if log==True or log[3]==True:
                 time_o, (obs, rewards, dones, infos) = timed(lambda: env.step(actions))
@@ -176,7 +176,7 @@ class LuxAI:
                 print_str += f'time_s: {time_s} mean_s: {round(sum(mean_s)/len(mean_s)/1_000_000, 4)} s '
             if log==True or log[3]:
                 print_str += f'time_o: {time_o} mean_o: {round(sum(mean_o)/len(mean_o)/1_000_000, 4)} s '
-            print(print_str, end='   ')
+            #print(print_str, end='   ')
             if dones["player_0"] and dones["player_1"]: break
 
         print('\r\n session time:', datetime.now()-gtime)
