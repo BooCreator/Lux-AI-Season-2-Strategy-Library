@@ -69,15 +69,14 @@ class GameStrategy:
     # ----- Получить массив действий для фабрик -----------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def getFactoryActions(self) -> dict:
-        actions = self.factoryStrategy.getActions(self.step, self.env_cfg, self.game_state, 
-                                                  f_data=self.data.getFactoryData())
+        actions = self.factoryStrategy.getActions(self.step, self.env_cfg, self.game_state, data=self.data)
         return actions
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Получить массив действий для роботов ----------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def getRobotActions(self) -> dict:
-        actions = self.robotStrategy.getActions(self.step, self.env_cfg, self.game_state, 
-                                                f_data=self.data.getFactoryData(), eyes=self.eyes)
+        actions = self.robotStrategy.getActions(self.step, self.env_cfg, self.game_state, data=self.data,
+                                                eyes=self.eyes)
         return actions
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Обновить игрока для стратегии -----------------------------------------------------------------------

@@ -1,24 +1,30 @@
 import numpy as np
+
+from strategy.kits.data_controller import DataController
 from strategy.kits.utils import *
 
 from strategy.kits.eyes import Eyes
 from strategy.kits.robot import RobotData
 from strategy.kits.factory import FactoryData
 
+from lux.kit import GameState
+from lux.kit import EnvConfig
+
 class RobotStrategy:
     ''' Класс для стратегии роботов на стадии игры '''
     return_robots = []
-    def getActions(self, step:int, env, game_state, **kwargs):
+    def getActions(self, step:int, env_cfg:EnvConfig, game_state:GameState, data:DataController, **kwargs):
         ''' Получить список действий для роботов '''
+        eyes:Eyes = kwargs.get('eyes')
+        if eyes is None: raise Exception('eyes not found in args')
         actions = {}
-        f_data = kwargs.get('f_data')
-        eyes = kwargs.get('eyes')
-        if f_data is None or eyes is None:
-            raise Exception('f_data or eyes not found in args')
+        f_data = data.getFactoryData()
         ice_map = game_state.board.ice
         rubble_map = game_state.board.rubble
         for __, item in f_data.items():
+            item: FactoryData
             for robot in item.robots.values():
+                robot: RobotData
                 # по умолчанию не берём энергии
                 take_energy = 0 # unit.unit_cfg.BATTERY_CAPACITY - unit.power
                 unit = robot.robot
