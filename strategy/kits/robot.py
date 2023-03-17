@@ -4,6 +4,8 @@ from math import floor
 from lux.unit import Unit
 from strategy.kits.factory import FactoryData
 
+from strategy.kits.robot_struct import ROBOT_TASK, ROBOT_TYPE
+
 from strategy.kits.utils import RES
 
 # ===============================================================================================================
@@ -12,24 +14,9 @@ from strategy.kits.utils import RES
 class RobotData:
     ''' Класс данных робота '''
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    class TYPE:
-        ''' Тип робота LIGHT - 1, HEAVY - 2 '''
-        LIGHT = 1
-        HEAVY = 2
-
-        def getType(type_name:str) -> int:
-            return 1 if type_name == 'LIGHT' else 2
+    TYPE = ROBOT_TYPE
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    class TASK:
-        ''' Тип работы робота: MINER - 0, CLEANER - 1'''
-        JOBLESS = -1
-        MINER = 0
-        CLEANER = 1
-        # COURIER = 2
-        # WARRION = 3
-
-        def getTask(task_name:str) -> int:
-            return 0 if task_name == 'MINER' else 1
+    TASK = ROBOT_TASK
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     robot: Unit = None
     robot_type: TYPE = -1
