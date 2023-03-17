@@ -1,4 +1,5 @@
 import numpy as np
+from strategy.kits.data_controller import DataController
 from strategy.kits.utils import *
 
 from strategy.kits.eyes import Eyes
@@ -9,115 +10,43 @@ from strategy.game.factory.default import FactoryStrategy
 from strategy.game.robot.default import RobotStrategy
 
 from lux.kit import GameState
+from lux.kit import EnvConfig
 
 # ===============================================================================================================
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ===============================================================================================================
 class GameStrategy:
     ''' Класс стратегии игры '''
-    f_data = {}
-    free_robots = []
+    data: DataController = None
     eyes: Eyes = None
-    game_state = None
+    game_state: GameState = None
     player = None
-    env = None
+    env_cfg = None
     step = 0
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def __init__(self, env_cfg, factoryStrategy=None, robotStrategy=None) -> None:
-        self.f_data = {}
-        self.free_robots = []
+    def __init__(self, env_cfg:EnvConfig, factoryStrategy=None, robotStrategy=None) -> None:
+        self.env_cfg = env_cfg
+        self.data = DataController()
+        self.game_state:GameState = None
         self.eyes = Eyes(env_cfg.map_size)
         self.factoryStrategy = FactoryStrategy() if factoryStrategy is None else (factoryStrategy() if type(factoryStrategy) is type else factoryStrategy)
         self.robotStrategy = RobotStrategy() if robotStrategy is None else (robotStrategy() if type(robotStrategy) is type else robotStrategy)
-        self.game_state = None
-        self.env = env_cfg
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Обновить состояние стратегии (фабрики, роботы) ------------------------------------------------------
     # ------- Инициализация происходит только при первом запуск -------------------------------------------------
     # ------- Сама функция вызывается на каждом ходу ------------------------------------------------------------
     # ------- В случае смены стратегии инициализация должна происходить -----------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def update(self, game_state, step:int):
+    def update(self, game_state:GameState, step:int):
         ''' Обновить состояние стратегии (фабрики, роботы) '''
-        self.game_state = game_state
         self.step = step
-        self.checkFactories(game_state.factories[self.player])
-        self.checkRobots(game_state.units[self.player])
-        ft, fu = self.getFactoryInfo()
-        for unit_id in self.free_robots:
-            unit = game_state.units[self.player].get(unit_id)
-            if unit is not None:
-                cf, __ = findClosestFactory(unit.pos, factory_tiles=ft, factory_units=fu)
-                self.f_data[cf.unit_id].robots[unit_id] = RobotData(unit)
-        self.free_robots.clear()
+        self.game_state = game_state
+        self.data.update(game_state)
         self.look(game_state, self.player)
-        self.game_state = game_state
-        self.step = step
-    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    # ----- Проверить фабрики в данных стратегии ----------------------------------------------------------------
-    # ------- Удаляем фабрики, если какая-то была уничтожена ----------------------------------------------------
-    # ------- Если фабрик нет - заполняем массив ----------------------------------------------------------------
-    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def checkFactories(self, factories):
-        ''' Проверить фабрики в данных стратегии '''
-        for unit_id, factory in factories.items():
-            if unit_id in self.f_data.keys():
-                self.f_data[unit_id].alive = True
-                self.f_data[unit_id].water.append(factory.cargo.water - self.f_data[unit_id].factory.cargo.water)
-                self.f_data[unit_id].factory = factory
-            else:
-                self.f_data[unit_id] = FactoryData(factory)
-        to_remove = []
-        for unit_id, item in self.f_data.items():
-            if not item.alive: 
-                for uid in item.robots.keys():
-                    self.free_robots.append(uid)
-                to_remove.append(unit_id)
-            else:
-                item.alive = False
-        for unit_id in to_remove:
-            del self.f_data[unit_id]
-    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    # ----- Проверить роботов в данных стратегии ----------------------------------------------------------------
-    # ------- Удаляем робота, если он не существует -------------------------------------------------------------
-    # ------- Если фабрик нет - заполняем массив ----------------------------------------------------------------
-    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def checkRobots(self, robots:dict):
-        ''' Проверить роботов в данных стратегии '''
-
-        # убираем удалённых роботов
-        for item in self.f_data.values():
-            has_robots = {}
-            for unit in robots.values():
-                if unit.unit_id in item.robots.keys():
-                    has_robots[unit.unit_id] = item.robots.get(unit.unit_id)
-                    has_robots[unit.unit_id].robot = unit
-            item.robots = has_robots
-        
-        # ищем свободных роботов
-        for unit in robots.values():
-            has_factory = False
-            for item in self.f_data.values():
-                if unit.unit_id in item.robots.keys():
-                    has_factory = True
-                    break
-            if not has_factory and unit.unit_id not in self.free_robots:
-                self.free_robots.append(unit.unit_id)
-    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    # ----- Получить информацию о фабриках (factory_tiles, factory_units) ---------------------------------------
-    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def getFactoryInfo(self):
-        ''' Получить информацию о фабриках '''
-        factory_tiles = []
-        factory_units = []
-        for item in self.f_data.values():
-            factory_tiles.append(item.factory.pos)
-            factory_units.append(item.factory)
-        return factory_tiles, factory_units
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Обновить карты фабрик, юнитов, лишайника TODO -------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def look(self, game_state, player: str):
+    def look(self, game_state:GameState, player: str):
         ''' Обновить карту юнитов '''
         self.eyes.clear(['factories', 'units', 'enemy', 'e_energy', 'e_move'])
         for pl in game_state.factories:
@@ -140,19 +69,21 @@ class GameStrategy:
     # ----- Получить массив действий для фабрик -----------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def getFactoryActions(self) -> dict:
-        actions = self.factoryStrategy.getActions(self.step, self.env, self.game_state, f_data=self.f_data)
+        actions = self.factoryStrategy.getActions(self.step, self.env_cfg, self.game_state, 
+                                                  f_data=self.data.getFactoryData())
         return actions
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Получить массив действий для роботов ----------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def getRobotActions(self) -> dict:
-        actions = self.robotStrategy.getActions(self.step, self.env, self.game_state, f_data=self.f_data, 
-                                                eyes=self.eyes)
+        actions = self.robotStrategy.getActions(self.step, self.env_cfg, self.game_state, 
+                                                f_data=self.data.getFactoryData(), eyes=self.eyes)
         return actions
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Обновить игрока для стратегии -----------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def setPlayer(self, player:str):
+        self.data.setPlayer(player)
         self.player = player
         return self
 # ===============================================================================================================
