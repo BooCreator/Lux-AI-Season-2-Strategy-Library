@@ -52,6 +52,25 @@ class RobotData:
     def getHasPerpecution(self, update:bool=False) -> bool:
         return self.persecution < self.max_persecution
     
+    def onResourcePoint(self, tile_map:np.ndarray) -> bool:
+        return tile_map[self.robot.pos[0], self.robot.pos[1]] == 1
+
+    def isType(self, r_type:int)->bool:
+        if type(r_type) is str: r_type = ROBOT_TYPE.getType(r_type)
+        return self.robot_type == r_type
+
+    def setType(self, new_type:int):
+        if type(new_type) is str: new_type = ROBOT_TYPE.getType(new_type)
+        self.robot_type = new_type
+
+    def isTask(self, task:int)->bool:
+        if type(task) is str: task = ROBOT_TASK.getTask(task)
+        return self.robot_task == task
+
+    def setTask(self, task:int):
+        if type(task) is str: task = ROBOT_TASK.getTask(task)
+        self.robot_task = task
+
     def getFactory(self)->FactoryData:
         return self.factory
     
@@ -70,6 +89,13 @@ class RobotData:
             res.append(RES.water)
             count.append(self.robot.cargo.water)
         return res, count
+
+    def getFree(self, res_id:int) -> int:
+        if res_id == RES.ice or res_id == RES.ore or res_id == RES.water or res_id == RES.metal:
+            return self.robot.unit_cfg.CARGO_SPACE - (self.robot.cargo.ice + self.robot.cargo.ore + self.robot.cargo.water + self.robot.cargo.metal)
+        elif res_id == RES.energy:
+            return self.robot.unit_cfg.BATTERY_CAPACITY - self.robot.power
+        else: return 0
 # ===============================================================================================================
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ===============================================================================================================

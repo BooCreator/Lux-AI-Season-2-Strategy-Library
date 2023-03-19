@@ -105,6 +105,12 @@ class DataController:
     def setPlayer(self, player:str):
         self.player = player
         return self
+
+    def getRobotOnPos(self, pos:np.ndarray) -> RobotData:
+        for robot in self.robots.values():
+            robot: RobotData
+            if robot.robot.pos == pos: return robot
+        return None
 # ===============================================================================================================
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ===============================================================================================================
