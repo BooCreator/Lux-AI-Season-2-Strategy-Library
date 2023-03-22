@@ -2,12 +2,12 @@ import numpy as np
 from math import ceil, floor, sqrt
 from datetime import datetime
 
-from pathfinding.core.diagonal_movement import DiagonalMovement
-from pathfinding.core.grid import Grid
+#from pathfinding.core.diagonal_movement import DiagonalMovement
+#from pathfinding.core.grid import Grid
 #from pathfinding.finder.a_star import AStarFinder as Finder
 #from pathfinding.finder.best_first import BestFirst as Finder
 #from pathfinding.finder.bi_a_star import BiAStarFinder as Finder
-from pathfinding.finder.breadth_first import BreadthFirstFinder as Finder
+#from pathfinding.finder.breadth_first import BreadthFirstFinder as Finder
 #from pathfinding.finder.dijkstra import DijkstraFinder as Finder
 #from pathfinding.finder.ida_star import IDAStarFinder as Finder
 #from pathfinding.finder.msp import MinimumSpanningTree as Finder
@@ -268,36 +268,36 @@ def findPathOld(dec:np.ndarray, to:np.ndarray, locked_field:np.ndarray=None, ste
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ----- Поиск маршрута движения для робота по навправлениям [left, up, up, right, ...] ----------------------
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-def setPathType(arr):
-    if len(arr) > 0:
-        if type(arr[0]) is tuple or type(arr[0]) is list: return arr
-        elif hasattr(arr[0], 'x') and hasattr(arr[0], 'y'):
-            return [[item.x, item.y] for item in arr]
-    return []
-def toLuxlist(arr):
-    return [arr[1], arr[0]]
-def findPath(dec:np.ndarray, to:np.ndarray, locked_field:np.ndarray=None, steps:int=20):
-    ''' Получить маршрут движения для робота по навправлениям
-        * [4 (left), 1 (up), 1 (up), 2 (right), ...] '''
-    field = locked_field.copy() if locked_field is not None else np.ones((env.map_size, env.map_size), dtype=int)
-    field[dec[0], dec[1]] = 0
-
-    grid = Grid(matrix=field.transpose())
-    start = grid.node(dec[1], dec[0])
-    end = grid.node(to[1], to[0])
-    finder = Finder(diagonal_movement=DiagonalMovement.never)
-    
-    result, __ = finder.find_path(start, end, grid)
-    if len(result) > 0:
-        tmp = []
-        if type(result[0]) is tuple or type(result[0]) is list:
-            for i in range(1, len(result)):
-                tmp.append({'d': direction_to(np.array(toLuxlist(result[i-1])), np.array(toLuxlist(result[i]))), 'loc': np.array(toLuxlist(result[i]))})
-        #elif hasattr(result[0], 'x') and hasattr(result[0], 'y'):
-        #    for i in range(1, len(result)):
-        #        tmp.append({'d': direction_to(np.array([result[i-1].x, result[i-1].y]), np.array([result[i].x, result[i].y])), 'loc': np.array([result[i].x, result[i].y])})
-        result = tmp
-    return result
+#def setPathType(arr):
+#    if len(arr) > 0:
+#        if type(arr[0]) is tuple or type(arr[0]) is list: return arr
+#        elif hasattr(arr[0], 'x') and hasattr(arr[0], 'y'):
+#            return [[item.x, item.y] for item in arr]
+#    return []
+#def toLuxlist(arr):
+#    return [arr[1], arr[0]]
+#def findPath(dec:np.ndarray, to:np.ndarray, locked_field:np.ndarray=None, steps:int=20):
+#    ''' Получить маршрут движения для робота по навправлениям
+#        * [4 (left), 1 (up), 1 (up), 2 (right), ...] '''
+#    field = locked_field.copy() if locked_field is not None else np.ones((env.map_size, env.map_size), dtype=int)
+#    field[dec[0], dec[1]] = 0
+#
+#    grid = Grid(matrix=field.transpose())
+#    start = grid.node(dec[1], dec[0])
+#    end = grid.node(to[1], to[0])
+#    finder = Finder(diagonal_movement=DiagonalMovement.never)
+#    
+#    result, __ = finder.find_path(start, end, grid)
+#    if len(result) > 0:
+#        tmp = []
+#        if type(result[0]) is tuple or type(result[0]) is list:
+#            for i in range(1, len(result)):
+#                tmp.append({'d': direction_to(np.array(toLuxlist(result[i-1])), np.array(toLuxlist(result[i]))), 'loc': np.array(toLuxlist(result[i]))})
+#        #elif hasattr(result[0], 'x') and hasattr(result[0], 'y'):
+#        #    for i in range(1, len(result)):
+#        #        tmp.append({'d': direction_to(np.array([result[i-1].x, result[i-1].y]), np.array([result[i].x, result[i].y])), 'loc': np.array([result[i].x, result#[i].y])})
+#        result = tmp
+#    return result
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ----- Найти ближайшую фабрику -----------------------------------------------------------------------------
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
