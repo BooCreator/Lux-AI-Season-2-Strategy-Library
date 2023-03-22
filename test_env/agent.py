@@ -10,9 +10,9 @@ from strategy.game.default import GameStrategy as Game
 from strategy.game.robot.default import RobotStrategy as Robot
 from strategy.game.factory.default import FactoryStrategy as Factory
 
-def initStrategy(env_cfg, strategy:dict)->Strategy:
+def initStrategy(env_cfg:EnvConfig, strategy:dict)->Strategy:
     #return Strategy(early, game) if strategy is None else (strategy(early, game) if type(strategy) is type else strategy)
-    if strategy is None: return Strategy()
+    if strategy is None: return Strategy(env_cfg)
     elif type(strategy) is type: return strategy()
     elif type(strategy) is dict:
         basic = strategy.get('basic', Strategy)

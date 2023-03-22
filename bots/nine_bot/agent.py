@@ -3,22 +3,38 @@ from strategy.kits.lux import obs_to_game_state
 from lux.config import EnvConfig
 import numpy as np
 
-from strategy.basic import DefaultStrategy as Strategy
-from strategy.early.default import EarlyStrategy as Early
-from strategy.game.default import GameStrategy as Game
+# ----- default -----
+from strategy.basic import DefaultStrategy
+# ----- early -----
+from strategy.early.default import EarlyStrategy as DefaultEarly
+from strategy.early.from_kaggle_strategy import EarlyStrategy as OptimisedEarly
+# ----- game -----
+from strategy.game.default import GameStrategy as DefaultGame
+from strategy.game.cautious import GameStrategy as CautiousStrategy
+# ----- robot -----
+from strategy.game.robot.cautious import RobotStrategy as CautiousRobots
+from strategy.game.robot.curious import RobotStrategy as CuriousRobots
+from strategy.game.robot.optimised import RobotStrategy as OptimisedRobots
+# ----- factory -----
+from strategy.game.factory.mean_water import FactoryStrategy as MeanWaterStrategy
 
-from strategy.game.robot.optimised import RobotStrategy as Robot
-from strategy.game.factory.mean_water import FactoryStrategy as Factory
+ddf = {
+    'basic': DefaultStrategy,
+    'early': OptimisedEarly,
+    'game': DefaultGame,
+    'robot': OptimisedRobots,
+    'factory': MeanWaterStrategy
+}
 
-def initStrategy(env_cfg, strategy:dict)->Strategy:
-    if strategy is None: return Strategy()
+def initStrategy(env_cfg:EnvConfig, strategy:dict)->DefaultStrategy:
+    if strategy is None: return DefaultStrategy(env_cfg)
     elif type(strategy) is type: return strategy()
     elif type(strategy) is dict:
-        basic = strategy.get('basic', Strategy)
-        early = strategy.get('early', Early)
-        game = strategy.get('game', Game)
-        robot = strategy.get('robot', Robot)
-        factory = strategy.get('factory', Factory)
+        basic = strategy.get('basic', DefaultStrategy)
+        early = strategy.get('early', DefaultEarly)
+        game = strategy.get('game', DefaultGame)
+        robot = strategy.get('robot', OptimisedRobots)
+        factory = strategy.get('factory', MeanWaterStrategy)
         return basic(env_cfg, early=early(env_cfg), game=game(env_cfg, robotStrategy=robot, factoryStrategy=factory))
     else: return strategy
 
@@ -27,13 +43,13 @@ def initStrategy(env_cfg, strategy:dict)->Strategy:
 # ===============================================================================================================
 class Agent():
     ''' Агент для игры '''
-    strategy: Strategy = None # стратегия игры, общая (включающая в себя early и game стратегии)
+    strategy: DefaultStrategy = None # стратегия игры, общая (включающая в себя early и game стратегии)
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def __init__(self, player:str, env_cfg:EnvConfig, *, strategy:dict=None) -> None:
         self.player = player
         self.opp_player = "player_1" if self.player == "player_0" else "player_0"
         self.env_cfg = env_cfg
-        self.strategy = initStrategy(env_cfg, strategy)
+        self.strategy = initStrategy(env_cfg, ddf)
         self.strategy.setPlayer(self.player)
         np.random.seed(0)
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =

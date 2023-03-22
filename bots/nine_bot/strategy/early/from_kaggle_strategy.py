@@ -5,9 +5,10 @@ from math import ceil
 from lux.kit import GameState
 from lux.config import EnvConfig
 
-from utils.tools import toImage
-
-from scipy.ndimage import distance_transform_cdt
+try:
+    from utils.tools import toImage
+except:
+    def toImage(imgs:np.ndarray, filename:str='_blank', *, render:bool=False, return_:bool=False, palette=None, frames:int=5): pass
 
 def count_region_cells(array, start, min_dist=2, max_dist=np.inf, exponent=1):
     
