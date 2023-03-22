@@ -1,6 +1,7 @@
 import numpy as np
 
 from strategy.kits.data_controller import DataController
+from strategy.kits.decorators import time_wrapper
 from strategy.kits.utils import *
 
 from strategy.kits.eyes import Eyes

@@ -14,7 +14,7 @@ class ROBOT_TASK:
     CLEANER = 1
     COURIER = 2
     WARRION = 3
-    LEAYER  = 4
+    LEAVER  = 4
     def getTask(task_name:str) -> int:
         return 0 if task_name == 'MINER' else 1
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =

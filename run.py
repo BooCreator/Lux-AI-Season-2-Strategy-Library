@@ -16,20 +16,27 @@ bots = [
 #Lux.sendSubmission(zip_name, 'third bot')
 
 from test_env.agent import Agent
-from strategy.basic import DefaultStrategy
-from strategy.early.default import EarlyStrategy
-from strategy.game.default import GameStrategy
 
+# ----- default -----
+from strategy.basic import DefaultStrategy
+# ----- early -----
+from strategy.early.default import EarlyStrategy as DefaultEarly
+from strategy.early.from_kaggle_strategy import EarlyStrategy as OptimisedEarly
+# ----- game -----
+from strategy.game.default import GameStrategy as DefaultGame
+from strategy.game.cautious import GameStrategy as CautiousStrategy
+# ----- robot -----
 from strategy.game.robot.cautious import RobotStrategy as CautiousRobots
 from strategy.game.robot.curious import RobotStrategy as CuriousRobots
+from strategy.game.robot.optimised import RobotStrategy as OptimisedRobots
+# ----- factory -----
 from strategy.game.factory.mean_water import FactoryStrategy as MeanWaterStrategy
-from strategy.game.cautious import GameStrategy as CautiousStrategy
 
 ddf = {
     'basic': DefaultStrategy,
-    'early': EarlyStrategy,
-    'game': GameStrategy,
-    'robot': CuriousRobots,
+    'early': OptimisedEarly,
+    'game': DefaultGame,
+    'robot': OptimisedRobots,
     'factory': MeanWaterStrategy
 }
 
@@ -38,13 +45,13 @@ Lux.env.reset()
 env_cfg = Lux.env.state.env_cfg
 agents = {player: Agent(player, env_cfg, strategy=ddf) for player in Lux.env.agents}
 #agents = {
-#    'player_0': Agent('player_0', env, game=GameStrategy(env, robotStrategy=CautiousRobots)),
-#    'player_1': Agent('player_1', env, game=GameStrategy(env, robotStrategy=CautiousRobots))
+#    'player_0': Agent('player_0', env_cfg, strategy={'early': OptimisedEarly, 'robot': CuriousRobots, 'factory': MeanWaterStrategy}),
+#    'player_1': Agent('player_1', env_cfg, strategy={'early': DefaultEarly, 'robot': CuriousRobots, 'factory': MeanWaterStrategy})
 #}
 #agents = {player: Agent(player, env, game=CautiousStrategy) for player in Lux.env.agents}
 
 #from bots.seven_bot.agent import Agent
 #agents = {player: Agent(player, env) for player in Lux.env.agents}
 
-log = Log(video=True, frames=False, step_time=True, obs_time=False)
-Lux.interact(agents, None, 100, seed=41, log=log.getLog())
+log = Log(video=False, frames=False, step_time=False, obs_time=False)
+Lux.interact(agents, None, 1000, seed=41, log=log.getLog(), show_steps=True) # 260

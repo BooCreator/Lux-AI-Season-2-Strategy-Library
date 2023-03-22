@@ -1,4 +1,5 @@
 from strategy.kits.data_controller import DataController
+from strategy.kits.decorators import time_wrapper
 from strategy.kits.factory import FactoryData
 
 from lux.kit import GameState
@@ -7,6 +8,7 @@ from lux.kit import EnvConfig
 class FactoryStrategy:
     ''' Класс для стратегии фабрик на стадии игры '''
 
+    #@time_wrapper('getFactoryActions')
     def getActions(self, step:int, env_cfg:EnvConfig, game_state:GameState, data:DataController, **kwargs):
         ''' Получить список действий для фабрик '''
         f_data = data.getFactoryData()

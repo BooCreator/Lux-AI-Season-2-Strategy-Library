@@ -53,7 +53,7 @@ class RobotData:
         return self.persecution < self.max_persecution
     
     def onResourcePoint(self, tile_map:np.ndarray) -> bool:
-        return tile_map[self.robot.pos[0], self.robot.pos[1]] == 1
+        return tile_map[self.robot.pos[0], self.robot.pos[1]] > 0
 
     def isType(self, r_type:int)->bool:
         if type(r_type) is str: r_type = ROBOT_TYPE.getType(r_type)
@@ -69,7 +69,9 @@ class RobotData:
 
     def setTask(self, task:int):
         if type(task) is str: task = ROBOT_TASK.getTask(task)
+        if self.robot_task == task: return False
         self.robot_task = task
+        return True
 
     def getFactory(self)->FactoryData:
         return self.factory

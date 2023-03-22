@@ -109,7 +109,7 @@ class DataController:
     def getRobotOnPos(self, pos:np.ndarray) -> RobotData:
         for robot in self.robots.values():
             robot: RobotData
-            if robot.robot.pos == pos: return robot
+            if robot.robot.pos[0] == pos[0] and robot.robot.pos[1] == pos[1]: return robot
         return None
 # ===============================================================================================================
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =

@@ -12,11 +12,18 @@ from pathfinding.finder.breadth_first import BreadthFirstFinder as Finder
 #from pathfinding.finder.ida_star import IDAStarFinder as Finder
 #from pathfinding.finder.msp import MinimumSpanningTree as Finder
 
+#from strategy.kits.decorators import time_wrapper
+
 try:
     from lux.config import EnvConfig
+    from lux.kit import GameState
+    from lux.unit import Unit
+
     env = EnvConfig()
 except:
     env = None
+    class Unit: pass
+    class GameState: pass
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ----- Номера ресурсов для удобства (в Lux не указаны)
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -330,10 +337,10 @@ class DIG_TYPES:
     RESOURCE = 0
     RUBBLE = 1
     LICHEN = 2
-def calcDigCount(unit, *, count:int=1000, has_energy:int=None, reserve_energy:int=0, dig_type:int = DIG_TYPES.RESOURCE):
+def calcDigCount(unit: Unit, *, count:int=1000, has_energy:int=None, reserve_energy:int=0, dig_type:int = DIG_TYPES.RESOURCE):
     ''' Рассчитать, сколько мы можем копнуть '''
     dig_cost = env.ROBOTS[unit.unit_type].DIG_COST
-    energy = min(env.ROBOTS[unit.unit_type].BATTERY_CAPACITY, has_energy or env.ROBOTS[unit.unit_type].BATTERY_CAPACITY) - reserve_energy
+    energy = min(unit.power, has_energy or env.ROBOTS[unit.unit_type].BATTERY_CAPACITY) - reserve_energy
     gain = 1
     if dig_type == DIG_TYPES.LICHEN:
         gain = env.ROBOTS[unit.unit_type].DIG_LICHEN_REMOVED
@@ -381,6 +388,7 @@ def getResFromState(game_state):
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ----- Получить список действий движения со стоимостью по энергии ------------------------------------------
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+#@time_wrapper('getMoveActions')
 def getMoveActions(game_state, unit, *, path:list=None, dec:np.ndarray=None, to:np.ndarray=None, 
                     locked_field:np.ndarray=None, repeat:int=0, n:int=1, has_points: bool=False,
                     steps:int=25):
@@ -401,6 +409,27 @@ def getMoveActions(game_state, unit, *, path:list=None, dec:np.ndarray=None, to:
 
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ----- Получить список действий движения со стоимостью по энергии ------------------------------------------
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+# a[1] = direction (0 = center, 1 = up, 2 = right, 3 = down, 4 = left)
+move_deltas = np.array([[0, 0], [0, -1], [1, 0], [0, 1], [-1, 0]])
+#@time_wrapper('findPathActions')
+def findPathActions(unit:Unit, game_state:GameState, *, dec:np.ndarray=None, to:np.ndarray=None, 
+                    lock_map:np.ndarray=None, steps:int=25):
+    ''' Получить список действий движения со стоимостью по энергии 
+        * lock_map: 0 - lock, 1 - alloy '''
+    actions, points, move_cost, pos = [], [], [], unit.pos
+
+    for direction in findPathOld(pos if dec is None else dec, pos if to is None else to, lock_map, steps=steps):
+        unit.pos = direction['loc']
+        points.append(direction['loc'])
+        move_cost.append(unit.move_cost(game_state, direction['d']) or 0)
+        actions.append(unit.move(direction['d'], repeat=0, n=1))
+        
+    unit.pos = pos
+    return actions, move_cost
+
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+# ----- Получить список действий движения со стоимостью по энергии ------------------------------------------
 # ------- * [4 (left), 1 (up), 1 (up), 2 (right), ...]
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 def getNextMovePos(unit) -> np.ndarray:
@@ -416,7 +445,19 @@ def getNextMovePos(unit) -> np.ndarray:
             elif action[1] == 4:
                 return [unit.pos[0]-1, unit.pos[1]]
     return unit.pos
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+# ----- Получить расстояние между клетками ------------------------------------------------------------------
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+def getDistance(dec:np.ndarray, to:np.ndarray) -> int:
+    ''' Найти ближайшую фабрику '''
+    dec = dec if type(dec) is np.ndarray else np.array(dec)
+    to = to if type(to) is np.ndarray else np.array(to)
+    return np.sum(np.abs(dec-to))
 
+#print(findClosestFactory([2, 3], [0,0]))
+#[0, 0] -> [0, 1] -> [0, 2] -> [1, 2]
+#[0, 0] -> [0, 1] -> [0, 2] -> [1, 2] -> [2, 2]
+#[0, 0] -> [0, 1] -> [0, 2] -> [0, 3] -> [1, 3] -> [2, 3]
 
 #def getRange(pos=[], size=10, vals=[0,1]):
 #    res = [vals[0] for i in range(size)]
