@@ -6,12 +6,14 @@ bots = [
     #{'file':'./bots/example/main.py', 'name':'example'},
     #{'file':'./bots/second_bot/main.py', 'name':'second'},
     #{'file':'./bots/five_bot/main.py', 'name':'five'},
-    {'file':'./bots/six_bot/main.py', 'name':'six'},
-    {'file':'./bots/seven_bot/main.py', 'name':'seven'},
+    #{'file':'./bots/six_bot/main.py', 'name':'six'},
+    #{'file':'./bots/seven_bot/main.py', 'name':'seven'},
+    #{'file':'./bots/eight_bot/main.py', 'name':'eight'},
+    {'file':'./bots/nine_bot/main.py', 'name':'nine'},
 ]
 
 #Lux.play(bots, seed=None)
-#Lux.tornament('bots/')
+Lux.tornament('bots/')
 #zip_name = Lux.buildSubmission('seven_bot') # zip_name == 'example_2023-02-09_15-38-21.tar.gz'
 #Lux.sendSubmission(zip_name, 'third bot')
 
@@ -53,5 +55,5 @@ agents = {player: Agent(player, env_cfg, strategy=ddf) for player in Lux.env.age
 #from bots.seven_bot.agent import Agent
 #agents = {player: Agent(player, env) for player in Lux.env.agents}
 
-log = Log(video=False, frames=False, step_time=False, obs_time=False)
-Lux.interact(agents, None, 1000, seed=41, log=log.getLog(), show_steps=True) # 260
+#log = Log(video=True, frames=False, step_time=False, obs_time=False)
+#Lux.interact(agents, None, 1000, seed=156, log=log.getLog(), show_steps=True) # 260

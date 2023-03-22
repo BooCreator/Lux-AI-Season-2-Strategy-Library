@@ -20,7 +20,7 @@ from strategy.game.factory.mean_water import FactoryStrategy as MeanWaterStrateg
 
 ddf = {
     'basic': DefaultStrategy,
-    'early': OptimisedEarly,
+    'early': DefaultEarly,
     'game': DefaultGame,
     'robot': OptimisedRobots,
     'factory': MeanWaterStrategy
