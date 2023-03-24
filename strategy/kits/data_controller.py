@@ -32,7 +32,7 @@ class DataController:
         ft, fu = self.getFactoryInfo()
         for unit_id in self.free_robots:
             robot:RobotData = self.robots.get(unit_id)
-            factory, __ = findClosestFactory(robot.robot.pos, factory_tiles=ft, factory_units=fu)
+            factory = findClosestFactory(robot.robot.pos, ft, fu)
             self.factories[factory.unit_id].robots[unit_id] = robot
             robot.factory = self.factories.get(factory.unit_id)
         self.free_robots.clear()

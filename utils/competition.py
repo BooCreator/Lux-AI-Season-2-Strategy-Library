@@ -1,3 +1,4 @@
+from strategy.kits.decorators import showMeanFuncTime
 from .tools import *
 from datetime import datetime
 from luxai_s2.env import LuxAI_S2
@@ -180,7 +181,8 @@ class LuxAI:
             if dones["player_0"] and dones["player_1"]: break
 
         print('\r\n session time:', datetime.now()-gtime)
-        
+        showMeanFuncTime()
+
         if log==True or log[0]==True:
             date = datetime.now()
             datefolder = str(date.date()).replace(':', '-')

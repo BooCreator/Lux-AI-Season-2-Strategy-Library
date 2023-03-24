@@ -65,7 +65,7 @@ class RobotStrategy:
                             elif robot.robot_type != RobotData.TYPE.HEAVY:
                                 robot.robot_task = RobotData.TASK.CLEANER
                         # --- если робот находится на блоке с ресурсом ---
-                        if onResourcePoint(robot.robot.pos, ice_map) and unit.unit_id not in self.return_robots:
+                        if robot.onResourcePoint(robot.robot.pos, ice_map) and unit.unit_id not in self.return_robots:
                             # --- строим маршрут к фабрике ---
                             m_actions, move_cost = getMoveActions(game_state, unit, to=item.factory.pos)
                             # --- определяем сколько будем копать ---

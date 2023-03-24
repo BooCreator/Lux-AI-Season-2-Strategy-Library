@@ -60,8 +60,8 @@ class GameStrategy:
                     self.eyes.update('units', getNextMovePos(unit), unit_type)
                 else:
                     self.eyes.update('enemy', getNextMovePos(unit), unit_type)
-                    px, py = getRad(unit.pos)
-                    for x, y in zip(px, py):
+                    xy = getRad(unit.pos)
+                    for [x, y] in xy:
                         self.eyes.update('e_move', [x, y], unit_type, collision=lambda a,b: max(a,b))
                         self.eyes.update('e_energy', [x, y], unit.power, collision=lambda a,b: max(a,b))
         # лишайник

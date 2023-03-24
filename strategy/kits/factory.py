@@ -71,8 +71,8 @@ class FactoryData:
         ''' Получить ближайшую ячейку фабрики '''
         minX, minY = self.factory.pos[0], self.factory.pos[1]
         min = abs(point[0]-minX) + abs(point[1]-minY)
-        x, y = getRect(minX, minY, 1)
-        for x, y in zip(x, y):
+        xy = getRect([minX, minY], 1)
+        for [x, y] in xy:
             if abs(point[0]-x) + abs(point[1]-y) < min:
                 minX, minY = x, y
         return np.array([minX, minY])

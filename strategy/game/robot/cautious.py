@@ -77,7 +77,7 @@ class RobotStrategy:
                             if unit.unit_id in self.return_robots: 
                                 self.return_robots.remove(unit.unit_id)
                         # --- если робот находится на блоке с ресурсом ---
-                        if onResourcePoint(unit.pos, ice_map) and unit.unit_id not in self.return_robots:
+                        if robot.onResourcePoint(unit.pos, ice_map) and unit.unit_id not in self.return_robots:
                             # --- выясняем куда может ли на нас шагнуть противник ---
                             locked_field = eyes.diff(['e_energy', 'u_energy'])
                             # --- ищем ближайшего противника ---

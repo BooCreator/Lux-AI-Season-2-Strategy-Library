@@ -98,7 +98,7 @@ class RobotStrategy:
                             # --- считаем за сколько он до нас дойдёт ---
                             e_actions, __ = getMoveActions(game_state, unit, to=enemy_pos)
                             # --- если робот находится на блоке с ресурсом ---
-                            if onResourcePoint(unit.pos, ice_map) and unit.unit_id not in self.return_robots:
+                            if robot.onResourcePoint(unit.pos, ice_map) and unit.unit_id not in self.return_robots:
                                 # --- строим маршрут к фабрике ---
                                 m_actions, move_cost = getMoveActions(game_state, unit, to=item.factory.pos)
                                 # --- определяем сколько будем копать ---
