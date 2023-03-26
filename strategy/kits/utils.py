@@ -390,11 +390,11 @@ def findPathActions(unit:Unit, game_state:GameState, *, dec:np.ndarray=None, to:
     ''' Получить список действий движения со стоимостью по энергии 
         * lock_map: 0 - lock, 1 - alloy '''
     actions, move_cost, spos = [], [], unit.pos
-    move_map = np.ones(lock_map.shape, dtype=int)
+    move_map = np.zeros(lock_map.shape, dtype=int)
     for [d, point, n] in findPath(spos if dec is None else dec, spos if to is None else to, lock_map, steps=steps):
-        move_map[point] = 0
+        move_map[point] = 1
         unit.pos = point
         actions.append(unit.move(d, repeat=0, n=n))
         move_cost.append(unit.move_cost(game_state, d) or 0)
     unit.pos = spos
-    return actions, move_cost # actions, move_cost, move_map if get_move_map else 
+    return (actions, move_cost, move_map) if get_move_map else (actions, move_cost)

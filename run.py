@@ -55,5 +55,5 @@ agents = {player: Agent(player, env_cfg, strategy=ddf) for player in Lux.env.age
 #from bots.seven_bot.agent import Agent
 #agents = {player: Agent(player, env) for player in Lux.env.agents}
 
-#log = Log(video=False, frames=False, step_time=False, obs_time=False)
-#Lux.interact(agents, None, 100, seed=156, log=log.getLog(), show_steps=True)
+log = Log(video=False, frames=False, step_time=False, obs_time=False)
+Lux.interact(agents, None, 100, seed=156, log=log.getLog(), show_steps=True)

@@ -32,7 +32,6 @@ class RobotStrategy:
         locked_field = np.where(eyes.sum(['factories', 'units', move_map]) > 0, 0, 1)
         return locked_field
       
-    #@time_wrapper('getRobotActions')
     def getActions(self, step:int, env_cfg:EnvConfig, game_state:GameState, data:DataController, **kwargs)->dict:
         ''' Получить список действий для роботов '''
         eyes:Eyes = kwargs.get('eyes')
@@ -41,7 +40,7 @@ class RobotStrategy:
         for robot, task in zip(*Observer.look(data, step, game_state, eyes)):
             robot: RobotData
             unit, item = robot.robot, robot.factory
-            actions = ActionsFabric(game_state, robot, eyes)
+            actions = ActionsFabric(game_state, robot)
            
             # --- если робот находится на своей фабрике ---
             if robot.on_position(item.factory.pos, size=3):
@@ -55,7 +54,7 @@ class RobotStrategy:
             
             # --- если робот идёт на базу ---
             if task == ROBOT_TASK.RETURN:
-                actions.buildMove(item.getNeareastPoint(unit.pos), True)
+                actions.buildMove(item.getNeareastPoint(unit.pos), True, lock_map=Observer.getLockMap())
                 Observer.addReturn(unit.unit_id)
 
             # --- если робот не на фабрике и он - копатель ---
@@ -73,7 +72,7 @@ class RobotStrategy:
                 else:
                     # --- находим ближайший ресурс ---
                     ct = findClosestTile(unit.pos, ice_map, lock_map=eyes.neg(eyes.sum([eyes.getFree(1) - ice_map, 'units'])))
-                    if actions.buildMove(ct, border=20):
+                    if actions.buildMove(ct, border=20, lock_map=Observer.getLockMap()):
                         actions.buildDigResource(reserve=actions.last_energy_cost)
                     # --- иначе - идём на базу ---
                     else:
@@ -92,7 +91,7 @@ class RobotStrategy:
                                                      dig_type=DIG_TYPES.RUBBLE)
                     if dig_count > 0:
                         # --- строим маршрут ---
-                        if actions.buildMove(ct, border=20, dec=start_pos):
+                        if actions.buildMove(ct, border=20, dec=start_pos, lock_map=Observer.getLockMap()):
                             full_energy_cost += actions.last_energy_cost 
                         if actions.buildDigRubble(rubble_map[ct[0]][ct[1]], reserve=full_energy_cost):
                             rubble_map[ct[0]][ct[1]] -= min(actions.rubble_gain.get('last', 0), rubble_map[ct[0]][ct[1]])
@@ -100,7 +99,7 @@ class RobotStrategy:
                         start_pos = ct
                     # --- если не можем, то идём на базу ---
                     else:
-                        actions.buildMove(item.getNeareastPoint(unit.pos), True)
+                        actions.buildMove(item.getNeareastPoint(unit.pos), True, lock_map=Observer.getLockMap())
                         Observer.addReturn(unit.unit_id)
                         break
             # --- если робот не на фабрике и он - курьер ---

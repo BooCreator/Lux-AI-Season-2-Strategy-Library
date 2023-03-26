@@ -1,19 +1,12 @@
 import numpy as np
-from lux.unit import Unit
 
-from strategy.kits.data_controller import DataController
-from strategy.kits.decorators import time_wrapper
-from strategy.kits.observer import Observer
-from strategy.kits.robot_struct import ROBOT_TASK, ROBOT_TYPE
+
 from strategy.kits.utils import *
+from strategy.kits.decorators import time_wrapper
 
-from strategy.kits.eyes import Eyes
 from strategy.kits.robot import RobotData
-from strategy.kits.factory import FactoryData
 
 from lux.kit import GameState
-from lux.kit import EnvConfig
-
 
 # ===============================================================================================================
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -29,20 +22,20 @@ class ActionsFabric:
     resource_gain =  {'full': 0, 'last': 0}
     rubble_gain = {'full': 0, 'last': 0}
     action_cost = 1
-    eyes: Eyes
+    move_map = None
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def __init__(self, game_state:GameState, unit:RobotData, eyes:Eyes, max_actions:int=20) -> None:
+    def __init__(self, game_state:GameState, unit:RobotData, max_actions:int=20) -> None:
+        self.move_map = np.zeros(game_state.board.ice.shape, dtype=int)
         self.action_cost = unit.robot.action_queue_cost(game_state)
-        self.last_energy_cost = 0
-        self.max_actions = max_actions
-        self.free_len = max_actions
-        self.game_state = game_state
         self.resource_gain = {'full': 0, 'last': 0}
         self.rubble_gain = {'full': 0, 'last': 0}
         self.energy_cost = self.action_cost
+        self.max_actions = max_actions
+        self.game_state = game_state
+        self.free_len = max_actions
+        self.last_energy_cost = 0
         self.actions = []
         self.unit = unit
-        self.eyes = eyes
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Проверить, можно ли добавить ещё ходов --------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -85,16 +78,13 @@ class ActionsFabric:
         if not self.check(): return False
         dec = self.unit.robot.pos if dec is None else dec
         if getDistance(dec, to) > border and not trim: return False
-        m_actions, move_cost = findPathActions(self.unit.robot, self.game_state, to=to, steps=self.max_actions-len(self.actions)+3,
-                                               dec=dec, lock_map=lock_map or Observer.getLockMap())
+        m_actions, move_cost, move_map = findPathActions(self.unit.robot, self.game_state, to=to, steps=self.max_actions-len(self.actions)+3,
+                                               dec=dec, lock_map=lock_map, get_move_map=True)
         if len(m_actions) > 0:
+            self.move_map += move_map
             self.actions.extend(m_actions[:self.max_actions-len(self.actions)])
             self.energy_cost += sum(move_cost[:self.max_actions-len(self.actions)])
             self.last_energy_cost = sum(move_cost[:self.max_actions-len(self.actions)])
-            Observer.lock_map[self.unit.robot.pos[0], self.unit.robot.pos[1]] = 0
-            Observer.lock_map[m_actions[0][0], m_actions[0][1]] = 1
-            self.eyes.update('units', self.unit.robot.pos, 0)
-            self.eyes.update('units', m_actions[0], 1)
             return self.trimActions()
         return False
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -166,6 +156,12 @@ class ActionsFabric:
     def getActions(self) -> list:
         ''' Вернуть действия в виде списка '''
         return self.actions
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Вернуть матрицу ходов -------------------------------------------------------------------------------
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    def getMoveMap(self) -> list:
+        ''' Вернуть матрицу ходов '''
+        return self.move_map
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Проверит не полная ли очередь ----------------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
