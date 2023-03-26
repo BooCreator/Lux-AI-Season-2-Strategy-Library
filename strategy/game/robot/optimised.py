@@ -58,7 +58,7 @@ class RobotStrategy:
                 Observer.addReturn(unit.unit_id)
 
             # --- если робот не на фабрике и он - копатель ---
-            elif task == ROBOT_TASK.MINER:
+            elif task == ROBOT_TASK.ICE_MINER:
                 # --- если робот на блоке с ресурсом ---
                 if robot.onResourcePoint(ice_map):
                     # --- строим маршрут к фабрике ---
@@ -103,24 +103,24 @@ class RobotStrategy:
                         Observer.addReturn(unit.unit_id)
                         break
             # --- если робот не на фабрике и он - курьер ---
-            elif task == ROBOT_TASK.COURIER:
-                # --- находим ближайшего робота на ресурсе ---
-                ct = findClosestTile(unit.pos, eyes.get('units')*ice_map)
-                ct_robot = data.getRobotOnPos(ct)
-                if ct_robot is not None:
-                    # --- если робот на блоке с ресурсом ---
-                    if robot.onResourcePoint(ice_map):
-                        # --- передаём соседу ресурсы ---
-                        if actions.buildTransferResource(RES.ice, to=ct, count_max=ct_robot.getFree(RES.ice)):
-                            # --- продолжаем делать, что делали ---
-                            actions.extend(unit.action_queue)
-                    else:
-                        # --- строим маршрут к фабрике ---
-                        m_actions, move_cost = findPathActions(unit, game_state, to=item.getNeareastPoint(unit.pos), lock_map=Observer.getLockMap())
-                        # --- передаём копателю энергию и едем на базу ---
-                        actions.buildTransferResource(RES.energy, to=ct, count_max=min(unit.power-sum(move_cost), ct_robot.getFree(RES.energy)))
-                        actions.extend(m_actions, move_cost)
-                        Observer.addReturn(unit.unit_id)
+            #elif task == ROBOT_TASK.COURIER:
+            #    # --- находим ближайшего робота на ресурсе ---
+            #    ct = findClosestTile(unit.pos, eyes.get('units')*ice_map)
+            #    ct_robot = data.getRobotOnPos(ct)
+            #    if ct_robot is not None:
+            #        # --- если робот на блоке с ресурсом ---
+            #        if robot.onResourcePoint(ice_map):
+            #            # --- передаём соседу ресурсы ---
+            #            if actions.buildTransferResource(RES.ice, to=ct, count_max=ct_robot.getFree(RES.ice)):
+            #                # --- продолжаем делать, что делали ---
+            #                actions.extend(unit.action_queue)
+            #        else:
+            #            # --- строим маршрут к фабрике ---
+            #            m_actions, move_cost = findPathActions(unit, game_state, to=item.getNeareastPoint(unit.pos), lock_map=Observer.getLockMap())
+            #            # --- передаём копателю энергию и едем на базу ---
+            #            actions.buildTransferResource(RES.energy, to=ct, count_max=min(unit.power-sum(move_cost), ct_robot.getFree(RES.energy)))
+            #            actions.extend(m_actions, move_cost)
+            #            Observer.addReturn(unit.unit_id)
             # --- если робот не на фабрике и он - давитель ---
             elif task == ROBOT_TASK.WARRION:
                 # --- выясняем куда мы можем шагнуть ---

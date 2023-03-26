@@ -62,9 +62,9 @@ class Observer:
                 if robot.isTask(ROBOT_TASK.JOBLESS) or step > 50:
                     task_changed = False
                     if robot.isType(RobotData.TYPE.HEAVY):
-                        task_changed = robot.setTask(ROBOT_TASK.MINER)
+                        task_changed = robot.setTask(ROBOT_TASK.ICE_MINER)
                     else:
-                        task_changed = robot.setTask(ROBOT_TASK.MINER if step < 50 else ROBOT_TASK.CLEANER)
+                        task_changed = robot.setTask(ROBOT_TASK.ICE_MINER if step < 50 else ROBOT_TASK.CLEANER)
                     if task_changed:
                         tasks.append(ROBOT_TASK.RETURN)
                         has_robots.append(unit_id)
