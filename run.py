@@ -13,8 +13,8 @@ bots = [
 ]
 
 #Lux.play(bots, seed=None)
-Lux.tornament('bots/')
-#zip_name = Lux.buildSubmission('seven_bot') # zip_name == 'example_2023-02-09_15-38-21.tar.gz'
+#Lux.tornament('bots/')
+#zip_name = Lux.buildSubmission('nine_bot') # zip_name == 'example_2023-02-09_15-38-21.tar.gz'
 #Lux.sendSubmission(zip_name, 'third bot')
 
 from test_env.agent import Agent
@@ -55,5 +55,5 @@ agents = {player: Agent(player, env_cfg, strategy=ddf) for player in Lux.env.age
 #from bots.seven_bot.agent import Agent
 #agents = {player: Agent(player, env) for player in Lux.env.agents}
 
-#log = Log(video=True, frames=False, step_time=False, obs_time=False)
-#Lux.interact(agents, None, 1000, seed=156, log=log.getLog(), show_steps=True) # 260
+#log = Log(video=False, frames=False, step_time=False, obs_time=False)
+#Lux.interact(agents, None, 100, seed=156, log=log.getLog(), show_steps=True)
