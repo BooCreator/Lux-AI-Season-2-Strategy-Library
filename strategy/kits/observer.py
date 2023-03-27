@@ -46,6 +46,15 @@ class Observer:
                 del Observer.moves_map[key]
         Observer.step = step
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Получить общую матрицу ходов роботов ----------------------------------------------------------------
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    def getMovesMatrix():
+        result = np.ones(Observer.game_state.board.ice.shape, dtype=int)
+        for maps in Observer.moves_map.values():
+            for map in maps:
+                result = np.where(map > 0, 0, result)
+        return result
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Проверить роботов и раздать задачи ------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def look(data:DataController, step:int, game_state:GameState, eyes:Eyes) -> list:
@@ -53,7 +62,6 @@ class Observer:
         Observer.next_step(step)
         Observer.eyes = eyes
         Observer.game_state = game_state
-        Observer.lock_map = Observer.eyes.neg(Observer.eyes.sum(['factories', 'units']))
         robots, tasks, has_robots = [], [], []
         matrix, resource = eyes.getFree(), game_state.board.ice + game_state.board.ore
         # --- обрабатываем случаи наезда на противников ---
@@ -65,7 +73,7 @@ class Observer:
             # --- задавит ли нас противник ---
             pos = getNextMovePos(unit)
             e_move = eyes.get('e_move')
-            # --- если может, то что-то делаем ---
+            # --- если можем, то что-то делаем ---
             if e_move[pos[0], pos[1]] >= ROBOT_TYPE.getType(unit.unit_type):
                 # --- если робот тяжелее нас или у нас нет шагов преследования - убегаем ---
                 if e_move[unit.pos[0], unit.pos[1]] > ROBOT_TYPE.getType(unit.unit_type) \
@@ -127,37 +135,55 @@ class Observer:
     def getLockMap(unit:Unit, task:int, map_type:int=MAP_TYPE.MOVE) -> np.ndarray:
         ''' Вернуть матрицу возможных ходов
             lock_map: 0 - lock, 1 - alloy '''
-        if task == ROBOT_TASK.WARRION or task == ROBOT_TASK.LEAVER:
-            return Observer.getWarriorLockMap(unit)
+        eyes = Observer.eyes
+        if map_type == MAP_TYPE.MOVE:
+            if task == ROBOT_TASK.WARRION or task == ROBOT_TASK.LEAVER:
+                return Observer.getWarriorLockMap(unit)
+            #elif task == ROBOT_TASK.CLEANER:
+            else:
+                eyes.clear('u_move')
+                eyes.update('u_move', unit.pos-1, getRad(unit.pos, as_matrix=True))
+                return eyes.neg(eyes.sum([eyes.mul(['units', 'u_move']), 'factories']))
+                #return eyes.neg(eyes.sum(['factories', 'units']))
         elif task == ROBOT_TASK.ICE_MINER or task == ROBOT_TASK.ORE_MINER:
-            if map_type == MAP_TYPE.FIND:
-                return Observer.findResource(RES.ice if task == ROBOT_TASK.ICE_MINER else RES.ore)
+            return Observer.findResource(RES.ice if task == ROBOT_TASK.ICE_MINER else RES.ore)
         elif task == ROBOT_TASK.CLEANER:
-            if map_type == MAP_TYPE.FIND:
-                return Observer.findRubble(unit)
-        return Observer.lock_map
-    
+            return Observer.findRubble(unit)
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Расчёт матрицы поиска ближайшего ресурса ------------------------------------------------------------
+    # ------- lock_map: 0 - lock, 1 - alloy ---------------------------------------------------------------------
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def findResource(res_type:int):
         eyes = Observer.eyes
         resource = Observer.game_state.board.ice if res_type == RES.ice else Observer.game_state.board.ore
         return eyes.neg(eyes.sum([eyes.getFree(1) - resource, 'units']))
-    
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Расчёт матрицы поиска ближайшего щебня --------------------------------------------------------------
+    # ------- lock_map: 0 - lock, 1 - alloy ---------------------------------------------------------------------
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def findRubble(unit:Unit):
         rubble_map = Observer.game_state.board.rubble
         ice_map = Observer.game_state.board.ice
         ore_map = Observer.game_state.board.ore
         eyes = Observer.eyes
-        return eyes.update(eyes.neg('units'), unit.pos, 1)*rubble_map*eyes.neg(ore_map+ice_map)
+        return eyes.update(eyes.neg('units'), unit.pos, 1)*rubble_map*eyes.neg(ore_map+ice_map)#*eyes.neg(Observer.getMovesMatrix())
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Расчёт матрицы возможных ходов для столкновения с противником -------------------------------------------------
+    # ------- lock_map: 0 - lock, 1 - alloy ---------------------------------------------------------------------
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def getWarriorLockMap(unit:Unit) -> np.ndarray:
-        Observer.eyes.clear(['u_move', 'u_energy'])
-        Observer.eyes.update('u_move', unit.pos-1, getRad(unit.pos, as_matrix=True)*ROBOT_TYPE.getType(unit.unit_type))
-        Observer.eyes.update('u_energy', unit.pos-1, getRad(unit.pos, as_matrix=True)*unit.power)
-        move_map = Observer.eyes.diff(['e_move', 'u_move'])
-        energy_map = Observer.eyes.diff(['e_energy', 'u_energy'])
+        eyes = Observer.eyes
+        eyes.update('units', getNextMovePos(unit), -1, collision=lambda a,b: a+b)
+        eyes.update('units', unit.pos, 1, collision=lambda a,b: a+b)
+        eyes.clear(['u_move', 'u_energy'])
+        eyes.update('u_move', unit.pos-1, getRad(unit.pos, as_matrix=True)*ROBOT_TYPE.getType(unit.unit_type))
+        eyes.update('u_energy', unit.pos-1, getRad(unit.pos, as_matrix=True)*unit.power)
+        move_map = eyes.diff(['e_move', 'u_move'])
+        energy_map = eyes.diff(['e_energy', 'u_energy']) # 
         move_map = np.where(move_map == 0, energy_map, move_map)
         move_map = np.where(move_map > 0, 1, 0)
         # --- выясняем куда мы можем шагнуть ---
-        locked_field = np.where(Observer.eyes.sum(['factories', 'units', move_map]) > 0, 0, 1)
+        locked_field = np.where(eyes.sum(['factories', 'units', move_map]) > 0, 0, 1)
         return locked_field
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Добавить робота в список возвращающихся роботов -----------------------------------------------------
@@ -174,11 +200,16 @@ class Observer:
         if unit_id in Observer.return_robots:
             Observer.return_robots.remove(unit_id)
         return True
-
-    def addMovesMap(unit_id:str, move_map:list):
-        Observer.moves_map[unit_id] = move_map
- 
-    
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Добавить матрицы ходов всех роботов -----------------------------------------------------------------
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    def addMovesMap(unit:Unit, move_map:list):
+        Observer.moves_map[unit.unit_id] = move_map
+        Observer.eyes.update('units', unit.pos, -1, collision=lambda a,b: a+b)
+        for map in move_map:
+            poses = np.argwhere(map == 1)
+            if len(poses) > 0:
+                Observer.eyes.update('units', poses[0], 1, collision=lambda a,b: a+b)
 # ===============================================================================================================
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ===============================================================================================================

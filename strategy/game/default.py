@@ -48,7 +48,7 @@ class GameStrategy:
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def look(self, game_state:GameState, player: str):
         ''' Обновить карту юнитов '''
-        self.eyes.clear(['factories', 'units', 'enemy', 'e_energy', 'e_move'])
+        self.eyes.clear(['factories', 'units', 'e_energy', 'e_move'])
         for pl in game_state.factories:
             if pl != player:
                 for factory in game_state.factories.get(pl).values():
@@ -57,13 +57,13 @@ class GameStrategy:
             for unit in game_state.units.get(pl).values():
                 unit_type = RobotData.TYPE.getType(unit.unit_type)
                 if pl == player:
-                    self.eyes.update('units', getNextMovePos(unit), unit_type)
+                    self.eyes.update('units', getNextMovePos(unit), 1, collision=lambda a,b: a+b)
                 else:
-                    self.eyes.update('enemy', getNextMovePos(unit), unit_type)
+                    self.eyes.update('e_energy', unit.pos, -unit.power, collision=lambda a,b: a+b)
                     xy = getRad(unit.pos)
                     for [x, y] in xy:
                         self.eyes.update('e_move', [x, y], unit_type, collision=lambda a,b: max(a,b))
-                        self.eyes.update('e_energy', [x, y], unit.power, collision=lambda a,b: max(a,b))
+                        self.eyes.update('e_energy', [x, y], unit.power, collision=lambda a,b: a+b)
         # лишайник
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Получить массив действий для фабрик -----------------------------------------------------------------

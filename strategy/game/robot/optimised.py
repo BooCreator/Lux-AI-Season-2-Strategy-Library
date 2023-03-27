@@ -35,7 +35,7 @@ class RobotStrategy:
                 # --- если робот вернулся от куда-то, то удаляем его из массива ---
                 Observer.removeReturn(unit.unit_id)
                 # --- устанавливаем базовую задачу робота ---
-                task = robot.robot_task
+                task = robot.robot_task if task == ROBOT_TASK.RETURN else task
                 # --- добавляем действия по выгрузке и взятии энергии ---
                 take_energy = min(unit.unit_cfg.BATTERY_CAPACITY - unit.power, item.factory.power)
                 actions.buildResourceUnload()
@@ -115,37 +115,28 @@ class RobotStrategy:
                 # --- выясняем куда мы можем шагнуть ---
                 locked_field = Observer.getLockMap(unit, task)
                 # --- ищем ближайшего врага ---
-                next_pos = findClosestTile(unit.pos, eyes.get('e_move')*locked_field)
-                # --- если можем шагнуть на врага - шагаем ---
-                if locked_field[next_pos[0], next_pos[1]] == 1 and robot.getHasPerpecution():
-                    m_actions, move_cost = findPathActions(unit, game_state, to=next_pos, lock_map=locked_field)
-                    robot.persecution += 1
-                # --- иначе - пытаемся убежать ---
-                else:
-                    # --- на врага не ходим ---
-                    locked_field[next_pos[0], next_pos[1]] = 0
-                    # --- строим маршрут побега ---
+                next_pos = findClosestTile(unit.pos, eyes.get('e_move')*locked_field, dec_is_none=False)
+                if next_pos is None:
+                    # --- если не нашли, то пытаемся пойти хоть куда-то ---
                     next_pos = findClosestTile(unit.pos, locked_field)
-                    m_actions, move_cost = findPathActions(unit, game_state, to=next_pos, lock_map=locked_field)
+                # --- если можем шагнуть на врага - шагаем ---
+                m_actions, move_cost, move_map = findPathActions(unit, game_state, to=next_pos, lock_map=locked_field, get_move_map=True)
                 # --- делаем один шаг, если можем сделать шаг ---
                 if len(m_actions) > 0:
-                    actions.extend(m_actions, move_cost)
+                    actions.extend(m_actions, move_cost, move_map)
             # --- если робот не на фабрике и он - убегатель ---
             elif task == ROBOT_TASK.LEAVER:
                 # --- выясняем куда мы можем шагнуть ---
                 locked_field = Observer.getLockMap(unit, task)
-                # --- ищем ближайшего врага ---
-                next_pos = findClosestTile(unit.pos, eyes.get('e_move')*locked_field)
-                # --- на врага не ходим ---
-                locked_field[next_pos[0], next_pos[1]] = 0
-                # --- строим маршрут побега ---
+                # --- смотрим куда можем пойти ---
                 next_pos = findClosestTile(unit.pos, locked_field)
-                m_actions, move_cost = findPathActions(unit, game_state, to=next_pos, lock_map=locked_field)
+                # --- строим маршрут побега в сторону базы ---
+                m_actions, move_cost, move_map = findPathActions(unit, game_state, to=item.getNeareastPoint(unit.pos), lock_map=locked_field, get_move_map=True)
                 # --- делаем один шаг, если можем сделать шаг ---
                 if len(m_actions) > 0:
-                    actions.extend(m_actions, move_cost)
+                    actions.extend(m_actions[:1], move_cost[:1], move_map=np.where(move_map==1, 1, 0))
             # если действий для робота нет - действия не изменяем
             if not actions.isFree():
                 result[unit.unit_id] = actions.getActions()
-                Observer.addMovesMap(unit.unit_id, actions.getMoveMap())
+                Observer.addMovesMap(unit, actions.getMoveMap())
         return result
