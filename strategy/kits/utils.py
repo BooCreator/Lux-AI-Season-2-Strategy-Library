@@ -366,10 +366,10 @@ class Path:
 def findPath(dec:np.ndarray, to:np.ndarray, lock_map:np.ndarray=None, steps:int=20, old=False):
     ''' Получить маршрут движения для робота по навправлениям
         * [4 (left), 1 (up), 1 (up), 2 (right), ...] '''
-    if dec[0] == to[0] and dec[1] == to[1]: return []
+    if dec[0] == to[0] and dec[1] == to[1]: return ([], []) if not old else ([])
     field = lock_map.copy() if lock_map is not None else np.ones((env.map_size, env.map_size), dtype=int)
     field[dec[0], dec[1]] = 0
-    result, prev_step = [], dec
+    result, points, prev_step = [], [], dec
 
     path = Path(dec.copy(), field, steps)
 
@@ -378,10 +378,11 @@ def findPath(dec:np.ndarray, to:np.ndarray, lock_map:np.ndarray=None, steps:int=
             d = direction_to(prev_step, step)
             if len(result) > 0 and result[-1][0] == d: result[-1][2] += 1
             else: result.append([d, step, 1])
+            points.append(step)
         else:
             result.append({'d': direction_to(prev_step, step), 'loc': step})
         prev_step = step
-    return result
+    return (points, result) if not old else (result)
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ----- Получить список действий движения со стоимостью по энергии ------------------------------------------
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -390,11 +391,21 @@ def findPathActions(unit:Unit, game_state:GameState, *, dec:np.ndarray=None, to:
     ''' Получить список действий движения со стоимостью по энергии 
         * lock_map: 0 - lock, 1 - alloy '''
     actions, move_cost, spos = [], [], unit.pos
-    move_map = np.zeros(lock_map.shape, dtype=int)
-    for [d, point, n] in findPath(spos if dec is None else dec, spos if to is None else to, lock_map, steps=steps):
-        move_map[point] = 1
+    lock_map = lock_map if lock_map is not None else np.ones(game_state.board.ice.shape, dtype=int)
+    points, moves = findPath(spos if dec is None else dec, spos if to is None else to, lock_map, steps=steps)
+
+    if get_move_map:
+        move_map = np.zeros(lock_map.shape, dtype=int)
+        for i, point in enumerate(points):
+            move_map[point[0], point[1]] = i+1
+
+    for [d, point, n] in moves:
+        cost = 0
         unit.pos = point
         actions.append(unit.move(d, repeat=0, n=n))
-        move_cost.append(unit.move_cost(game_state, d) or 0)
+        for i in range(n):
+            cost += unit.move_cost(game_state, d) or 0
+        move_cost.append(cost)
+
     unit.pos = spos
     return (actions, move_cost, move_map) if get_move_map else (actions, move_cost)

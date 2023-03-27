@@ -22,10 +22,10 @@ class ActionsFabric:
     resource_gain =  {'full': 0, 'last': 0}
     rubble_gain = {'full': 0, 'last': 0}
     action_cost = 1
-    move_map = None
+    move_map = []
+    steps = 0
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def __init__(self, game_state:GameState, unit:RobotData, max_actions:int=20) -> None:
-        self.move_map = np.zeros(game_state.board.ice.shape, dtype=int)
         self.action_cost = unit.robot.action_queue_cost(game_state)
         self.resource_gain = {'full': 0, 'last': 0}
         self.rubble_gain = {'full': 0, 'last': 0}
@@ -34,8 +34,10 @@ class ActionsFabric:
         self.game_state = game_state
         self.free_len = max_actions
         self.last_energy_cost = 0
+        self.move_map = []
         self.actions = []
         self.unit = unit
+        self.steps = 0
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Проверить, можно ли добавить ещё ходов --------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -58,6 +60,7 @@ class ActionsFabric:
         if not self.check(): return False
         for res, count in zip(*self.unit.getResource()):
             self.actions.append(self.unit.robot.transfer(0, res, count))
+            self.steps += 1
         return self.trimActions()
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Добавить действие "взять энергию" ----------------------------------------------------------------------------
@@ -68,6 +71,7 @@ class ActionsFabric:
         if count > self.action_cost:
             self.actions.append(self.unit.robot.pickup(RES.energy, count))
             self.energy_cost -= count
+            self.steps += 1
             return True
         return False
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -81,10 +85,11 @@ class ActionsFabric:
         m_actions, move_cost, move_map = findPathActions(self.unit.robot, self.game_state, to=to, steps=self.max_actions-len(self.actions)+3,
                                                dec=dec, lock_map=lock_map, get_move_map=True)
         if len(m_actions) > 0:
-            self.move_map += move_map
+            self.move_map.append(np.where(move_map > 0, move_map + self.steps, 0))
             self.actions.extend(m_actions[:self.max_actions-len(self.actions)])
             self.energy_cost += sum(move_cost[:self.max_actions-len(self.actions)])
             self.last_energy_cost = sum(move_cost[:self.max_actions-len(self.actions)])
+            self.steps += np.max(move_map)
             return self.trimActions()
         return False
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -101,6 +106,7 @@ class ActionsFabric:
             self.resource_gain['last'] = dig_gain
             self.energy_cost += dig_cost
             self.last_energy_cost = dig_cost
+            self.steps += dig_count
             return True
         return False
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -117,17 +123,21 @@ class ActionsFabric:
             self.rubble_gain['last'] = dig_gain
             self.energy_cost += dig_cost
             self.last_energy_cost = dig_cost
+            self.steps += dig_count
             return True
         return False
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Добавить действия из вне ----------------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def extend(self, actions:list, energy_cost:int=0) -> bool:
+    def extend(self, actions:list, energy_cost:int=0, move_map:np.ndarray=None) -> bool:
         ''' Добавить действия из вне '''
         if not self.check(): return False
         if type(energy_cost) is int: self.energy_cost += energy_cost
         elif type(energy_cost) is list: self.energy_cost += sum(energy_cost[:self.max_actions-len(self.actions)])
         self.actions.extend(actions[:self.max_actions-len(self.actions)])
+        if move_map is not None:
+            self.move_map.append(np.where(move_map > 0, move_map + self.steps, 0))
+            self.steps += np.max(move_map)
         return self.trimActions()
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Добавить действия "передать ресурсы" ----------------------------------------------------------------
@@ -149,6 +159,7 @@ class ActionsFabric:
         if count < count_min: 
             return False
         self.actions.append(self.unit.robot.transfer(direction_to(self.unit.robot.pos, to), res_id, count))
+        self.steps += 1
         return self.trimActions()
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Вернуть действия в виде списка ----------------------------------------------------------------------
