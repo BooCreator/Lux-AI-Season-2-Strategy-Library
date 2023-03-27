@@ -1,3 +1,4 @@
+from collections import defaultdict
 import numpy as np
 from lux.unit import Unit
 
@@ -23,24 +24,36 @@ class MAP_TYPE:
 class Observer:
     ''' Класс-обозреватель состояния игры '''
     return_robots = []
-    moves_map = []
+    moves_map = defaultdict(list)
     lock_map = np.ones((48, 48), dtype=int)
     eyes:Eyes = None
     game_state:GameState = None
+    step:int = 0
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    # ----- Рассчитать матрицу ходов ----------------------------------------------------------------------------
+    # ----- Правим матрицу ходов для каждого шага ---------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def calcLockMap(eyes:Eyes):
-        Observer.moves_map = []
-        Observer.lock_map = eyes.neg(eyes.sum(['factories', 'units']))
+    def next_step(step:int):
+        r = step - Observer.step
+        remove = []
+        for key, maps in Observer.moves_map.items():
+            for i, map in enumerate(maps):
+                map = np.where((map-r) < 0, 0, map)
+                if np.max(map) <= 0:
+                    remove.append((key, i))
+        for (key, i) in remove:
+            del Observer.moves_map[key][i]
+            if len(Observer.moves_map[key]) == 0:
+                del Observer.moves_map[key]
+        Observer.step = step
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Проверить роботов и раздать задачи ------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def look(data:DataController, step:int, game_state:GameState, eyes:Eyes) -> list:
         ''' Проверить роботов и раздать задачи '''
+        Observer.next_step(step)
         Observer.eyes = eyes
         Observer.game_state = game_state
-        Observer.calcLockMap(eyes)
+        Observer.lock_map = Observer.eyes.neg(Observer.eyes.sum(['factories', 'units']))
         robots, tasks, has_robots = [], [], []
         matrix, resource = eyes.getFree(), game_state.board.ice + game_state.board.ore
         # --- обрабатываем случаи наезда на противников ---
@@ -135,6 +148,17 @@ class Observer:
         ore_map = Observer.game_state.board.ore
         eyes = Observer.eyes
         return eyes.update(eyes.neg('units'), unit.pos, 1)*rubble_map*eyes.neg(ore_map+ice_map)
+    def getWarriorLockMap(unit:Unit) -> np.ndarray:
+        Observer.eyes.clear(['u_move', 'u_energy'])
+        Observer.eyes.update('u_move', unit.pos-1, getRad(unit.pos, as_matrix=True)*ROBOT_TYPE.getType(unit.unit_type))
+        Observer.eyes.update('u_energy', unit.pos-1, getRad(unit.pos, as_matrix=True)*unit.power)
+        move_map = Observer.eyes.diff(['e_move', 'u_move'])
+        energy_map = Observer.eyes.diff(['e_energy', 'u_energy'])
+        move_map = np.where(move_map == 0, energy_map, move_map)
+        move_map = np.where(move_map > 0, 1, 0)
+        # --- выясняем куда мы можем шагнуть ---
+        locked_field = np.where(Observer.eyes.sum(['factories', 'units', move_map]) > 0, 0, 1)
+        return locked_field
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Добавить робота в список возвращающихся роботов -----------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -151,20 +175,10 @@ class Observer:
             Observer.return_robots.remove(unit_id)
         return True
 
-    def addMovesMap(move_map:list):
-        Observer.moves_map.append(move_map)
+    def addMovesMap(unit_id:str, move_map:list):
+        Observer.moves_map[unit_id] = move_map
  
-    def getWarriorLockMap(unit:Unit) -> np.ndarray:
-        Observer.eyes.clear(['u_move', 'u_energy'])
-        Observer.eyes.update('u_move', unit.pos-1, getRad(unit.pos, as_matrix=True)*ROBOT_TYPE.getType(unit.unit_type))
-        Observer.eyes.update('u_energy', unit.pos-1, getRad(unit.pos, as_matrix=True)*unit.power)
-        move_map = Observer.eyes.diff(['e_move', 'u_move'])
-        energy_map = Observer.eyes.diff(['e_energy', 'u_energy'])
-        move_map = np.where(move_map == 0, energy_map, move_map)
-        move_map = np.where(move_map > 0, 1, 0)
-        # --- выясняем куда мы можем шагнуть ---
-        locked_field = np.where(Observer.eyes.sum(['factories', 'units', move_map]) > 0, 0, 1)
-        return locked_field
+    
 # ===============================================================================================================
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ===============================================================================================================

@@ -147,5 +147,5 @@ class RobotStrategy:
             # если действий для робота нет - действия не изменяем
             if not actions.isFree():
                 result[unit.unit_id] = actions.getActions()
-                Observer.addMovesMap(actions.getMoveMap())
+                Observer.addMovesMap(unit.unit_id, actions.getMoveMap())
         return result
