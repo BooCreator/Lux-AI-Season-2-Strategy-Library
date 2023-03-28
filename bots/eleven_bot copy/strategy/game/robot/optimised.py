@@ -30,10 +30,8 @@ class RobotStrategy:
             unit, item = robot.robot, robot.factory
             actions = ActionsFabric(game_state, robot)
            
-            if task == ROBOT_TASK.WALKER:
-                task = robot.robot_task
             # --- если робот находится на своей фабрике ---
-            elif robot.on_position(item.factory.pos, size=3):
+            if robot.on_position(item.factory.pos, size=3):
                 # --- если робот вернулся от куда-то, то удаляем его из массива ---
                 Observer.removeReturn(unit.unit_id)
                 # --- устанавливаем базовую задачу робота ---
@@ -50,9 +48,7 @@ class RobotStrategy:
 
             # --- если робот не на фабрике и он - копатель ---
             elif task == ROBOT_TASK.ICE_MINER or task == ROBOT_TASK.ORE_MINER:
-                eyes.update('units', unit.pos, -1, collision=lambda a,b: a+b)
-                resource = (ice_map if task == ROBOT_TASK.ICE_MINER else ore_map)*eyes.neg('units')
-                eyes.update('units', unit.pos, 1, collision=lambda a,b: a+b)
+                resource = ice_map if task == ROBOT_TASK.ICE_MINER else ore_map
                 # --- если робот на блоке с ресурсом ---
                 if robot.onResourcePoint(resource):
                     # --- строим маршрут к фабрике ---
@@ -93,6 +89,7 @@ class RobotStrategy:
                     # --- если не можем, то идём на базу ---
                     else:
                         actions.buildMove(item.getNeareastPoint(unit.pos), True, lock_map=Observer.getLockMap(unit, task))
+                        Observer.addReturn(unit.unit_id)
                         break
             # --- если робот не на фабрике и он - курьер ---
             #elif task == ROBOT_TASK.COURIER:
@@ -139,7 +136,7 @@ class RobotStrategy:
                 if len(m_actions) > 0:
                     actions.extend(m_actions[:1], move_cost[:1], move_map=np.where(move_map==1, 1, 0))
             # если действий для робота нет - действия не изменяем
-            if not actions.isFree() or len(unit.action_queue) > 0:
+            if not actions.isFree():
                 result[unit.unit_id] = actions.getActions()
                 Observer.addMovesMap(unit, actions.getMoveMap())
         return result

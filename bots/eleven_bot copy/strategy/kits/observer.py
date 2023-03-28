@@ -118,7 +118,7 @@ class Observer:
                     # --- если да, то пересчитываем маршрут ---
                     if matrix[pos[0], pos[1]] > 0:
                         has_robots.append(unit_id)
-                        tasks.append(ROBOT_TASK.WALKER)
+                        tasks.append(robot_task)
                         robots.append(robot)
                     else:
                         matrix[pos[0], pos[1]] = 1
@@ -166,8 +166,7 @@ class Observer:
         ice_map = Observer.game_state.board.ice
         ore_map = Observer.game_state.board.ore
         eyes = Observer.eyes
-        eyes.update('units', getNextMovePos(unit), -1, collision=lambda a,b: a+b)
-        return eyes.neg('units')*rubble_map*eyes.neg(ore_map+ice_map)#*eyes.neg(Observer.getMovesMatrix())
+        return eyes.update(eyes.neg('units'), unit.pos, 1)*rubble_map*eyes.neg(ore_map+ice_map)#*eyes.neg(Observer.getMovesMatrix())
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Расчёт матрицы возможных ходов для столкновения с противником -------------------------------------------------
     # ------- lock_map: 0 - lock, 1 - alloy ---------------------------------------------------------------------
@@ -191,8 +190,7 @@ class Observer:
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def addReturn(unit_id:str) -> bool:
         ''' Добавить робота в список возвращающихся роботов '''
-        if unit_id not in Observer.return_robots:
-            Observer.return_robots.append(unit_id)
+        Observer.return_robots.append(unit_id)
         return True
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Удалить робота в список возвращающихся роботов ------------------------------------------------------
