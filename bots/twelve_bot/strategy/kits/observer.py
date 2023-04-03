@@ -59,7 +59,7 @@ class Observer:
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Проверить роботов и раздать задачи ------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    #@time_wrapper('obs_look', 6)
+    @time_wrapper('obs_look', 6)
     def look(data:DataController, step:int, game_state:GameState, eyes:Eyes) -> list:
         ''' Проверить роботов и раздать задачи '''
         Observer.next_step(step)
@@ -73,8 +73,16 @@ class Observer:
             robot: RobotData
             unit = robot.robot
             item = robot.factory.factory
-            # --- задавит ли нас противник ---
             pos = getNextMovePos(unit)
+            # --- есть ли у робота энергия чтобы сделать шаг ---
+            if getNextMoveEnergyCost(game_state, unit) >= unit.power:
+                eyes.update('units', unit.pos, 1, collision=lambda a,b: a+b)
+                eyes.update('units', pos, -1, collision=lambda a,b: a+b)
+                tasks.append(ROBOT_TASK.RECHARGE)
+                has_robots.append(unit_id)
+                robots.append(robot)
+                continue
+            # --- задавит ли нас противник ---
             e_move = eyes.get('e_move')
             # --- если можем, то что-то делаем ---
             if e_move[pos[0], pos[1]] >= ROBOT_TYPE.getType(unit.unit_type):

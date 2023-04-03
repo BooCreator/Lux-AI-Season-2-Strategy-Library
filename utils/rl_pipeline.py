@@ -16,7 +16,7 @@ from strategy.game.robot.optimised import RobotStrategy
 def get_data(gs:GameState, pid:int):
     # фичи карты
     ice, ore, rubble, __ = getResFromState(gs)
-    result = [ice, ore, rubble]
+    result = [ice, ore, rubble] # лишайник,
 
     # фичи фабрик
     feyes = Eyes().clear(['factories', 'f_ice', 'f_ore', 'f_water', 'f_metal', 'f_energy', 'f_water_cost'])
@@ -30,6 +30,7 @@ def get_data(gs:GameState, pid:int):
         feyes.update('f_metal',      factory.pos, factory.cargo.metal)
         feyes.update('f_energy',     factory.pos, factory.power)
         feyes.update('f_water_cost', factory.pos, factory.water_cost(gs))
+        # feyes.update('f_strain', factory.pos, factory.water_cost(gs))
     
     # статические фичи роботов
     reyes = Eyes().clear(['robots', 'u_move', 'r_ice', 'r_ore', 'r_water', 'r_metal', 'r_energy', 'r_actions', 'r_actions_cost'])
@@ -37,7 +38,7 @@ def get_data(gs:GameState, pid:int):
         unit: Unit
         unit_type = ROBOT_TYPE.getType(unit.unit_type)
         reyes.update('robots',         unit.pos, 1 if unit.team_id == pid else -1)
-        reyes.update('u_move',         getNextMovePos(unit), 1 if unit.team_id == pid else -1)
+        #reyes.update('u_move',         getNextMovePos(unit), 1 if unit.team_id == pid else -1) # сделать сложение
         reyes.update('r_ice',          unit.pos, unit.cargo.ice)
         reyes.update('r_ore',          unit.pos, unit.cargo.ore)
         reyes.update('r_water',        unit.pos, unit.cargo.water)
@@ -86,3 +87,4 @@ def rl_interact(url:str):
             # preds = RL.get_preds()
             # action[f'player_{pl}'] = get_actions(preds, state.env_cfg, gs, eyes)
         env.step(action)
+        # -----

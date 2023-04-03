@@ -1,4 +1,5 @@
 import numpy as np
+from strategy.kits.robot_struct import ROBOT_TYPE
 
 
 from strategy.kits.utils import *
@@ -64,7 +65,7 @@ class ActionsFabric:
             self.steps += 1
         return self.trimActions()
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    # ----- Добавить действие "взять энергию" ----------------------------------------------------------------------------
+    # ----- Добавить действие "взять энергию" -------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     #@time_wrapper('af_buildTakeEnergy', 6)
     def buildTakeEnergy(self, count:int) -> bool:
@@ -74,6 +75,19 @@ class ActionsFabric:
             self.actions.append(self.unit.robot.pickup(RES.energy, count))
             self.energy_cost -= count
             self.steps += 1
+            return True
+        return False
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Добавить действие "копить энергию" ------------------------------------------------------------------
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    #@time_wrapper('af_buildReharge', 6)
+    def buildReharge(self, count:int) -> bool:
+        ''' Добавить действие "копить энергию" '''
+        if not self.check(): return False
+        if count > self.action_cost:
+            self.actions.append(self.unit.robot.recharge(RES.energy, count))
+            self.energy_cost -= count
+            self.steps += count if self.unit.isType(ROBOT_TYPE.LIGHT) else ceil(count/10)
             return True
         return False
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =

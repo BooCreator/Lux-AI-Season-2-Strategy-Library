@@ -20,8 +20,10 @@ class DataController:
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def __init__(self, env_cfg:EnvConfig) -> None:
         self.free_robots = []
+        self.e_factories = {}
         self.factories = {}
         self.robots = {}
+        self.player = ''
         self.eyes = Eyes(env_cfg.map_size)
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Обновить состояние стратегии (фабрики, роботы) ------------------------------------------------------
@@ -89,7 +91,7 @@ class DataController:
                             self.eyes.update('factories', factory.pos-1, np.ones((3,3), dtype=int), check_keys=False)
                     for unit_id in self.e_factories.copy().keys():
                         if unit_id not in game_state.factories[pl].keys():
-                            self.eyes.update('factories', self.e_factories.get(unit_id)-1, np.zeros((3,3), dtype=int), check_keys=False)
+                            self.eyes.update('factories', self.e_factories.get(unit_id)-1, np.zeros((3,3), dtype=int))
                             del self.e_factories[unit_id]
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Проверить роботов в данных стратегии ----------------------------------------------------------------

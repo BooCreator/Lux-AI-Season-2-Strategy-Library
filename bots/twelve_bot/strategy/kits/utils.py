@@ -104,6 +104,16 @@ def getNextMovePos(unit:Unit) -> np.ndarray:
             return result + move_deltas[action[1]]
     return result
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+# ----- Получить цену в энергии шага робота -----------------------------------------------------------------
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+def getNextMoveEnergyCost(gs:GameState, unit:Unit) -> int:
+    result = 0
+    if len(unit.action_queue) > 0:
+        action = unit.action_queue[0]
+        if action[0] == 0:
+            return unit.move_cost(gs, action[1])
+    return result
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ----- Вернуть матрицу ходов робота ------------------------------------------------------------------------
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 def getMoveMap(unit:Unit, shape:tuple=(48,48)) -> np.ndarray:

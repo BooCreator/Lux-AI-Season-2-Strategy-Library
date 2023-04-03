@@ -21,6 +21,7 @@ class ROBOT_TASK:
     DESTROYER  = 7 # уничтожает лишайник
     CARRIER    = 8 # делает дорожки к ресурсу
     WALKER     = 9 # задача - отойти
+    RECHARGE   = 10 # если не хватает энергии, чтобы сделать шаг
     def getTask(task_name:str) -> int:
         if type(task_name) is int: return task_name 
         return -1
