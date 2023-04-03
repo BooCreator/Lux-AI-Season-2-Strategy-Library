@@ -24,11 +24,11 @@ class RobotStrategy:
     #@time_wrapper('last_getRobotActions', 5)
     def getActions(self, step:int, env_cfg:EnvConfig, game_state:GameState, data:DataController, **kwargs)->dict:
         ''' Получить список действий для роботов '''
-        eyes:Eyes = kwargs.get('eyes')
-        if eyes is None: raise Exception('eyes not found in args')
+        eyes = data.eyes
         robot, task = Observer.look(data, step, game_state, eyes)
         return RobotStrategy.getRLActions(robot, task, env_cfg, game_state, eyes)
     
+    #@time_wrapper('getRLActions', 5)
     def getRLActions(robots, tasks, env_cfg:EnvConfig, game_state:GameState, eyes:Eyes):
         Observer.eyes = eyes
         result, ice_map, ore_map, rubble_map = {}, game_state.board.ice, game_state.board.ore, game_state.board.rubble

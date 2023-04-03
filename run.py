@@ -9,7 +9,7 @@ bots = [
 ]
 
 #Lux.play(bots, seed=7753391)
-Lux.tornament('bots/')
+#Lux.tornament('bots/')
 #zip_name = Lux.buildSubmission('eleven_bot') # zip_name == 'example_2023-02-09_15-38-21.tar.gz'
 #Lux.sendSubmission(zip_name, 'third bot')
 
@@ -59,7 +59,7 @@ agents = {player: Agent(player, env_cfg, strategy=ddf) for player in Lux.env.age
 #}
 
 log = Log(video=False, frames=False, step_time=False, obs_time=False)
-#Lux.interact(agents, None, 100, seed=7753391, log=log.getLog(), show_steps=True)
+Lux.interact(agents, None, 100, seed=7753391, log=log.getLog(), show_steps=True)
 
 
 #rl_interact(f'D:\\ML\\Lux AI Season 2\\replays\\json\\{46215591}.json')
