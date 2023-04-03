@@ -19,13 +19,20 @@ from lux.kit import EnvConfig
 # ----- Номера ресурсов для удобства (в Lux не указаны)
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 class RobotStrategy:
-    ''' Стратегия с наблюдателем ''' 
+    ''' Стратегия с наблюдателем '''
+
+    #@time_wrapper('last_getRobotActions', 5)
     def getActions(self, step:int, env_cfg:EnvConfig, game_state:GameState, data:DataController, **kwargs)->dict:
         ''' Получить список действий для роботов '''
         eyes:Eyes = kwargs.get('eyes')
         if eyes is None: raise Exception('eyes not found in args')
+        robot, task = Observer.look(data, step, game_state, eyes)
+        return RobotStrategy.getRLActions(robot, task, env_cfg, game_state, eyes)
+    
+    def getRLActions(robots, tasks, env_cfg:EnvConfig, game_state:GameState, eyes:Eyes):
+        Observer.eyes = eyes
         result, ice_map, ore_map, rubble_map = {}, game_state.board.ice, game_state.board.ore, game_state.board.rubble
-        for robot, task in zip(*Observer.look(data, step, game_state, eyes)):
+        for robot, task in zip(robots, tasks):
             robot: RobotData
             unit, item = robot.robot, robot.factory
             actions = ActionsFabric(game_state, robot)
@@ -115,15 +122,22 @@ class RobotStrategy:
             #            Observer.addReturn(unit.unit_id)
             # --- если робот не на фабрике и он - давитель ---
             elif task == ROBOT_TASK.WARRION:
-                # --- выясняем куда мы можем шагнуть ---
+                 # --- выясняем куда мы можем шагнуть ---
                 locked_field = Observer.getLockMap(unit, task)
+                # --- строим маршрут к фабрике ---
+                m_actions, move_cost, move_map = findPathActions(unit, game_state, to=item.getNeareastPoint(unit.pos), lock_map=locked_field, get_move_map=True)
                 # --- ищем ближайшего врага ---
                 next_pos = findClosestTile(unit.pos, eyes.get('e_move')*locked_field, dec_is_none=False)
                 if next_pos is None:
                     # --- если не нашли, то пытаемся пойти хоть куда-то ---
                     next_pos = findClosestTile(unit.pos, locked_field)
                 # --- если можем шагнуть на врага - шагаем ---
-                m_actions, move_cost, move_map = findPathActions(unit, game_state, to=next_pos, lock_map=locked_field, get_move_map=True)
+                e_actions, e_move_cost, e_move_map = findPathActions(unit, game_state, to=next_pos, lock_map=locked_field, get_move_map=True)
+                # --- если энергии хватит ещё и вернуться домой, то давим ---
+                if unit.power - (sum(move_cost) + sum(e_move_cost)) > 1:
+                    m_actions = e_actions
+                    move_cost = e_move_cost
+                    move_map  = e_move_map
                 # --- делаем один шаг, если можем сделать шаг ---
                 if len(m_actions) > 0:
                     actions.extend(m_actions, move_cost, move_map)

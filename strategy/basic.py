@@ -11,6 +11,7 @@ class DefaultStrategy:
     early: EarlyStrategy = None
     game: GameStrategy = None
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    #@time_wrapper('basic_init', 3)
     def __init__(self, env_cfg, early:EarlyStrategy=None, game:GameStrategy=None) -> None:
         self.early = EarlyStrategy(env_cfg) if early is None else (early(env_cfg) if type(early) is type else early)
         self.game  = GameStrategy(env_cfg) if game is None else (game(env_cfg) if type(game) is type else game)
@@ -18,6 +19,7 @@ class DefaultStrategy:
     # ----- Обновить состояние стратегии ------------------------------------------------------------------------
     # ------- Можно изменять стратегии в процессе игры ----------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    #@time_wrapper('basic_update', 3)
     def update(self, game_state, step, early=False):
         ''' Обновить состояние стратегии '''
         strategy = self.early if early else self.game
@@ -28,19 +30,20 @@ class DefaultStrategy:
     # ------- Если ставка > 0, то ставим на первый ход. Ресурсы тратятся ----------------------------------------
     # ------- Если ставка < 0, то ставим на второй ход. Ресурсы тратятся ----------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    #@time_wrapper('basic_bid', 3)
     def getBid(self) -> dict:
         return self.early.getBid()
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Получить позицию расположения фабрики ---------------------------------------------------------------
     # ------- Возвращаем массив из двух значений ----------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    #@time_wrapper('getSpawnPos')
+    #@time_wrapper('basic_getSpawnPos', 3)
     def getSpawnPos(self) -> dict:
         return self.early.getSpawnPos()
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Получить массив действий для фабрик -----------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    #@time_wrapper('getActions')
+    #@time_wrapper('basic_getActions', 3)
     def getActions(self) -> dict:
         actions = dict()
         # получаем список действий для фабрик

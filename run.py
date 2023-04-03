@@ -1,20 +1,16 @@
 from utils.competition import Log, LuxAI as Lux
+from utils.rl_pipeline import rl_interact
 
 #Lux.loadCompetition(rw=True) # if not exists - load
 
 bots = [
-    #{'file':'./bots/example/main.py', 'name':'example'},
-    #{'file':'./bots/second_bot/main.py', 'name':'second'},
-    #{'file':'./bots/five_bot/main.py', 'name':'five'},
-    #{'file':'./bots/six_bot/main.py', 'name':'six'},
-    #{'file':'./bots/seven_bot/main.py', 'name':'seven'},
-    #{'file':'./bots/eight_bot/main.py', 'name':'eight'},
-    {'file':'./bots/nine_bot/main.py', 'name':'nine'},
+    {'file':'./bots/ten_bot/main.py', 'name':'ten'},
+    {'file':'./bots/eleven_bot/main.py', 'name':'eleven'},
 ]
 
-#Lux.play(bots, seed=None)
-#Lux.tornament('bots/')
-#zip_name = Lux.buildSubmission('nine_bot') # zip_name == 'example_2023-02-09_15-38-21.tar.gz'
+#Lux.play(bots, seed=7753391)
+Lux.tornament('bots/')
+#zip_name = Lux.buildSubmission('eleven_bot') # zip_name == 'example_2023-02-09_15-38-21.tar.gz'
 #Lux.sendSubmission(zip_name, 'third bot')
 
 from test_env.agent import Agent
@@ -24,6 +20,7 @@ from strategy.basic import DefaultStrategy
 # ----- early -----
 from strategy.early.default import EarlyStrategy as DefaultEarly
 from strategy.early.from_kaggle_strategy import EarlyStrategy as OptimisedEarly
+from strategy.early.best_strategy import EarlyStrategy as BestEarly
 # ----- game -----
 from strategy.game.default import GameStrategy as DefaultGame
 from strategy.game.cautious import GameStrategy as CautiousStrategy
@@ -32,14 +29,16 @@ from strategy.game.robot.cautious import RobotStrategy as CautiousRobots
 from strategy.game.robot.curious import RobotStrategy as CuriousRobots
 from strategy.game.robot.optimised import RobotStrategy as OptimisedRobots
 # ----- factory -----
+from strategy.game.factory.default import FactoryStrategy as DefaultFactoryStrategy
 from strategy.game.factory.mean_water import FactoryStrategy as MeanWaterStrategy
+from strategy.game.factory.for_best import FactoryStrategy as ForBestFactoryStrategy
 
 ddf = {
     'basic': DefaultStrategy,
-    'early': OptimisedEarly,
+    'early': BestEarly,
     'game': DefaultGame,
     'robot': OptimisedRobots,
-    'factory': MeanWaterStrategy
+    'factory': ForBestFactoryStrategy
 }
 
 Lux.render_log_count=10
@@ -52,8 +51,15 @@ agents = {player: Agent(player, env_cfg, strategy=ddf) for player in Lux.env.age
 #}
 #agents = {player: Agent(player, env, game=CautiousStrategy) for player in Lux.env.agents}
 
-#from bots.seven_bot.agent import Agent
-#agents = {player: Agent(player, env) for player in Lux.env.agents}
+#from bots.ten_bot.agent import Agent as AgentTen
+#from bots.eleven_bot.agent import Agent as AgentEleven
+#agents = {
+#    'player_0': AgentTen('player_0', env_cfg),
+#    'player_1': AgentEleven('player_1', env_cfg)
+#}
 
 log = Log(video=False, frames=False, step_time=False, obs_time=False)
-Lux.interact(agents, None, 100, seed=156, log=log.getLog(), show_steps=True)
+#Lux.interact(agents, None, 100, seed=7753391, log=log.getLog(), show_steps=True)
+
+
+#rl_interact(f'D:\\ML\\Lux AI Season 2\\replays\\json\\{46215591}.json')

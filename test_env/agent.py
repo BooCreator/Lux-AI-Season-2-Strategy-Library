@@ -1,4 +1,5 @@
 from lux.utils import my_turn_to_place_factory
+from strategy.kits.decorators import time_wrapper
 from strategy.kits.lux import obs_to_game_state
 from lux.config import EnvConfig
 import numpy as np
@@ -8,6 +9,7 @@ from strategy.basic import DefaultStrategy
 # ----- early -----
 from strategy.early.default import EarlyStrategy as DefaultEarly
 from strategy.early.from_kaggle_strategy import EarlyStrategy as OptimisedEarly
+from strategy.early.best_strategy import EarlyStrategy as BestEarly
 # ----- game -----
 from strategy.game.default import GameStrategy as DefaultGame
 from strategy.game.cautious import GameStrategy as CautiousStrategy
@@ -45,6 +47,7 @@ class Agent():
     ''' Агент для игры '''
     strategy: DefaultStrategy = None # стратегия игры, общая (включающая в себя early и game стратегии)
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    #@time_wrapper('agent_init', 1)
     def __init__(self, player:str, env_cfg:EnvConfig, *, strategy:dict=None) -> None:
         self.player = player
         self.opp_player = "player_1" if self.player == "player_0" else "player_0"
@@ -55,6 +58,7 @@ class Agent():
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Фаза расстановки фабрик -----------------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    #@time_wrapper('early_setup', 1)
     def early_setup(self, step: int, obs, remainingOverageTime: int = 60):
         if step == 0: return self.strategy.getBid()
         else:
@@ -66,6 +70,7 @@ class Agent():
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Фаза игры -------------------------------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    #@time_wrapper('act', 1)
     def act(self, step: int, obs, remainingOverageTime: int = 60):
         game_state = obs_to_game_state(step, self.env_cfg, obs)
         self.strategy.update(game_state, step)

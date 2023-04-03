@@ -274,6 +274,27 @@ class Eyes:
             if table.shape[0] >= index[0] and table.shape[1] >= index[1]:
                 return table[index[0], index[1]] == value
         return False
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Объединить данных двух классов ----------------------------------------------------------------------
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    def extend(self, eyes, rw:bool=True):
+        for key, value in eyes.data.items():
+            if rw or key not in self.data.keys():
+                self.data[key] = value
+            else:
+                raise Exception(f'{key} exists in keys')
+        return self
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Костыль для RL --------------------------------------------------------------------------------------
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    def for_observer(self):
+        n_data = {}
+        for key, alias in {'factories':'', 'units':'u_move', 'e_energy':'e_energy_cross', 'e_move':'e_move_cross'}.items():
+            n_data[key] = self.data.get(key if len(alias)==0 else alias, np.zeros(self.map_size, dtype=int))
+        self.data = n_data
+        self.data['factories'] = np.where(self.data['factories'] < 0, 0, self.data['factories'])
+        self.data['units'] = np.where(self.data['units'] < 0, 0, self.data['units'])
+        return self
 # ===============================================================================================================
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ===============================================================================================================

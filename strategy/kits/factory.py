@@ -1,4 +1,5 @@
 import numpy as np
+from strategy.kits.eyes import Eyes
 from strategy.kits.utils import *
 from strategy.kits.robot_struct import ROBOT_TASK, ROBOT_TYPE
 
@@ -69,13 +70,14 @@ class FactoryData:
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def getNeareastPoint(self, point:np.ndarray) -> np.ndarray:
         ''' Получить ближайшую ячейку фабрики '''
-        minX, minY = self.factory.pos[0], self.factory.pos[1]
-        min = abs(point[0]-minX) + abs(point[1]-minY)
-        xy = getRect([minX, minY], 1)
-        for [x, y] in xy:
-            if abs(point[0]-x) + abs(point[1]-y) < min:
-                minX, minY = x, y
-        return np.array([minX, minY])
+        pt = self.factory.pos
+        mln = getDistance(point, pt)
+        for f_points in getRect(self.factory.pos, 1):
+            min = getDistance(point, f_points)
+            if min < mln:
+                mln = min
+                pt = f_points
+        return pt
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Получить ближайшую ячейку фабрики -------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =

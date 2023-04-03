@@ -51,6 +51,7 @@ class EarlyStrategy:
     weighted:np.ndarray = None
 
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    #@time_wrapper('lux_early_init', 3)
     def __init__(self, env_cfg:EnvConfig) -> None:
         self.env_cfg = env_cfg
         self.spreadResource = 2
@@ -67,6 +68,7 @@ class EarlyStrategy:
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Обновить состояние стратегии ------------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    #@time_wrapper('lux_early_update', 4)
     def update(self, game_state, step:int):
         self.game_state = game_state
         self.step = step
@@ -76,6 +78,7 @@ class EarlyStrategy:
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Рассчитываем матрицу весов для расстановки фабрик ---------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    #@time_wrapper('lux_early_calcWeightedMatrix', 4)
     def calcWeightedMatrix(self):
         # получаем массивы ресурсов
         ice, ore, rubble, valid = getResFromState(self.game_state)
@@ -93,6 +96,7 @@ class EarlyStrategy:
     # ----- Получить позицию расположения фабрики ---------------------------------------------------------------
     # ------- Возвращаем массив из двух значений ----------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    #@time_wrapper('lux_early_getSpawnPos', 4)
     def getSpawnPos(self) -> dict:
         ''' Получить позицию расположения фабрики '''
         # если фабрики есть для расстановки

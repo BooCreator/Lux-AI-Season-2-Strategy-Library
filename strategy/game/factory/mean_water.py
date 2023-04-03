@@ -8,7 +8,7 @@ from lux.kit import EnvConfig
 class FactoryStrategy:
     ''' Класс для стратегии фабрик на стадии игры '''
 
-    #@time_wrapper('getFactoryActions')
+    #@time_wrapper('mean_water_getFactoryActions', 5)
     def getActions(self, step:int, env_cfg:EnvConfig, game_state:GameState, data:DataController, **kwargs):
         ''' Получить список действий для фабрик '''
         f_data = data.getFactoryData()

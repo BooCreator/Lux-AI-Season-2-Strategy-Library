@@ -32,6 +32,7 @@ class Observer:
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Правим матрицу ходов для каждого шага ---------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    #@time_wrapper('obs_next_step', 6)
     def next_step(step:int):
         r = step - Observer.step
         remove = []
@@ -48,6 +49,7 @@ class Observer:
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Получить общую матрицу ходов роботов ----------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    #@time_wrapper('obs_getMovesMatrix', 6)
     def getMovesMatrix():
         result = np.ones(Observer.game_state.board.ice.shape, dtype=int)
         for maps in Observer.moves_map.values():
@@ -57,6 +59,7 @@ class Observer:
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Проверить роботов и раздать задачи ------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    #@time_wrapper('obs_look', 6)
     def look(data:DataController, step:int, game_state:GameState, eyes:Eyes) -> list:
         ''' Проверить роботов и раздать задачи '''
         Observer.next_step(step)
@@ -132,6 +135,7 @@ class Observer:
     # ----- Вернуть матрицу возможных ходов ---------------------------------------------------------------------
     # ------- lock_map: 0 - lock, 1 - alloy ---------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    #@time_wrapper('obs_getLockMap', 6)
     def getLockMap(unit:Unit, task:int, map_type:int=MAP_TYPE.MOVE) -> np.ndarray:
         ''' Вернуть матрицу возможных ходов
             lock_map: 0 - lock, 1 - alloy '''
@@ -153,6 +157,7 @@ class Observer:
     # ----- Расчёт матрицы поиска ближайшего ресурса ------------------------------------------------------------
     # ------- lock_map: 0 - lock, 1 - alloy ---------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    #@time_wrapper('obs_findResource', 7)
     def findResource(res_type:int):
         eyes = Observer.eyes
         resource = Observer.game_state.board.ice if res_type == RES.ice else Observer.game_state.board.ore
@@ -161,17 +166,19 @@ class Observer:
     # ----- Расчёт матрицы поиска ближайшего щебня --------------------------------------------------------------
     # ------- lock_map: 0 - lock, 1 - alloy ---------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    #@time_wrapper('obs_findRubble', 7)
     def findRubble(unit:Unit):
         rubble_map = Observer.game_state.board.rubble
         ice_map = Observer.game_state.board.ice
         ore_map = Observer.game_state.board.ore
         eyes = Observer.eyes
         eyes.update('units', getNextMovePos(unit), -1, collision=lambda a,b: a+b)
-        return eyes.neg('units')*rubble_map*eyes.neg(ore_map+ice_map)#*eyes.neg(Observer.getMovesMatrix())
+        return rubble_map*eyes.neg(eyes.sum(['units', ore_map, ice_map]))#*eyes.neg(Observer.getMovesMatrix())
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    # ----- Расчёт матрицы возможных ходов для столкновения с противником -------------------------------------------------
+    # ----- Расчёт матрицы возможных ходов для столкновения с противником ---------------------------------------
     # ------- lock_map: 0 - lock, 1 - alloy ---------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    #@time_wrapper('obs_getWarriorLockMap', 7)
     def getWarriorLockMap(unit:Unit) -> np.ndarray:
         eyes = Observer.eyes
         eyes.update('units', getNextMovePos(unit), -1, collision=lambda a,b: a+b)
@@ -205,6 +212,7 @@ class Observer:
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Добавить матрицы ходов всех роботов -----------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    #@time_wrapper('obs_addMovesMap', 6)
     def addMovesMap(unit:Unit, move_map:list):
         Observer.moves_map[unit.unit_id] = move_map
         Observer.eyes.update('units', unit.pos, -1, collision=lambda a,b: a+b)

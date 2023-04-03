@@ -141,7 +141,7 @@ class LuxAI:
             if log==True or log[0]==True or log[1]==True:
                 frame = env.render("rgb_array", width=640, height=640)
                 imgs += [frame]
-                if log[1]: toImage(frame, f'{log_path}frame', frames=LuxAI.render_log_count)
+                if log[1]: toImage(frame, f'{log_path}frame', frames=min(steps, LuxAI.render_log_count))
             step += 1
             print_str = f'\r step: {step} of {steps} '
             if log==True or log[2]:
@@ -170,7 +170,7 @@ class LuxAI:
             if log==True or log[0]==True or log[1]==True:
                 frame = LuxAI.env.render("rgb_array", width=640, height=640)
                 imgs += [frame]
-                if log[1]: toImage(frame, f'{log_path}frame', frames=LuxAI.render_log_count)
+                if log[1]: toImage(frame, f'{log_path}frame', frames=min(steps, LuxAI.render_log_count))
             step += 1
             print_str = f'\r step: {step} of {steps} '
             if log==True or log[2]:

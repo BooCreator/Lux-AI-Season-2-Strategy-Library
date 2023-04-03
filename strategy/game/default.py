@@ -37,6 +37,7 @@ class GameStrategy:
     # ------- Сама функция вызывается на каждом ходу ------------------------------------------------------------
     # ------- В случае смены стратегии инициализация должна происходить -----------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    #@time_wrapper('game_update', 4)
     def update(self, game_state:GameState, step:int):
         ''' Обновить состояние стратегии (фабрики, роботы) '''
         self.step = step
@@ -46,6 +47,7 @@ class GameStrategy:
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Обновить карты фабрик, юнитов, лишайника TODO -------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    #@time_wrapper('game_look', 4)
     def look(self, game_state:GameState, player: str):
         ''' Обновить карту юнитов '''
         self.eyes.clear(['factories', 'units', 'e_energy', 'e_move'])
@@ -68,12 +70,14 @@ class GameStrategy:
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Получить массив действий для фабрик -----------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    #@time_wrapper('game_getFactoryActions', 4)
     def getFactoryActions(self) -> dict:
         actions = self.factoryStrategy.getActions(self.step, self.env_cfg, self.game_state, data=self.data)
         return actions
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Получить массив действий для роботов ----------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    #@time_wrapper('game_getRobotActions', 4)
     def getRobotActions(self) -> dict:
         actions = self.robotStrategy.getActions(self.step, self.env_cfg, self.game_state, data=self.data,
                                                 eyes=self.eyes)

@@ -91,4 +91,5 @@ def toImage(imgs:np.ndarray, filename:str='_blank', *, render:bool=False, return
                 break
             except: pass
         img = cv2.cvtColor(frame, palette)
-        cv2.imwrite(f'{filename}_{frames-1}.png', img)
+        filename = f'{filename}_{frames-1}.png' if frames > 1 else f'{filename}.png'
+        cv2.imwrite(filename, img)

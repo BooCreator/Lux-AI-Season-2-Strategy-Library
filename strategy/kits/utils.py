@@ -104,6 +104,18 @@ def getNextMovePos(unit:Unit) -> np.ndarray:
             return result + move_deltas[action[1]]
     return result
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+# ----- Вернуть матрицу ходов робота ------------------------------------------------------------------------
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+def getMoveMap(unit:Unit, shape:tuple=(48,48)) -> np.ndarray:
+    result = np.zeros(shape, dtype=int)
+    pt, n = unit.pos, 0
+    for action in unit.action_queue:
+        n += action[5]
+        if action[0] == 0:
+            pt += move_deltas[action[1]]
+            result[pt[0], pt[1]] = n
+    return result
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ----- Получить расстояние между клетками в шагах ----------------------------------------------------------
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 def getDistance(dec:np.ndarray, to:np.ndarray) -> int:
@@ -146,6 +158,15 @@ def extended(arr:list) -> list:
     res = []
     for item in arr: 
         res.extend(item)
+    return res
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+# ----- Объединить словари ----------------------------------------------------------------------------------
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+def dict_extended(arr:list) -> dict:
+    ''' Объединить списки '''
+    res = {}
+    for key, value in arr.items(): 
+        res[key] = value
     return res
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ----- Определить направление движения до точки (из кода Lux) ----------------------------------------------
@@ -212,7 +233,7 @@ def spreadCell(matrix:np.ndarray, rad:int=3, *, find:int=1, val:int=1, max:int=1
     ''' Распространение ячейки '''
     result = matrix.copy()
     for z in range(rad, 0, -1):
-        for x, y in zip(*np.where(matrix == find)):
+        for [x, y] in np.argwhere(matrix == find):
             for [rx, ry] in func([x, y], z):
                 if (rx > -1 and ry > -1) and (rx < matrix.shape[0] and ry < matrix.shape[1]):
                     result[rx,ry] += val
