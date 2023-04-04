@@ -16,10 +16,10 @@ from strategy.game.robot.optimised import RobotStrategy
 def get_data(gs:GameState, pid:int):
     # фичи карты
     ice, ore, rubble, __ = getResFromState(gs)
-    result = [ice, ore, rubble] # лишайник,
+    result = [ice, ore, rubble, gs.board.lichen]
 
     # фичи фабрик
-    feyes = Eyes().clear(['factories', 'f_ice', 'f_ore', 'f_water', 'f_metal', 'f_energy', 'f_water_cost'])
+    feyes = Eyes().clear(['factories', 'f_ice', 'f_ore', 'f_water', 'f_metal', 'f_energy', 'f_water_cost', 'f_strain_id'])
     for factory in extended([gs.factories.get('player_0').values(), gs.factories.get('player_1').values()]):
         factory: Factory
         matrix = np.ones((3,3), dtype=int)
@@ -30,15 +30,16 @@ def get_data(gs:GameState, pid:int):
         feyes.update('f_metal',      factory.pos, factory.cargo.metal)
         feyes.update('f_energy',     factory.pos, factory.power)
         feyes.update('f_water_cost', factory.pos, factory.water_cost(gs))
-        # feyes.update('f_strain', factory.pos, factory.water_cost(gs))
+        feyes.update('f_strain_id',  factory.pos, factory.strain_id)
     
     # статические фичи роботов
-    reyes = Eyes().clear(['robots', 'u_move', 'r_ice', 'r_ore', 'r_water', 'r_metal', 'r_energy', 'r_actions', 'r_actions_cost'])
+    reyes = Eyes().clear(['robots', 'r_type', 'u_move', 'r_ice', 'r_ore', 'r_water', 'r_metal', 'r_energy', 'r_actions', 'r_actions_cost'])
     for unit in extended([gs.units.get('player_0').values(), gs.units.get('player_1').values()]):
         unit: Unit
         unit_type = ROBOT_TYPE.getType(unit.unit_type)
         reyes.update('robots',         unit.pos, 1 if unit.team_id == pid else -1)
-        #reyes.update('u_move',         getNextMovePos(unit), 1 if unit.team_id == pid else -1) # сделать сложение
+        reyes.update('r_type',         unit.pos, unit.unit_type if unit.team_id == pid else -unit.unit_type)
+        reyes.update('u_move',         getNextMovePos(unit), 1 if unit.team_id == pid else 0, collision=lambda a,b:a+b)
         reyes.update('r_ice',          unit.pos, unit.cargo.ice)
         reyes.update('r_ore',          unit.pos, unit.cargo.ore)
         reyes.update('r_water',        unit.pos, unit.cargo.water)

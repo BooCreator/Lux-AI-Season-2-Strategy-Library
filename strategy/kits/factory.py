@@ -57,26 +57,28 @@ class FactoryData:
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Получить матрицу свободных ячеек на фабрике ---------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def getFreeLocation(self) -> np.ndarray:
+    def getFreeLocation(self, ignore:list=None) -> np.ndarray:
         ''' Получить матрицу свободных ячеек на фабрике '''
         matrix = np.ones((3,3), dtype=int)
         for unit in self.robots.values():
-            loc = unit.robot.pos - self.factory.pos
-            if loc[0] > -2 and loc[1] > -2 and loc[0] < 2 and loc[1] < 2:
-                matrix[loc[0]+1, loc[1]+1] = 0
+            if ignore is None or (unit.robot.pos[0] != ignore[0] or unit.robot.pos[1] != ignore[1]):
+                loc = unit.robot.pos - self.factory.pos
+                if loc[0] > -2 and loc[1] > -2 and loc[0] < 2 and loc[1] < 2:
+                    matrix[loc[0]+1, loc[1]+1] = 0
         return matrix
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Получить ближайшую ячейку фабрики -------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def getNeareastPoint(self, point:np.ndarray) -> np.ndarray:
         ''' Получить ближайшую ячейку фабрики '''
-        pt = self.factory.pos
-        mln = getDistance(point, pt)
-        for f_points in getRect(self.factory.pos, 1):
-            min = getDistance(point, f_points)
-            if min < mln:
-                mln = min
-                pt = f_points
+        points = getRect(self.factory.pos, 1)
+        lock_map = self.getFreeLocation(point)       
+        distances = np.mean((points - point) ** 2, 1)
+        for i, point in enumerate(points):
+            f_pt = point - (self.factory.pos-1)
+            if lock_map[f_pt[0], f_pt[1]] == 0:
+                distances[i] *= 2
+        pt = points[np.argmin(distances)]
         return pt
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Получить ближайшую ячейку фабрики -------------------------------------------------------------------

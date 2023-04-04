@@ -132,6 +132,10 @@ class RobotStrategy:
                 if next_pos is None:
                     # --- если не нашли, то пытаемся пойти хоть куда-то ---
                     next_pos = findClosestTile(unit.pos, locked_field)
+                    # --- если не можем походить никуда рядом, то идём на фабрику напролом ---
+                    if getDistance(unit.pos, next_pos) > 1:
+                        next_pos = item.getNeareastPoint(unit.pos)
+                        locked_field = np.ones(locked_field.shape, dtype=int)
                 # --- если можем шагнуть на врага - шагаем ---
                 e_actions, e_move_cost, e_move_map = findPathActions(unit, game_state, to=next_pos, lock_map=locked_field, get_move_map=True)
                 # --- если энергии хватит ещё и вернуться домой, то давим ---
@@ -147,7 +151,11 @@ class RobotStrategy:
                 # --- выясняем куда мы можем шагнуть ---
                 locked_field = Observer.getLockMap(unit, task)
                 # --- смотрим куда можем пойти ---
-                next_pos = findClosestTile(unit.pos, locked_field)
+                #next_pos = findClosestTile(unit.pos, locked_field)
+                ## --- если не можем походить никуда рядом, то идём на фабрику напролом ---
+                #if getDistance(unit.pos, next_pos) > 1:
+                #    next_pos = item.getNeareastPoint(unit.pos)
+                #    locked_field = np.ones(locked_field.shape, dtype=int)
                 # --- строим маршрут побега в сторону базы ---
                 m_actions, move_cost, move_map = findPathActions(unit, game_state, to=item.getNeareastPoint(unit.pos), lock_map=locked_field, get_move_map=True)
                 # --- делаем один шаг, если можем сделать шаг ---

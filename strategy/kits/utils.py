@@ -206,7 +206,7 @@ def getRect(dec:np.ndarray, rad:int=1, borders:bool=True, as_matrix:bool=False):
             ny, nx = dec[0]-k, dec[1]-r
             if not borders or nx > -1 and ny > -1:
                 result.append([dec[0]-k, dec[1]-r])
-    return result
+    return np.array(result)
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ----- Получить круг координат вокруг точки ----------------------------------------------------------------
 # ------- Пример:    X  X    --------------------------------------------------------------------------------
@@ -397,7 +397,7 @@ class Path:
 def findPath(dec:np.ndarray, to:np.ndarray, lock_map:np.ndarray=None, steps:int=20, old=False):
     ''' Получить маршрут движения для робота по навправлениям
         * [4 (left), 1 (up), 1 (up), 2 (right), ...] '''
-    if dec[0] == to[0] and dec[1] == to[1]: return ([], []) if not old else ([])
+    if (dec[0] == to[0]) and (dec[1] == to[1]): return ([], []) if not old else ([])
     field = lock_map.copy() if lock_map is not None else np.ones((env.map_size, env.map_size), dtype=int)
     field[dec[0], dec[1]] = 0
     result, points, prev_step = [], [], dec
