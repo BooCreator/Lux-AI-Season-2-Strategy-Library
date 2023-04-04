@@ -59,7 +59,7 @@ class Observer:
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Проверить роботов и раздать задачи ------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    @time_wrapper('obs_look', 6)
+    #@time_wrapper('obs_look', 6)
     def look(data:DataController, step:int, game_state:GameState, eyes:Eyes) -> list:
         ''' Проверить роботов и раздать задачи '''
         Observer.next_step(step)
@@ -171,7 +171,7 @@ class Observer:
             else:
                 eyes.clear('u_move')
                 eyes.update('u_move', unit.pos-1, getRad(unit.pos, as_matrix=True))
-                return eyes.neg(eyes.sum([eyes.mul(['units', 'u_move']), 'factories', move_map]))
+                return np.where(eyes.sum([eyes.mul(['units', 'u_move']), 'factories', move_map]) > 0, 0, 1)
         elif task == ROBOT_TASK.ICE_MINER or task == ROBOT_TASK.ORE_MINER:
             return Observer.findResource(RES.ice if task == ROBOT_TASK.ICE_MINER else RES.ore)
         elif task == ROBOT_TASK.CLEANER:
@@ -184,7 +184,7 @@ class Observer:
     def findResource(res_type:int):
         eyes = Observer.eyes
         resource = Observer.game_state.board.ice if res_type == RES.ice else Observer.game_state.board.ore
-        return eyes.neg(eyes.sum([eyes.getFree(1) - resource, 'units']))
+        return np.where(eyes.sum([eyes.getFree(1) - resource, 'units']) > 0, 0, 1)
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Расчёт матрицы поиска ближайшего щебня --------------------------------------------------------------
     # ------- lock_map: 0 - lock, 1 - alloy ---------------------------------------------------------------------
@@ -195,7 +195,7 @@ class Observer:
         ice_map = Observer.game_state.board.ice
         ore_map = Observer.game_state.board.ore
         eyes = Observer.eyes
-        return rubble_map*eyes.neg(eyes.sum(['units', ore_map, ice_map]))
+        return rubble_map*np.where(eyes.sum(['units', ore_map, ice_map]) > 0, 0, 1)
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Расчёт матрицы возможных ходов для столкновения с противником ---------------------------------------
     # ------- lock_map: 0 - lock, 1 - alloy ---------------------------------------------------------------------
