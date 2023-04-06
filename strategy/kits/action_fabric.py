@@ -85,7 +85,7 @@ class ActionsFabric:
         ''' Добавить действие "копить энергию" '''
         if not self.check(): return False
         if count > self.action_cost:
-            self.actions.append(self.unit.robot.recharge(RES.energy, 0, count))
+            self.actions.append(self.unit.robot.recharge(count))
             self.energy_cost -= count
             self.steps += count if self.unit.isType(ROBOT_TYPE.LIGHT) else ceil(count/10)
             return True
