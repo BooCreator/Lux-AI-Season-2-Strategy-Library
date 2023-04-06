@@ -101,7 +101,8 @@ def getNextMovePos(unit:Unit) -> np.ndarray:
     if len(unit.action_queue) > 0:
         action = unit.action_queue[0]
         if action[0] == 0:
-            return result + move_deltas[action[1]]
+            r = result + move_deltas[action[1]]
+            return [min(r[0], 47), min(r[1], 47)]
     return result
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ----- Получить цену в энергии шага робота -----------------------------------------------------------------
@@ -111,7 +112,8 @@ def getNextMoveEnergyCost(gs:GameState, unit:Unit) -> int:
     if len(unit.action_queue) > 0:
         action = unit.action_queue[0]
         if action[0] == 0:
-            return unit.move_cost(gs, action[1])
+            cost = unit.move_cost(gs, action[1])
+            return 0 if cost is None else cost
     return result
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ----- Вернуть матрицу ходов робота ------------------------------------------------------------------------

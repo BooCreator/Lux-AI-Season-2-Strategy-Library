@@ -51,9 +51,19 @@ class FactoryData:
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Получить количество роботов по условию ---------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def getCount(self,*, type_is:int=-1, task_is:int=-1, condition=lambda x: x == x) -> int:
+    def getCount(self,*, unit=None, type_is:int=-1, task_is:int=-1, condition=lambda x: x == x) -> int:
         ''' Получить количество роботов по условию '''
-        return len(self.getRobots(type_is=type_is, task_is=task_is, condition=condition))
+        cond = 0
+        if type(type_is) is str: type_is = ROBOT_TYPE.getType(type_is)
+        if type(task_is) is str: task_is = ROBOT_TASK.getTask(task_is)
+        if unit is not None:
+            if type_is > -1 and task_is > -1:
+                if unit.isType(type_is) and unit.isTask(task_is): cond = 1
+            elif type_is > -1:
+                if unit.isType(type_is): cond = 1
+            elif task_is > -1:
+                if unit.isTask(task_is): cond = 1
+        return len(self.getRobots(type_is=type_is, task_is=task_is, condition=condition)) - cond
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Получить матрицу свободных ячеек на фабрике ---------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =

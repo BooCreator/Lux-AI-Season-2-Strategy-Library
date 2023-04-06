@@ -10,7 +10,7 @@ bots = [
 
 #Lux.play(bots, seed=7753391)
 #Lux.tornament('bots/')
-#zip_name = Lux.buildSubmission('eleven_bot') # zip_name == 'example_2023-02-09_15-38-21.tar.gz'
+#zip_name = Lux.buildSubmission('twelve_fix_bot') # zip_name == 'example_2023-02-09_15-38-21.tar.gz'
 #Lux.sendSubmission(zip_name, 'third bot')
 
 from test_env.agent import Agent
@@ -51,15 +51,15 @@ agents = {player: Agent(player, env_cfg, strategy=ddf) for player in Lux.env.age
 #}
 #agents = {player: Agent(player, env, game=CautiousStrategy) for player in Lux.env.agents}
 
-#from bots.ten_bot.agent import Agent as AgentTen
-#from bots.eleven_bot.agent import Agent as AgentEleven
+#from bots.twelve_bot.agent import Agent as AgentTwelve
+#from bots.thirteen_bot.agent import Agent as AgentThirteen
 #agents = {
-#    'player_0': AgentTen('player_0', env_cfg),
-#    'player_1': AgentEleven('player_1', env_cfg)
+#    'player_0': AgentTwelve('player_0', env_cfg),
+#    'player_1': AgentThirteen('player_1', env_cfg),
 #}
-
-log = Log(video=False, frames=False, step_time=False, obs_time=False)
-Lux.interact(agents, None, 100, seed=7753391, log=log.getLog(), show_steps=True)
+#
+log = Log(video=False, frames=True, step_time=False, obs_time=False) # 598640900
+Lux.interact(agents, None, 1000, seed=6628359, log=log.getLog(), show_steps=True)
 
 
 #rl_interact(f'D:\\ML\\Lux AI Season 2\\replays\\json\\{46215591}.json')

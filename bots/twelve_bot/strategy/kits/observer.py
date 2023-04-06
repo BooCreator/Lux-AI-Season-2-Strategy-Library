@@ -153,7 +153,7 @@ class Observer:
     # ----- Вернуть матрицу возможных ходов ---------------------------------------------------------------------
     # ------- lock_map: 0 - lock, 1 - alloy ---------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    @time_wrapper('obs_getLockMap', 6)
+    #@time_wrapper('obs_getLockMap', 6)
     def getLockMap(unit:Unit, task:int, map_type:int=MAP_TYPE.MOVE) -> np.ndarray:
         ''' Вернуть матрицу возможных ходов
             lock_map: 0 - lock, 1 - alloy '''

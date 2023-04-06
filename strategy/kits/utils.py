@@ -95,15 +95,23 @@ def getMoveActions(game_state:GameState, unit:Unit, *, path:list=None, dec:np.nd
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ----- Получить координаты следующего шага робота ----------------------------------------------------------
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-def getNextMovePos(unit:Unit) -> np.ndarray:
+def getNextMovePos(unit:Unit, correct:bool=True) -> np.ndarray:
     ''' Получить координаты следующего шага робота '''
     result = unit.pos.copy()
     if len(unit.action_queue) > 0:
         action = unit.action_queue[0]
         if action[0] == 0:
             r = result + move_deltas[action[1]]
-            return [min(r[0], 47), min(r[1], 47)]
+            if correct:
+                return [max(min(r[0], 47), 0), max(min(r[1], 47), 0)]
+            else:
+                return [r[0], r[1]]
     return result
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+# ----- Проверить, следущих шаг - это копать? ---------------------------------------------------------------
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+def nextActionIsDig(unit:Unit) -> bool:
+    return len(unit.action_queue) > 0 and unit.action_queue[0][0] == 3
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ----- Получить цену в энергии шага робота -----------------------------------------------------------------
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -153,7 +161,7 @@ def findClosestTile(dec:np.ndarray, tile_map:np.ndarray, *, lock_map:np.ndarray=
     closest_tile = dec if dec_is_none else None
     if len(tile_locations) > 0:
         tile_distances = np.mean((tile_locations - dec) ** 2, 1)
-        closest_tile: np.ndarray = tile_locations[np.argmin(tile_distances)]
+        closest_tile:np.ndarray = tile_locations[np.argmin(tile_distances)]
     return closest_tile
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ----- Получить из игровой среди все массивы с данными -----------------------------------------------------
@@ -396,7 +404,7 @@ class Path:
             self.result = self.paths[min_path][:min_pos+1]
         return np.array([item + self.slice for item in self.result])
 
-def findPath(dec:np.ndarray, to:np.ndarray, lock_map:np.ndarray=None, steps:int=20, old=False):
+def findPath(dec:np.ndarray, to:np.ndarray, lock_map:np.ndarray=None, steps:int=20, old=False, sum_n=True):
     ''' Получить маршрут движения для робота по навправлениям
         * [4 (left), 1 (up), 1 (up), 2 (right), ...] '''
     if (dec[0] == to[0]) and (dec[1] == to[1]): return ([], []) if not old else ([])
@@ -409,7 +417,7 @@ def findPath(dec:np.ndarray, to:np.ndarray, lock_map:np.ndarray=None, steps:int=
     for step in path.find(to)[1:]:
         if not old:
             d = direction_to(prev_step, step)
-            if len(result) > 0 and result[-1][0] == d: result[-1][2] += 1
+            if sum_n and len(result) > 0 and result[-1][0] == d: result[-1][2] += 1
             else: result.append([d, step, 1])
             points.append(step)
         else:
@@ -442,3 +450,35 @@ def findPathActions(unit:Unit, game_state:GameState, *, dec:np.ndarray=None, to:
 
     unit.pos = spos
     return (actions, move_cost, move_map) if get_move_map else (actions, move_cost)
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+# ----- Получить список действий движения со стоимостью по энергии ------------------------------------------
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+def findPathAndDigActions(unit:Unit, game_state:GameState, rubble:np.ndarray, *, dec:np.ndarray=None, to:np.ndarray=None, 
+                    lock_map:np.ndarray=None, steps:int=25, get_move_map:bool=False, reserve:int=0):
+    ''' Получить список действий движения со стоимостью по энергии 
+        * lock_map: 0 - lock, 1 - alloy '''
+    actions, move_cost, action_cost, full_cost, spos = [], [], [], [], unit.pos
+    lock_map = lock_map if lock_map is not None else np.ones(game_state.board.ice.shape, dtype=int)
+    __, moves = findPath(spos if dec is None else dec, spos if to is None else to, lock_map, steps=steps, sum_n=False)
+    move_map = np.zeros(lock_map.shape, dtype=int)
+    step = 0
+    for [d, point, n] in moves:
+        if rubble[unit.pos[0], unit.pos[1]] > 0:
+            count, cost, gain = calcDigCount(unit, count=rubble[unit.pos[0], unit.pos[1]],
+                                             reserve_energy=sum(move_cost)*2+sum(action_cost)+reserve, dig_type=DIG_TYPES.RUBBLE)
+            if count > 0:
+                actions.append(unit.dig(n=count))
+                full_cost.append(cost)
+                action_cost.append(cost)
+                step += count
+        step += 1
+        move_map[point[0], point[1]] = step
+        move_cost.append(unit.move_cost(game_state, d) or 0)
+        full_cost.append(move_cost[-1])
+        if len(actions) > 0 and actions[-1][0] == 0 and actions[-1][1] == d:
+            actions[-1][-1] += 1
+        else:
+            actions.append(unit.move(d, repeat=0, n=n))
+        unit.pos = point
+    unit.pos = spos
+    return (actions, full_cost, move_map) if get_move_map else (actions, full_cost)

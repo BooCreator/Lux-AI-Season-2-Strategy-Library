@@ -28,7 +28,7 @@ class RobotStrategy:
         robot, task = Observer.look(data, step, game_state, eyes)
         return RobotStrategy.getRLActions(robot, task, env_cfg, game_state, eyes)
     
-    @time_wrapper('getRLActions', 5)
+    #@time_wrapper('getRLActions', 5)
     def getRLActions(robots, tasks, env_cfg:EnvConfig, game_state:GameState, eyes:Eyes):
         Observer.eyes = eyes
         result, ice_map, ore_map, rubble_map = {}, game_state.board.ice, game_state.board.ore, game_state.board.rubble

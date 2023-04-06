@@ -16,10 +16,10 @@ from strategy.game.robot.optimised import RobotStrategy
 def get_data(gs:GameState, pid:int):
     # фичи карты
     ice, ore, rubble, __ = getResFromState(gs)
-    result = [ice, ore, rubble, gs.board.lichen]
-
+    result = [ice, ore, rubble]
+    u_lichens, e_lichens = [], []
     # фичи фабрик
-    feyes = Eyes().clear(['factories', 'f_ice', 'f_ore', 'f_water', 'f_metal', 'f_energy', 'f_water_cost', 'f_strain_id'])
+    feyes = Eyes().clear(['factories', 'f_ice', 'f_ore', 'f_water', 'f_metal', 'f_energy', 'f_water_cost'])
     for factory in extended([gs.factories.get('player_0').values(), gs.factories.get('player_1').values()]):
         factory: Factory
         matrix = np.ones((3,3), dtype=int)
@@ -30,8 +30,14 @@ def get_data(gs:GameState, pid:int):
         feyes.update('f_metal',      factory.pos, factory.cargo.metal)
         feyes.update('f_energy',     factory.pos, factory.power)
         feyes.update('f_water_cost', factory.pos, factory.water_cost(gs))
-        feyes.update('f_strain_id',  factory.pos, factory.strain_id)
-    
+        if factory.team_id == pid:
+            u_lichens.append(factory.strain_id)
+        else:
+            e_lichens.append(factory.strain_id)
+    lichen = np.where(gs.board.lichen_strains in u_lichens, 1, 0)
+    lichen = np.where(gs.board.lichen_strains in e_lichens, -1, lichen)
+    result.append(lichen)
+
     # статические фичи роботов
     reyes = Eyes().clear(['robots', 'r_type', 'u_move', 'r_ice', 'r_ore', 'r_water', 'r_metal', 'r_energy', 'r_actions', 'r_actions_cost'])
     for unit in extended([gs.units.get('player_0').values(), gs.units.get('player_1').values()]):
