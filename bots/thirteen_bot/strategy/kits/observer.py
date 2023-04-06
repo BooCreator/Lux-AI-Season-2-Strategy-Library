@@ -159,24 +159,6 @@ class Observer:
                 eyes.update('units', pos, -1, collision=lambda a,b: a+b)
                 eyes.update('units', unit.pos, 1, collision=lambda a,b: a+b)
         
-        # --- обрабатываем исключительные случаи ---
-        #for unit_id, robot in data.robots.items():
-        #    if unit_id in has_robots: continue
-        #    robot: RobotData
-        #    unit = robot.robot
-        #    # --- если пытаемся поехать вне карты ---
-        #    pos = getNextMovePos(unit, correct=False)
-        #    if pos[0] < 0 or pos[0] > game_state.board.ice.shape[0]-1 \
-        #        or pos[1] < 0 or pos[1] > game_state.board.ice.shape[1]-1:
-        #        tasks.append(robot.robot_task)
-        #        has_robots.append(unit_id)
-        #        robots.append(robot)
-        #    elif nextActionIsDig(unit):
-        #        i, o, r, __ = getResFromState(game_state)
-        #        if r[unit.pos[0], unit.pos[1]]+i[unit.pos[0], unit.pos[1]]+o[unit.pos[0], unit.pos[1]] == 0:
-        #            tasks.append(robot.robot_task)
-        #            has_robots.append(unit_id)
-        #            robots.append(robot)
         return robots, tasks
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Вернуть матрицу возможных ходов ---------------------------------------------------------------------

@@ -66,7 +66,7 @@ class Observer:
         Observer.eyes = eyes
         Observer.game_state = game_state
         robots, tasks, has_robots = [], [], []
-        # --- проверяем действия роботов п энергии ---
+        # --- проверяем действия роботов без энергии ---
         for unit_id, robot in data.robots.items():
             robot: RobotData
             unit = robot.robot
@@ -105,12 +105,22 @@ class Observer:
             # --- если вражеский робот не может нас задавить ---
             else:
                 # --- проверяем задачу робота ---
-                if robot.isTask(ROBOT_TASK.JOBLESS) or step > 50:
+                if robot.isTask(ROBOT_TASK.JOBLESS):
                     task_changed = False
                     if robot.isType(ROBOT_TYPE.HEAVY):
-                        task_changed = robot.setTask(ROBOT_TASK.ICE_MINER)
+                        if robot.factory.getCount(unit=robot, type_is=ROBOT_TYPE.HEAVY, task_is=ROBOT_TASK.ICE_MINER) == 0:
+                            task_changed = robot.setTask(ROBOT_TASK.ICE_MINER)
+                        elif robot.factory.getCount(unit=robot, type_is=ROBOT_TYPE.HEAVY, task_is=ROBOT_TASK.ORE_MINER) == 0:
+                            task_changed = robot.setTask(ROBOT_TASK.ORE_MINER)
+                        else:
+                            task_changed = robot.setTask(ROBOT_TASK.CLEANER)
                     else:
-                        task_changed = robot.setTask(ROBOT_TASK.ICE_MINER if step < 50 else ROBOT_TASK.CLEANER)
+                        if robot.factory.getCount(unit=robot, task_is=ROBOT_TASK.ICE_MINER) == 0:
+                            task_changed = robot.setTask(ROBOT_TASK.ICE_MINER)
+                        elif robot.factory.getCount(unit=robot, task_is=ROBOT_TASK.ORE_MINER) == 0:
+                            task_changed = robot.setTask(ROBOT_TASK.ORE_MINER)
+                        else:
+                            task_changed = robot.setTask(ROBOT_TASK.CLEANER)
                     # --- если базовая задача была изменена - сначала возвращаемся на базу ---
                     if task_changed:
                         tasks.append(ROBOT_TASK.RETURN)
@@ -148,6 +158,7 @@ class Observer:
             if unit_id in has_robots:
                 eyes.update('units', pos, -1, collision=lambda a,b: a+b)
                 eyes.update('units', unit.pos, 1, collision=lambda a,b: a+b)
+        
         return robots, tasks
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Вернуть матрицу возможных ходов ---------------------------------------------------------------------
