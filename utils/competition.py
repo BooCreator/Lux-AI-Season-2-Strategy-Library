@@ -112,7 +112,7 @@ class LuxAI:
     # ------- seed - генерация карты, None - каждый раз новая ---------------------------------------------------
     # ------- log - сохранять ли в папку log каждый кадр игры ---------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =   
-    def interact(agents:dict, env=None, steps:int=1000, *, seed:int=None, log:list=True, show_steps:bool=True):
+    def interact(agents:dict, env:LuxAI_S2=None, steps:int=1000, *, seed:int=None, log:list=True, show_steps:bool=True, v:int=0):
         ''' Запуск локальной игры между агентами '''
         step, imgs, mean_s, mean_o = 0, [], [], []
         log_path = createFolder(['log', 'render'])
@@ -120,7 +120,8 @@ class LuxAI:
         if env is None: env = LuxAI.env
         obs = env.reset(seed=seed)
         np.random.seed(0)
-        
+        env.env_cfg.verbose = v
+
         gtime = datetime.now()
         while env.state.real_env_steps < 0:
             if step >= steps: break
@@ -193,89 +194,3 @@ class LuxAI:
 # ===============================================================================================================
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ===============================================================================================================
-
-class JuxEnv:
-        pass
-class JuxAction:
-    pass
-class jux:
-    pass
-
-try:
-    GPU_ON = True
-    import jux
-    from jux.env import JuxEnv
-    from jux.actions import JuxAction
-except:
-    GPU_ON = False
-
-
-class JuxAI(LuxAI):
-    alloy = GPU_ON
-    env = JuxEnv()          # python окружение LuxAI
-    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    # ----- Запуск локальной игры между агентами ----------------------------------------------------------------
-    # ------- steps - количество шагов игры ---------------------------------------------------------------------
-    # ------- seed - генерация карты, None - каждый раз новая ---------------------------------------------------
-    # ------- log - сохранять ли в папку log каждый кадр игры ---------------------------------------------------
-    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def interact(agents:dict, steps:int=1000, *, seed:int=None, log:bool=True, render_log_count:int=5):
-        if not JuxAI.alloy: 
-            print('Jux AI is not installed!')
-            return
-        state = JuxAI.env.reset(seed=0)
-        log_path, imgs, step, mean = '', [], 0, []
-        for folder in ['log', 'render']:
-            log_path += folder + '/'
-            if not os.path.exists(log_path): os.mkdir(log_path)
-        gtime = datetime.now()
-        while state.real_env_steps < 0:
-            o = state.to_lux().get_obs()
-            if step >= steps: break
-            if step == 0:
-                actions = {}
-                for player in agents.keys():
-                    a = agents[player].early_setup(step, o) # ???
-                    actions[player] = a
-                bid, faction = jux.actions.bid_action_from_lux(actions)
-                state, (observations, rewards, dones, infos) = JuxAI.env.step_bid(state, bid, faction)
-                print('\r', 'step:', step+1, 'of', steps, end='   ')
-            else:
-                actions = {}
-                for player in agents.keys():
-                    a = agents[player].early_setup(step, o) # ???
-                    actions[player] = a
-                spawn, water, metal = jux.actions.factory_placement_action_from_lux(actions)
-                time = datetime.now()
-                state, (observations, rewards, dones, infos) = JuxAI.env.step_factory_placement(state, spawn, water, metal)
-                time = datetime.now() - time
-                frame = JuxAI.env.render(state, "rgb_array")
-                imgs += [frame]
-                #if log: toImage(frame, f'{log_path}frame', frames=render_log_count)
-                print('\r', 'step:', step+1, 'of', steps, time, end='   ')
-            step += 1
-        done = False
-        while not done:
-            if step >= steps: break
-            actions = {}
-            for player in agents.keys():
-                a = agents[player].act(step, o) # ???
-                actions[player] = a
-            jux_act = JuxAction.from_lux(state, actions)
-            time = datetime.now()
-            state, (observations, rewards, dones, infos) = JuxAI.env.step_late_game(state, jux_act)
-            time = datetime.now() - time
-            mean.append(time.microseconds)
-            frame = JuxAI.env.render(state, "rgb_array")
-            imgs += [frame]
-            done = dones[0] and dones[1]
-            #if log: toImage(frame, f'{log_path}frame', frames=render_log_count)
-            print('\r', 'step:', step+1, 'of', steps, 'time:', time, 'mean:', round(sum(mean)/len(mean)/1_000_000, 4), 's', end='   ')
-            step += 1
-        full_path = ''
-        date = datetime.now()
-        for folder in ['log', 'video', str(date.date()).replace(':', '-')]:
-            full_path += folder + '/'
-            if not os.path.exists(full_path): os.mkdir(full_path)
-        full_path += str(date.time()).split('.')[0].replace(':', '-') + f'_s_{seed}_e_{step}_of_{steps}'
-        return toVideo(imgs, full_path)

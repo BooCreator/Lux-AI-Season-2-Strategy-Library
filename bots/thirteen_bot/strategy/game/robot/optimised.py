@@ -131,7 +131,7 @@ class RobotStrategy:
                                                  dig_type=DIG_TYPES.RUBBLE)
                     if dig_count > 0:
                         actions.extend(m_actions, move_cost, move_map)
-                        # --- строим маршрут ---
+                        # --- копаем ---
                         if actions.buildDigRubble(rubble_map[ct[0]][ct[1]], reserve=full_energy_cost):
                             rubble_map[ct[0]][ct[1]] -= min(actions.rubble_gain.get('last', 0), rubble_map[ct[0]][ct[1]])
                         else: break

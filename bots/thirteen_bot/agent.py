@@ -16,6 +16,7 @@ from strategy.game.cautious import GameStrategy as CautiousStrategy
 from strategy.game.robot.cautious import RobotStrategy as CautiousRobots
 from strategy.game.robot.curious import RobotStrategy as CuriousRobots
 from strategy.game.robot.optimised import RobotStrategy as OptimisedRobots
+from strategy.game.robot.fixed import RobotStrategy as FixedRobots
 # ----- factory -----
 from strategy.game.factory.mean_water import FactoryStrategy as MeanWaterStrategy
 from strategy.game.factory.for_best import FactoryStrategy as ForBestFactoryStrategy
@@ -24,7 +25,7 @@ ddf = {
     'basic': DefaultStrategy,
     'early': BestEarly,
     'game': DefaultGame,
-    'robot': OptimisedRobots,
+    'robot': FixedRobots,
     'factory': ForBestFactoryStrategy
 }
 

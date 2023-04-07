@@ -20,18 +20,23 @@ from lux.kit import EnvConfig
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 class RobotStrategy:
     ''' Стратегия с наблюдателем '''
+    obs: Observer = None
+
+    def __init__(self) -> None:
+        self.obs = Observer()
 
     #@time_wrapper('last_getRobotActions', 5)
     def getActions(self, step:int, env_cfg:EnvConfig, game_state:GameState, data:DataController, **kwargs)->dict:
         ''' Получить список действий для роботов '''
         eyes = data.eyes
-        robot, task = Observer.look(data, step, game_state, eyes)
-        return RobotStrategy.getRLActions(robot, task, env_cfg, game_state, eyes)
+        robot, task = self.obs.look(data, step, game_state, eyes)
+        return RobotStrategy.getRLActions(robot, task, env_cfg, game_state, eyes, self.obs)
     
     #@time_wrapper('getRLActions', 5)
-    def getRLActions(robots, tasks, env_cfg:EnvConfig, game_state:GameState, eyes:Eyes):
-        Observer.eyes = eyes
-        Observer.game_state = game_state
+    def getRLActions(robots, tasks, env_cfg:EnvConfig, game_state:GameState, eyes:Eyes, obs:Observer=None):
+        if obs is None: obs = Observer()
+        obs.eyes = eyes
+        obs.game_state = game_state
         result = {}
         for robot, task in zip(robots, tasks):
             robot: RobotData
@@ -44,7 +49,7 @@ class RobotStrategy:
             # --- если робот находится на своей фабрике ---
             elif robot.on_position(item.factory.pos, size=3):
                 # --- если робот вернулся от куда-то, то удаляем его из массива ---
-                Observer.removeReturn(unit.unit_id)
+                obs.removeReturn(unit.unit_id)
                 # --- устанавливаем базовую задачу робота ---
                 task = robot.robot_task if task == ROBOT_TASK.RETURN else task
                 # --- добавляем действия по выгрузке и взятии энергии ---
@@ -53,26 +58,26 @@ class RobotStrategy:
                 actions.buildTakeEnergy(take_energy)
             
             # --- формируем действия робота на основе задачи ---
-            actions:ActionsFabric = RobotStrategy.getActionsOnTask(robot, task, game_state, actions)
+            actions:ActionsFabric = RobotStrategy.getActionsOnTask(robot, task, game_state, obs, actions)
             
             # --- если действий для робота нет - действия не изменяем ---
             if not actions.isFree() or len(unit.action_queue) > 0:
                 result[unit.unit_id] = actions.getActions()
-                Observer.addMovesMap(unit, actions.getMoveMap())
+                obs.addMovesMap(unit, actions.getMoveMap())
         return result
     
-    def getActionsOnTask(robot:RobotData, task:int, game_state:GameState, actions:ActionsFabric=None) -> ActionsFabric:
+    def getActionsOnTask(robot:RobotData, task:int, game_state:GameState, obs:Observer, actions:ActionsFabric=None) -> ActionsFabric:
         robot: RobotData
-        eyes = Observer.eyes
+        eyes = obs.eyes
         unit, item = robot.robot, robot.factory
         actions = ActionsFabric(game_state, robot) if actions is None else actions
         ice_map, ore_map, rubble_map = game_state.board.ice, game_state.board.ore, game_state.board.rubble
-        lock_map = Observer.getLockMap(unit, task)
+        lock_map = obs.getLockMap(unit, task)
 
         # --- если робот идёт на базу ---
         if task == ROBOT_TASK.RETURN:
             actions.buildMove(item.getNeareastPoint(unit.pos), True, lock_map=lock_map)
-            Observer.addReturn(unit.unit_id)
+            obs.addReturn(unit.unit_id)
         # --- если робот заряжается ---
         elif task == ROBOT_TASK.RECHARGE:
             actions.buildReharge(getNextMoveEnergyCost(game_state, unit))
@@ -88,11 +93,11 @@ class RobotStrategy:
                 # --- если не можем ничего выкопать - идём на фабрику ---
                 if not actions.buildDigResource(reserve=sum(move_cost)):
                     actions.extend(m_actions, move_cost, move_map=move_map)
-                    Observer.addReturn(unit.unit_id)
+                    obs.addReturn(unit.unit_id)
             # --- если робот где-то гуляет ---
             else:
                 # --- находим ближайший ресурс ---
-                ct = findClosestTile(item.factory.pos, resource, lock_map=Observer.getLockMap(unit, task, map_type=MAP_TYPE.FIND))
+                ct = findClosestTile(item.factory.pos, resource, lock_map=obs.getLockMap(unit, task, map_type=MAP_TYPE.FIND))
                 # --- находим ближайшую точку фабрики к ресурсу ---
                 pt = item.getNeareastPoint(ct)
                 # --- если расстояние от ближайшей свободной точки фабрики до ресурса меньше чем от позиции робота ---
@@ -111,11 +116,11 @@ class RobotStrategy:
                     actions.buildDigResource(reserve=actions.last_energy_cost + sum(move_cost))
                 # --- иначе - идём на базу ---
                 else:
-                    Observer.addReturn(unit.unit_id)
+                    obs.addReturn(unit.unit_id)
         # --- если робот не на фабрике и он - чистильщик ---
         elif task == ROBOT_TASK.CLEANER:
             # --- строим маршрут к фабрике ---
-            lock_find_map = Observer.getLockMap(unit, task, MAP_TYPE.FIND)
+            lock_find_map = obs.getLockMap(unit, task, MAP_TYPE.FIND)
             m_actions, move_cost = findPathActions(unit, game_state, to=item.getNeareastPoint(unit.pos), lock_map=lock_map)
             start_pos = unit.pos
             full_energy_cost = sum(move_cost)
@@ -131,9 +136,11 @@ class RobotStrategy:
                                                  dig_type=DIG_TYPES.RUBBLE)
                     if dig_count > 0:
                         actions.extend(m_actions, move_cost, move_map)
-                        # --- копаем ---
-                        if actions.buildDigRubble(rubble_map[ct[0]][ct[1]], reserve=full_energy_cost):
-                            rubble_map[ct[0]][ct[1]] -= min(actions.rubble_gain.get('last', 0), rubble_map[ct[0]][ct[1]])
+                        if move_map[ct[0]][ct[1]] > 0:
+                            # --- копаем ---
+                            if actions.buildDigRubble(rubble_map[ct[0]][ct[1]], reserve=full_energy_cost):
+                                rubble_map[ct[0]][ct[1]] -= min(actions.rubble_gain.get('last', 0), rubble_map[ct[0]][ct[1]])
+                            else: break
                         else: break
                         start_pos = ct.copy()
                     # --- если не можем, то идём на базу ---

@@ -33,26 +33,26 @@ class Observer:
     # ----- Правим матрицу ходов для каждого шага ---------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     #@time_wrapper('obs_next_step', 6)
-    def next_step(step:int):
-        r = step - Observer.step
+    def next_step(self, step:int):
+        r = step - self.step
         remove = []
-        for key, maps in Observer.moves_map.items():
+        for key, maps in self.moves_map.items():
             for i, map in enumerate(maps):
                 map = np.where((map-r) < 0, 0, map)
                 if np.max(map) <= 0:
                     remove.append((key, i))
         for (key, i) in remove:
-            del Observer.moves_map[key][i]
-            if len(Observer.moves_map[key]) == 0:
-                del Observer.moves_map[key]
-        Observer.step = step
+            del self.moves_map[key][i]
+            if len(self.moves_map[key]) == 0:
+                del self.moves_map[key]
+        self.step = step
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Получить общую матрицу ходов роботов ----------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     #@time_wrapper('obs_getMovesMatrix', 6)
-    def getMovesMatrix():
-        result = np.ones(Observer.game_state.board.ice.shape, dtype=int)
-        for maps in Observer.moves_map.values():
+    def getMovesMatrix(self):
+        result = np.ones(self.game_state.board.ice.shape, dtype=int)
+        for maps in self.moves_map.values():
             for map in maps:
                 result = np.where(map > 0, 0, result)
         return result
@@ -60,11 +60,11 @@ class Observer:
     # ----- Проверить роботов и раздать задачи ------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     #@time_wrapper('obs_look', 6)
-    def look(data:DataController, step:int, game_state:GameState, eyes:Eyes) -> list:
+    def look(self, data:DataController, step:int, game_state:GameState, eyes:Eyes) -> list:
         ''' Проверить роботов и раздать задачи '''
-        Observer.next_step(step)
-        Observer.eyes = eyes
-        Observer.game_state = game_state
+        self.next_step(step)
+        self.eyes = eyes
+        self.game_state = game_state
         robots, tasks, has_robots = [], [], []
         # --- проверяем действия роботов без энергии ---
         for unit_id, robot in data.robots.items():
@@ -127,7 +127,7 @@ class Observer:
                         has_robots.append(unit_id)
                         robots.append(robot)
                         continue
-                robot_task = ROBOT_TASK.RETURN if unit_id in Observer.return_robots else robot.robot_task
+                robot_task = ROBOT_TASK.RETURN if unit_id in self.return_robots else robot.robot_task
                 # --- считаем сколько шагов до связанной фабрики --- 
                 moves = getDistance(unit.pos, robot.factory.factory.pos)
                 # --- считаем через сколько фабрика уничтожится --- 
@@ -165,10 +165,10 @@ class Observer:
     # ------- lock_map: 0 - lock, 1 - alloy ---------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     #@time_wrapper('obs_getLockMap', 6)
-    def getLockMap(unit:Unit, task:int, map_type:int=MAP_TYPE.MOVE) -> np.ndarray:
+    def getLockMap(self, unit:Unit, task:int, map_type:int=MAP_TYPE.MOVE) -> np.ndarray:
         ''' Вернуть матрицу возможных ходов
             lock_map: 0 - lock, 1 - alloy '''
-        eyes = Observer.eyes
+        eyes = self.eyes
         if map_type == MAP_TYPE.MOVE:
             eyes.clear(['u_move', 'u_energy'])
             eyes.update('u_move', unit.pos-1, getRad(unit.pos, as_matrix=True)*ROBOT_TYPE.getType(unit.unit_type))
@@ -178,74 +178,74 @@ class Observer:
             move_map = np.where(move_map == 0, energy_map, move_map)
             move_map = np.where(move_map > 0, 1, 0)
             if task == ROBOT_TASK.WARRION or task == ROBOT_TASK.LEAVER:
-                return Observer.getWarriorLockMap(unit, move_map)
+                return self.getWarriorLockMap(unit, move_map)
             else:
                 eyes.clear('u_move')
                 eyes.update('u_move', unit.pos-1, getRad(unit.pos, as_matrix=True))
                 return np.where(eyes.sum([eyes.mul(['units', 'u_move']), 'factories', move_map]) > 0, 0, 1)
         elif task == ROBOT_TASK.ICE_MINER or task == ROBOT_TASK.ORE_MINER:
-            return Observer.findResource(RES.ice if task == ROBOT_TASK.ICE_MINER else RES.ore)
+            return self.findResource(RES.ice if task == ROBOT_TASK.ICE_MINER else RES.ore)
         elif task == ROBOT_TASK.CLEANER:
-            return Observer.findRubble(unit)
+            return self.findRubble(unit)
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Расчёт матрицы поиска ближайшего ресурса ------------------------------------------------------------
     # ------- lock_map: 0 - lock, 1 - alloy ---------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     #@time_wrapper('obs_findResource', 7)
-    def findResource(res_type:int):
-        eyes = Observer.eyes
-        resource = Observer.game_state.board.ice if res_type == RES.ice else Observer.game_state.board.ore
+    def findResource(self, res_type:int):
+        eyes = self.eyes
+        resource = self.game_state.board.ice if res_type == RES.ice else self.game_state.board.ore
         return np.where(eyes.sum([eyes.getFree(1) - resource, 'units']) > 0, 0, 1)
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Расчёт матрицы поиска ближайшего щебня --------------------------------------------------------------
     # ------- lock_map: 0 - lock, 1 - alloy ---------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     #@time_wrapper('obs_findRubble', 7)
-    def findRubble(unit:Unit):
-        rubble_map = Observer.game_state.board.rubble
-        ice_map = Observer.game_state.board.ice
-        ore_map = Observer.game_state.board.ore
-        eyes = Observer.eyes
+    def findRubble(self, unit:Unit):
+        rubble_map = self.game_state.board.rubble
+        ice_map = self.game_state.board.ice
+        ore_map = self.game_state.board.ore
+        eyes = self.eyes
         return rubble_map*np.where(eyes.sum(['units', ore_map, ice_map]) > 0, 0, 1)
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Расчёт матрицы возможных ходов для столкновения с противником ---------------------------------------
     # ------- lock_map: 0 - lock, 1 - alloy ---------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     #@time_wrapper('obs_getWarriorLockMap', 7)
-    def getWarriorLockMap(unit:Unit, move_map:np.ndarray=None) -> np.ndarray:
-        eyes = Observer.eyes
+    def getWarriorLockMap(self, unit:Unit, move_map:np.ndarray=None) -> np.ndarray:
+        eyes = self.eyes
         return np.where(eyes.sum(['factories', 'units', move_map]) > 0, 0, 1)
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Добавить робота в список возвращающихся роботов -----------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def addReturn(unit_id:str) -> bool:
+    def addReturn(self, unit_id:str) -> bool:
         ''' Добавить робота в список возвращающихся роботов '''
-        if unit_id not in Observer.return_robots:
-            Observer.return_robots.append(unit_id)
+        if unit_id not in self.return_robots:
+            self.return_robots.append(unit_id)
         return True
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Удалить робота в список возвращающихся роботов ------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def removeReturn(unit_id:str) -> bool:
+    def removeReturn(self, unit_id:str) -> bool:
         ''' Удалить робота в список возвращающихся роботов '''
-        if unit_id in Observer.return_robots:
-            Observer.return_robots.remove(unit_id)
+        if unit_id in self.return_robots:
+            self.return_robots.remove(unit_id)
         return True
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Добавить матрицы ходов всех роботов -----------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     #@time_wrapper('obs_addMovesMap', 6)
-    def addMovesMap(unit:Unit, move_map:list):
-        Observer.moves_map[unit.unit_id] = move_map
-        Observer.eyes.update('units', unit.pos, -1, collision=lambda a,b: a+b)
+    def addMovesMap(self, unit:Unit, move_map:list):
+        self.moves_map[unit.unit_id] = move_map
+        self.eyes.update('units', unit.pos, -1, collision=lambda a,b: a+b)
         find = False
         for map in move_map:
             poses = np.argwhere(map == 1)
             if len(poses) > 0:
-                Observer.eyes.update('units', poses[0], 1, collision=lambda a,b: a+b)
+                self.eyes.update('units', poses[0], 1, collision=lambda a,b: a+b)
                 find = True
         if not find:
-            Observer.eyes.update('units', unit.pos, 1, collision=lambda a,b: a+b)
+            self.eyes.update('units', unit.pos, 1, collision=lambda a,b: a+b)
 # ===============================================================================================================
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ===============================================================================================================
