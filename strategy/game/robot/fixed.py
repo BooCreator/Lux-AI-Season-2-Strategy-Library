@@ -181,5 +181,10 @@ class RobotStrategy:
             # --- выясняем куда мы можем шагнуть ---
             if not actions.buildMove(item.getNeareastPoint(unit.pos), True, 1, lock_map):
                 actions.buildMove(item.getNeareastPoint(unit.pos), True, 1)
-        
+        # --- если робот не на фабрике и он - уничтожитель ---
+        elif task == ROBOT_TASK.DESTROYER:
+            pass
+            # --- выясняем куда мы можем шагнуть ---
+            #if not actions.buildMove(item.getNeareastPoint(unit.pos), True, 1, lock_map):
+            #    actions.buildMove(item.getNeareastPoint(unit.pos), True, 1)
         return actions
