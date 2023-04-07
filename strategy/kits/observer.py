@@ -134,7 +134,7 @@ class Observer:
                 # --- считаем через сколько фабрика уничтожится --- 
                 steps = robot.factory.waterToSteps(game_state)
                 # --- если у нас есть лёд и фабрика скоро уничтожится - везём домой лёд ---
-                if unit.cargo.ice >= item.env_cfg.ICE_WATER_RATIO and steps <= moves+3 \
+                if unit.cargo.ice >= item.env_cfg.ICE_WATER_RATIO and (steps <= moves+3 or step >= 990 - moves) \
                     and robot_task != ROBOT_TASK.RETURN:
                     tasks.append(ROBOT_TASK.RETURN)
                     has_robots.append(unit_id)

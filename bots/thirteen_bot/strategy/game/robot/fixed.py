@@ -86,11 +86,13 @@ class RobotStrategy:
             resource = (ice_map if task == ROBOT_TASK.ICE_MINER else ore_map)*np.where(eyes.get('units') > 0, 0, 1)
             eyes.update('units', unit.pos, 1, collision=lambda a,b: a+b)
             # --- если робот на блоке с ресурсом ---
-            if robot.onResourcePoint(resource):
+            if robot.onResourcePoint(resource) :
+                space = unit.cargo.ice if task == ROBOT_TASK.ICE_MINER else unit.cargo.ore
+                max_res = 1000 if task == ROBOT_TASK.ICE_MINER else 150
                 # --- строим маршрут к фабрике ---
                 m_actions, move_cost, move_map = findPathActions(unit, game_state, to=item.getNeareastPoint(unit.pos), lock_map=lock_map, get_move_map=True)
                 # --- если не можем ничего выкопать - идём на фабрику ---
-                if not actions.buildDigResource(reserve=sum(move_cost)):
+                if space >= max_res or not actions.buildDigResource(reserve=sum(move_cost)):
                     actions.extend(m_actions, move_cost, move_map=move_map)
                     obs.addReturn(unit.unit_id)
             # --- если робот где-то гуляет ---
