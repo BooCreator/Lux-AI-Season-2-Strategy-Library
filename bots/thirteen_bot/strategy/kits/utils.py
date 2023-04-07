@@ -185,8 +185,9 @@ def extended(arr:list) -> list:
 def dict_extended(arr:list) -> dict:
     ''' Объединить списки '''
     res = {}
-    for key, value in arr.items(): 
-        res[key] = value
+    for data in arr:
+        for key, value in data.items(): 
+            res[key] = value
     return res
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ----- Определить направление движения до точки (из кода Lux) ----------------------------------------------

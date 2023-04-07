@@ -64,7 +64,7 @@ class EarlyStrategy:
         r_ice = spreadCell(ice, self.spread['ice'][0], val=self.spread['ice'][1])
         r_ore = spreadCell(ore, self.spread['ore'][0], val=self.spread['ore'][1], max=self.spread['ice'][1]-self.spread['ore'][1])
         rubble = normalize(rubble, min(np.max(r_ice), np.max(r_ore))) * -1
-        self.weighted = r_ice + r_ore
+        self.weighted = r_ice + r_ore + rubble
         self.weighted[:, 0:self.border] = -100
         self.weighted[:, -self.border:] = -100
         self.weighted[0:self.border, ] = -100
@@ -81,13 +81,21 @@ class EarlyStrategy:
         if n_factories > 0:
             # получаем матрицу свободных мест
             valid = self.game_state.board.valid_spawns_mask.astype(int)
+            rubble = self.game_state.board.rubble
             # определяем сколько ресурсов давать фабрике
             metal = ceil(self.game_state.teams[self.player].metal / n_factories)
             water = ceil(self.game_state.teams[self.player].water / n_factories)
             # получаем позицию для установки фабрики
             res = self.weighted * valid + valid
             potential_spawns = np.array(list(zip(*np.where(res==np.max(res)))))
-            spawn_loc = potential_spawns[np.random.randint(0, len(potential_spawns))]
+            spawn_i, min = 0, 1000
+            for i, spawn in enumerate(potential_spawns):
+                slice = rubble[spawn[0]-1:spawn[0]+2, spawn[1]-1:spawn[1]+2]
+                sum = np.sum(slice)
+                if sum < min:
+                    spawn_i = i
+                    min = sum
+            spawn_loc = potential_spawns[spawn_i]
             return dict(spawn=spawn_loc, metal=metal, water=water)
         return {}
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
