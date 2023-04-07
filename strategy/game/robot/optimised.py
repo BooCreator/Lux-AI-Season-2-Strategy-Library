@@ -115,7 +115,6 @@ class RobotStrategy:
         # --- если робот не на фабрике и он - чистильщик ---
         elif task == ROBOT_TASK.CLEANER:
             # --- строим маршрут к фабрике ---
-            
             lock_find_map = Observer.getLockMap(unit, task, MAP_TYPE.FIND)
             m_actions, move_cost = findPathActions(unit, game_state, to=item.getNeareastPoint(unit.pos), lock_map=lock_map)
             start_pos = unit.pos
@@ -123,22 +122,25 @@ class RobotStrategy:
             while not actions.isFull():
                 # --- находим ближайший щебень ---
                 ct = findClosestTile(start_pos, rubble_map, lock_map=lock_find_map)
-                # --- смотрим, можем ли мы копнуть хотябы пару раз ---
-                dig_count, __, __ = calcDigCount(unit, count=rubble_map[ct[0]][ct[1]], reserve_energy=actions.energy_cost+full_energy_cost,
+                # --- строим маршрут к ресурсу ---
+                m_actions, move_cost, move_map = findPathActions(unit, game_state, dec=start_pos, to=ct, lock_map=lock_map, get_move_map=True)
+                if len(m_actions) > 0:
+                    full_energy_cost += sum(move_cost)
+                    # --- смотрим, можем ли мы копнуть хотябы пару раз ---
+                    dig_count, __, __ = calcDigCount(unit, count=rubble_map[ct[0]][ct[1]], reserve_energy=actions.energy_cost+full_energy_cost,
                                                  dig_type=DIG_TYPES.RUBBLE)
-                if dig_count > 0:
-                    # --- строим маршрут ---
-                    if actions.buildMove(ct, border=20, dec=start_pos, lock_map=lock_map):
-                        full_energy_cost += actions.last_energy_cost 
+                    if dig_count > 0:
+                        actions.extend(m_actions, move_cost, move_map)
+                        # --- строим маршрут ---
                         if actions.buildDigRubble(rubble_map[ct[0]][ct[1]], reserve=full_energy_cost):
                             rubble_map[ct[0]][ct[1]] -= min(actions.rubble_gain.get('last', 0), rubble_map[ct[0]][ct[1]])
                         else: break
-                    else: break
-                    start_pos = ct
-                # --- если не можем, то идём на базу ---
-                else:
-                    actions.buildMove(item.getNeareastPoint(unit.pos), True, lock_map=lock_map)
-                    break
+                        start_pos = ct.copy()
+                    # --- если не можем, то идём на базу ---
+                    else:
+                        actions.buildMove(item.getNeareastPoint(unit.pos), True, lock_map=lock_map)
+                        break
+                else: break
         # --- если робот не на фабрике и он - давитель ---
         elif task == ROBOT_TASK.WARRION:
             # --- строим маршрут к фабрике ---
