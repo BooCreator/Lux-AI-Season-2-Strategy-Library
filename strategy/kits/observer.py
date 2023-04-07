@@ -105,28 +105,29 @@ class Observer:
             # --- если вражеский робот не может нас задавить ---
             else:
                 # --- проверяем задачу робота ---
-                if robot.isTask(ROBOT_TASK.JOBLESS):
-                    task_changed = False
-                    if robot.isType(ROBOT_TYPE.HEAVY):
-                        if robot.factory.getCount(unit=robot, type_is=ROBOT_TYPE.HEAVY, task_is=ROBOT_TASK.ICE_MINER) == 0:
-                            task_changed = robot.setTask(ROBOT_TASK.ICE_MINER)
-                        elif robot.factory.getCount(unit=robot, type_is=ROBOT_TYPE.HEAVY, task_is=ROBOT_TASK.ORE_MINER) == 0:
-                            task_changed = robot.setTask(ROBOT_TASK.ORE_MINER)
+                if robot.isTask(ROBOT_TASK.JOBLESS) or step > 150:
+                    if not robot.isTask(ROBOT_TASK.DESTROYER):
+                        task_changed = False
+                        if robot.isType(ROBOT_TYPE.HEAVY):
+                            if robot.factory.getCount(unit=robot, type_is=ROBOT_TYPE.HEAVY, task_is=ROBOT_TASK.ICE_MINER) == 0:
+                                task_changed = robot.setTask(ROBOT_TASK.ICE_MINER)
+                            elif robot.factory.getCount(unit=robot, type_is=ROBOT_TYPE.HEAVY, task_is=ROBOT_TASK.ORE_MINER) == 0:
+                                task_changed = robot.setTask(ROBOT_TASK.ORE_MINER)
+                            else:
+                                task_changed = robot.setTask(ROBOT_TASK.CLEANER)
                         else:
-                            task_changed = robot.setTask(ROBOT_TASK.CLEANER)
-                    else:
-                        if robot.factory.getCount(unit=robot, task_is=ROBOT_TASK.ICE_MINER) == 0:
-                            task_changed = robot.setTask(ROBOT_TASK.ICE_MINER)
-                        elif robot.factory.getCount(unit=robot, task_is=ROBOT_TASK.ORE_MINER) == 0:
-                            task_changed = robot.setTask(ROBOT_TASK.ORE_MINER)
-                        else:
-                            task_changed = robot.setTask(ROBOT_TASK.CLEANER)
-                    # --- если базовая задача была изменена - сначала возвращаемся на базу ---
-                    if task_changed:
-                        tasks.append(ROBOT_TASK.RETURN)
-                        has_robots.append(unit_id)
-                        robots.append(robot)
-                        continue
+                            if robot.factory.getCount(unit=robot, task_is=ROBOT_TASK.ICE_MINER) == 0:
+                                task_changed = robot.setTask(ROBOT_TASK.ICE_MINER)
+                            elif robot.factory.getCount(unit=robot, task_is=ROBOT_TASK.ORE_MINER) == 0:
+                                task_changed = robot.setTask(ROBOT_TASK.ORE_MINER)
+                            else:
+                                task_changed = robot.setTask(ROBOT_TASK.CLEANER)
+                        # --- если базовая задача была изменена - сначала возвращаемся на базу ---
+                        if task_changed:
+                            tasks.append(ROBOT_TASK.RETURN)
+                            has_robots.append(unit_id)
+                            robots.append(robot)
+                            continue
                 robot_task = ROBOT_TASK.RETURN if unit_id in self.return_robots else robot.robot_task
                 # --- считаем сколько шагов до связанной фабрики --- 
                 moves = getDistance(unit.pos, robot.factory.factory.pos)

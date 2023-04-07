@@ -95,10 +95,12 @@ class FactoryData:
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def getMeanWaterOnStep(self) -> int:
         return floor(sum(self.water)/len(self.water))
-
-    def waterToSteps(self, game_state:GameState) -> int:
-        water_cost = self.factory.water_cost(game_state)+1
-        return floor(self.factory.cargo.water/water_cost)
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- На сколько ходов ещё хватит воды --------------------------------------------------------------------
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    def waterToSteps(self, game_state:GameState) -> float:
+        water_cost = 1 + self.factory.water_cost(game_state)*1.5
+        return self.factory.cargo.water/water_cost
 # ===============================================================================================================
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ===============================================================================================================

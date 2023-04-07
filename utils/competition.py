@@ -10,14 +10,16 @@ class Log:
     get_frames:bool = True
     mean_step_time:bool = True
     mean_obs_time:bool = True
-    def __init__(self, video=True, frames=True, step_time=True, obs_time=True) -> None:
+    step_render:int = 1
+    def __init__(self, video=True, frames=True, step_time=True, obs_time=True, step_render=1) -> None:
         self.get_video=video
         self.get_frames=frames
         self.mean_step_time=step_time
         self.mean_obs_time=obs_time
+        self.step_render=step_render
     
     def getLog(self)->list:
-        return [self.get_video, self.get_frames, self.mean_step_time, self.mean_obs_time]
+        return [self.get_video, self.get_frames, self.mean_step_time, self.mean_obs_time, self.step_render]
 
 
 def timed(func=lambda x: 0):
@@ -112,15 +114,18 @@ class LuxAI:
     # ------- seed - генерация карты, None - каждый раз новая ---------------------------------------------------
     # ------- log - сохранять ли в папку log каждый кадр игры ---------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =   
-    def interact(agents:dict, env:LuxAI_S2=None, steps:int=1000, *, seed:int=None, log:list=True, show_steps:bool=True, v:int=0):
+    def interact(agents_data:dict, steps:int=1000, *, seed:int=None, log:list=True, show_steps:bool=True, v:int=0):
         ''' Запуск локальной игры между агентами '''
         step, imgs, mean_s, mean_o = 0, [], [], []
         log_path = createFolder(['log', 'render'])
-        
-        if env is None: env = LuxAI.env
+        env = LuxAI_S2()
+        np.random.seed(seed)
         obs = env.reset(seed=seed)
-        np.random.seed(0)
         env.env_cfg.verbose = v
+        env_cfg = env.state.env_cfg
+        agents = {}
+        for player, agent in agents_data.items():
+            agents[player] = agent[0](player, env_cfg, strategy=agent[1] if len(agent) > 1 else None)
 
         gtime = datetime.now()
         while env.state.real_env_steps < 0:
@@ -140,9 +145,10 @@ class LuxAI:
             else:
                 obs, rewards, dones, infos = env.step(actions)
             if log==True or log[0]==True or log[1]==True:
-                frame = env.render("rgb_array", width=640, height=640)
-                imgs += [frame]
-                if log[1]: toImage(frame, f'{log_path}frame', frames=min(steps, LuxAI.render_log_count))
+                if log[0] == True or step % log[4] == 0:
+                    frame = env.render("rgb_array", width=640, height=640)
+                    imgs += [frame]
+                    if log[1]: toImage(frame, f'{log_path}frame', frames=min(steps, LuxAI.render_log_count))
             step += 1
             print_str = f'\r step: {step} of {steps} '
             if log==True or log[2]:
@@ -169,9 +175,10 @@ class LuxAI:
             else:
                 obs, rewards, dones, infos = env.step(actions)
             if log==True or log[0]==True or log[1]==True:
-                frame = env.render("rgb_array", width=640, height=640)
-                imgs += [frame]
-                if log[1]: toImage(frame, f'{log_path}frame', frames=min(steps, LuxAI.render_log_count))
+                if log[0] == True or step % log[4] == 0:
+                    frame = env.render("rgb_array", width=640, height=640)
+                    imgs += [frame]
+                    if log[1]: toImage(frame, f'{log_path}frame', frames=min(steps, LuxAI.render_log_count))
             step += 1
             print_str = f'\r step: {step} of {steps} '
             if log==True or log[2]:

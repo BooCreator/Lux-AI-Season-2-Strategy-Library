@@ -18,7 +18,7 @@ class ROBOT_TASK:
     #COURIER_OUT= 4 # курьер, который отдаёт
     WARRION    = 5 # давит противников
     LEAVER     = 6 # убегает от противников
-    #DESTROYER  = 7 # уничтожает лишайник
+    DESTROYER  = 7 # уничтожает лишайник
     WALKER     = 8 # задача - отойти
     RECHARGE   = 9 # если не хватает энергии, чтобы сделать шаг
     def getTask(task_name:str) -> int:
