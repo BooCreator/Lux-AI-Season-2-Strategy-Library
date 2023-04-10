@@ -129,8 +129,8 @@ class RobotStrategy:
                     pass
                 # --- строим маршрут к фабрике ---
                 __, move_cost, move_map = findPathActions(unit, game_state, to=item.getNeareastPoint(unit.pos), lock_map=lock_map, dec=ct, get_move_map=True)
-                #if actions.buildCarrierMove(ct, rubble_map, dec=dec, border=20, lock_map=lock_map):
-                if actions.buildMove(ct, dec=dec, border=20, lock_map=lock_map):
+                if actions.buildCarrierMove(ct, rubble_map, dec=dec, border=20, lock_map=lock_map):
+                #if actions.buildMove(ct, dec=dec, border=20, lock_map=lock_map):
                     if move_map[ct[0]][ct[1]] > 0:
                         actions.buildDigResource(reserve=actions.last_energy_cost + sum(move_cost))
                 # --- иначе - идём на базу ---

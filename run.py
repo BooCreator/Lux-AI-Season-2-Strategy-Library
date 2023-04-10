@@ -9,7 +9,7 @@ bots = [
     {'file':'./bots/fourteen_bot/main.py', 'name':'fourteen_bot'},
 ]
 
-Lux.play(bots, seed=598640900)
+Lux.play(bots, seed=990277527)
 #Lux.tornament('bots/')
 #zip_name = Lux.buildSubmission('thirteen_bot') # zip_name == 'example_2023-02-09_15-38-21.tar.gz'
 #Lux.sendSubmission(zip_name, 'third bot')
@@ -59,10 +59,10 @@ ddf = {
 #    'player_0': AgentThirteen('player_0', env_cfg),
 #}
 Lux.render_log_count=10
-log = Log(video=False, frames=False, step_time=False, obs_time=False, step_render=1) # 598640900
+log = Log(video=False, frames=False, step_time=False, obs_time=False, step_render=1) # 990277527
 
 agents = {'player_0':[Agent, ddf], 'player_1':[Agent, ddf]}
-#Lux.interact(agents, 1000, seed=598640900, log=log.getLog(), show_steps=True, v=0)
+#Lux.interact(agents, 1000, seed=990277527, log=log.getLog(), show_steps=True, v=0)
 
 
 #rl_interact(Lux.env)#f'D:\\ML\\Lux AI Season 2\\replays\\json\\{46215591}.json')
