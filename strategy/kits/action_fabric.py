@@ -63,13 +63,13 @@ class ActionsFabric:
         ''' Добавить действие выгрузки всех ресурсов '''
         if not self.check(): return False
         if to is None: to = self.unit.robot.pos
-        for res, count in zip(*self.unit.getResource()):
-            d = direction_to(self.unit.robot.pos, to)
-            if d < 5 and d >= 0:
+        if getDistance(self.unit.robot.pos, to) <= 1:
+            for res, count in zip(*self.unit.getResource()):
+                d = direction_to(self.unit.robot.pos, to)
                 self.actions.append(self.unit.robot.transfer(d, res, count))
                 self.steps += 1
-            else:
-                return False
+        else:
+            return False
         return self.trimActions()
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Добавить действие "взять энергию" -------------------------------------------------------------------

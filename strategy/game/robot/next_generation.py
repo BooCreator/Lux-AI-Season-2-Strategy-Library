@@ -57,10 +57,10 @@ class RobotStrategy:
                 actions.buildResourceUnload(item.getNeareastPoint(unit.pos))
                 actions.buildTakeEnergy(take_energy)
                 obs.removeReturn(unit.unit_id)
-            #elif robot.on_position(item.factory.pos, size=5) and (task != ROBOT_TASK.LEAVER or task != ROBOT_TASK.WARRION):
-            #    # --- выгружаем ресурс, если выгрузили, то удаляем из возвращающихся ---
-            #    if actions.buildResourceUnload(item.getNeareastPoint(unit.pos)):
-            #        obs.removeReturn(unit.unit_id)
+            elif robot.on_position(item.factory.pos, size=5) and (task != ROBOT_TASK.LEAVER or task != ROBOT_TASK.WARRION):
+                # --- выгружаем ресурс, если выгрузили, то удаляем из возвращающихся ---
+                if actions.buildResourceUnload(item.getNeareastPoint(unit.pos)):
+                    obs.removeReturn(unit.unit_id)
 
             # --- формируем действия робота на основе задачи ---
             actions:ActionsFabric = RobotStrategy.getActionsOnTask(robot, task, game_state, obs, actions)
@@ -84,9 +84,15 @@ class RobotStrategy:
         
         # --- если робот идёт на базу ---
         if task == ROBOT_TASK.RETURN:
-            #if robot.getResCount() > 0:
-            #    lock_map *= np.where(eyes.get('u_factories') > 0, 0, 1)
-            actions.buildMove(item.getNeareastPoint(unit.pos), True, lock_map=lock_map)
+            ct = item.getNeareastPoint(unit.pos)
+            m_actions, move_cost, move_map = findPathActions(unit, game_state, to=ct, lock_map=lock_map, get_move_map=True)
+            if robot.getResCount() > 0 and move_map[ct[0], ct[1]] > 0 and getDistance(ct, unit.pos) > 1:
+                m_actions[-1][-1] -= 1
+                if m_actions[-1][-1] == 0:
+                    del m_actions[-1]
+                    del move_cost[-1]
+                move_map[ct[0], ct[1]] = 0
+            actions.extend(m_actions, move_cost, move_map)
             obs.addReturn(unit.unit_id)
         # --- если робот заряжается ---
         elif task == ROBOT_TASK.RECHARGE:

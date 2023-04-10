@@ -59,7 +59,7 @@ ddf = {
 #    'player_0': AgentThirteen('player_0', env_cfg),
 #}
 Lux.render_log_count=10
-log = Log(video=False, frames=True, step_time=False, obs_time=False, step_render=1) # 598640900
+log = Log(video=False, frames=False, step_time=False, obs_time=False, step_render=1) # 598640900
 
 agents = {'player_0':[Agent, ddf], 'player_1':[Agent, ddf]}
 #Lux.interact(agents, 1000, seed=598640900, log=log.getLog(), show_steps=True, v=0)
