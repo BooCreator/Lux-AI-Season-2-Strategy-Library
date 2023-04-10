@@ -14,54 +14,48 @@ from strategy.kits.factory import FactoryData
 from lux.kit import GameState
 from lux.kit import EnvConfig
 
-# ===============================================================================================================
-# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-# ===============================================================================================================
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+# ----- Номера ресурсов для удобства (в Lux не указаны)
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 class RobotStrategy:
     ''' Стратегия с наблюдателем '''
     obs: Observer = None
-    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+
     def __init__(self) -> None:
         self.obs = Observer()
-    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    # ----- Получить действия (для стратегий) -------------------------------------------------------------------
-    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+
+    #@time_wrapper('last_getRobotActions', 5)
     def getActions(self, step:int, env_cfg:EnvConfig, game_state:GameState, data:DataController, **kwargs)->dict:
         ''' Получить список действий для роботов '''
         eyes = data.eyes
         robot, task = self.obs.look(data, step, game_state, eyes)
         return RobotStrategy.getRLActions(robot, task, env_cfg, game_state, eyes, self.obs)
-    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    # ----- Получить действия (для RL) --------------------------------------------------------------------------
-    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    
+    #@time_wrapper('getRLActions', 5)
     def getRLActions(robots, tasks, env_cfg:EnvConfig, game_state:GameState, eyes:Eyes, obs:Observer=None):
         if obs is None: obs = Observer()
-        obs.game_state = game_state
         obs.eyes = eyes
+        obs.game_state = game_state
         result = {}
-        # --- перебираем всех роботов и их задачи ---
         for robot, task in zip(robots, tasks):
             robot: RobotData
             unit, item = robot.robot, robot.factory
+            
             actions = ActionsFabric(game_state, robot)
            
             if task == ROBOT_TASK.WALKER:
                 task = robot.robot_task
             # --- если робот находится на своей фабрике ---
             elif robot.on_position(item.factory.pos, size=3):
-                # --- добавляем действия взятия энергии ---
-                take_energy = min(unit.unit_cfg.BATTERY_CAPACITY - unit.power, item.factory.power)
+                # --- если робот вернулся от куда-то, то удаляем его из массива ---
+                obs.removeReturn(unit.unit_id)
                 # --- устанавливаем базовую задачу робота ---
                 task = robot.robot_task if task == ROBOT_TASK.RETURN else task
-                # --- если робот вернулся от куда-то, то удаляем его из массива ---
-                actions.buildResourceUnload(item.getNeareastPoint(unit.pos))
+                # --- добавляем действия по выгрузке и взятии энергии ---
+                take_energy = min(unit.unit_cfg.BATTERY_CAPACITY - unit.power, item.factory.power)
+                actions.buildResourceUnload()
                 actions.buildTakeEnergy(take_energy)
-                obs.removeReturn(unit.unit_id)
-            #elif robot.on_position(item.factory.pos, size=5) and (task != ROBOT_TASK.LEAVER or task != ROBOT_TASK.WARRION):
-            #    # --- выгружаем ресурс, если выгрузили, то удаляем из возвращающихся ---
-            #    if actions.buildResourceUnload(item.getNeareastPoint(unit.pos)):
-            #        obs.removeReturn(unit.unit_id)
-
+            
             # --- формируем действия робота на основе задачи ---
             actions:ActionsFabric = RobotStrategy.getActionsOnTask(robot, task, game_state, obs, actions)
             
@@ -70,22 +64,18 @@ class RobotStrategy:
                 result[unit.unit_id] = actions.getActions()
                 obs.addMovesMap(unit, actions.getMoveMap())
         return result
-    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    # ----- Получить действия по задаче -------------------------------------------------------------------------
-    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    
     def getActionsOnTask(robot:RobotData, task:int, game_state:GameState, obs:Observer, actions:ActionsFabric=None) -> ActionsFabric:
         robot: RobotData
-        unit, item = robot.robot, robot.factory
         eyes = obs.eyes
+        unit, item = robot.robot, robot.factory
+        actions = ActionsFabric(game_state, robot) if actions is None else actions
+        ice_map, ore_map, rubble_map = game_state.board.ice.copy(), game_state.board.ore.copy(), game_state.board.rubble.copy()
         lichen = eyes.get('e_lichen').copy()
         lock_map = obs.getLockMap(unit, task)
-        ice_map, ore_map, rubble_map = game_state.board.ice.copy(), game_state.board.ore.copy(), game_state.board.rubble.copy()
-        actions = ActionsFabric(game_state, robot) if actions is None else actions
-        
+
         # --- если робот идёт на базу ---
         if task == ROBOT_TASK.RETURN:
-            #if robot.getResCount() > 0:
-            #    lock_map *= np.where(eyes.get('u_factories') > 0, 0, 1)
             actions.buildMove(item.getNeareastPoint(unit.pos), True, lock_map=lock_map)
             obs.addReturn(unit.unit_id)
         # --- если робот заряжается ---
@@ -226,13 +216,4 @@ class RobotStrategy:
                 else:
                     actions.buildMove(item.getNeareastPoint(unit.pos), True, lock_map=lock_map)
                     break
-        # --- если робот заряжатель ---
-        elif task == ROBOT_TASK.ENERGIZER:
-            # --- выясняем куда мы можем шагнуть ---
-            #if not actions.buildMove(item.getNeareastPoint(unit.pos), True, 1, lock_map):
-            #    actions.buildMove(item.getNeareastPoint(unit.pos), True, 1)
-            pass
         return actions
-# ===============================================================================================================
-# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-# ===============================================================================================================
