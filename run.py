@@ -9,8 +9,8 @@ bots = [
 ]
 
 #Lux.play(bots, seed=598640900)
-Lux.tornament('bots/')
-#zip_name = Lux.buildSubmission('thirteen_bot') # zip_name == 'example_2023-02-09_15-38-21.tar.gz'
+#Lux.tornament('bots/')
+zip_name = Lux.buildSubmission('thirteen_bot') # zip_name == 'example_2023-02-09_15-38-21.tar.gz'
 #Lux.sendSubmission(zip_name, 'third bot')
 
 from test_env.agent import Agent
@@ -29,6 +29,7 @@ from strategy.game.robot.cautious import RobotStrategy as CautiousRobots
 from strategy.game.robot.curious import RobotStrategy as CuriousRobots
 from strategy.game.robot.optimised import RobotStrategy as OptimisedRobots
 from strategy.game.robot.fixed import RobotStrategy as FixedRobots
+from strategy.game.robot.next_generation import RobotStrategy as NextGenerationRobots
 # ----- factory -----
 from strategy.game.factory.default import FactoryStrategy as DefaultFactoryStrategy
 from strategy.game.factory.mean_water import FactoryStrategy as MeanWaterStrategy
@@ -38,7 +39,7 @@ ddf = {
     'basic': DefaultStrategy,
     'early': BestEarly,
     'game': DefaultGame,
-    'robot': FixedRobots,
+    'robot': NextGenerationRobots,
     'factory': ForBestFactoryStrategy
 }
 
