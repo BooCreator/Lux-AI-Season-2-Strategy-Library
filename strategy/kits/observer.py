@@ -219,9 +219,9 @@ class Observer:
         eyes = self.eyes
         lichen = eyes.get('e_lichen').copy()
         if  ROBOT_TYPE.getType(unit.unit_type) == ROBOT_TYPE.LIGHT:
-            return np.where(lichen < max(np.min(lichen) * 1.25, 5), 0, 1)
+            return np.where(lichen < max(np.min(lichen) * 1.25, 5), 1, 0)
         else:
-            return np.where(lichen > max(np.max(lichen) * 0.75, 20), 0, 1)
+            return np.where(lichen > np.max(lichen) * 0.75, 1, 0)
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Расчёт матрицы возможных ходов для столкновения с противником ---------------------------------------
     # ------- lock_map: 0 - lock, 1 - alloy ---------------------------------------------------------------------

@@ -1,19 +1,6 @@
 from utils.competition import Log, LuxAI as Lux
 #from utils.rl_pipeline import rl_interact
 
-#Lux.loadCompetition(rw=True) # if not exists - load
-
-bots = [
-    #{'file':'./bots/twelve_bot/main.py', 'name':'twelve_bot'},
-    #{'file':'./bots/thirteen_bot/main.py', 'name':'thirteen_bot'},
-    {'file':'./bots/fourteen_bot/main.py', 'name':'fourteen_bot'},
-]
-
-Lux.play(bots, seed=990277527)
-#Lux.tornament('bots/')
-#zip_name = Lux.buildSubmission('thirteen_bot') # zip_name == 'example_2023-02-09_15-38-21.tar.gz'
-#Lux.sendSubmission(zip_name, 'third bot')
-
 from test_env.agent import Agent
 
 # ----- default -----
@@ -36,6 +23,11 @@ from strategy.game.factory.default import FactoryStrategy as DefaultFactoryStrat
 from strategy.game.factory.mean_water import FactoryStrategy as MeanWaterStrategy
 from strategy.game.factory.for_best import FactoryStrategy as ForBestFactoryStrategy
 
+#Lux.loadCompetition(rw=True) # if not exists - load
+
+#zip_name = Lux.buildSubmission('thirteen_bot') # zip_name == 'example_2023-02-09_15-38-21.tar.gz'
+#Lux.sendSubmission(zip_name, 'third bot')
+
 ddf = {
     'basic': DefaultStrategy,
     'early': BestEarly,
@@ -44,25 +36,16 @@ ddf = {
     'factory': ForBestFactoryStrategy
 }
 
-
-#agents = {player: Agent(player, env_cfg, strategy=ddf) for player in Lux.env.agents}
-#agents = {
-#    'player_0': Agent('player_0', env_cfg, strategy={'early': OptimisedEarly, 'robot': CuriousRobots, 'factory': MeanWaterStrategy}),
-#    'player_1': Agent('player_1', env_cfg, strategy={'early': DefaultEarly, 'robot': CuriousRobots, 'factory': MeanWaterStrategy})
-#}
-#agents = {player: Agent(player, env, game=CautiousStrategy) for player in Lux.env.agents}
-
-#from bots.twelve_bot.agent import Agent as AgentTwelve
-#from bots.thirteen_bot.agent import Agent as AgentThirteen
-#agents = {
-#    'player_1': AgentThirteen('player_1', env_cfg),
-#    'player_0': AgentThirteen('player_0', env_cfg),
-#}
 Lux.render_log_count=10
-log = Log(video=False, frames=False, step_time=False, obs_time=False, step_render=1) # 990277527
+log = Log(video=False, frames=False, step_time=False, obs_time=False, step_render=1) 
+
+bots = [ {'file':'./bots/fourteen_bot/main.py', 'name':'fourteen_bot'},]
 
 agents = {'player_0':[Agent, ddf], 'player_1':[Agent, ddf]}
-#Lux.interact(agents, 1000, seed=990277527, log=log.getLog(), show_steps=True, v=0)
+
+seed = 598640900 # 598640900 # 990277527
 
 
-#rl_interact(Lux.env)#f'D:\\ML\\Lux AI Season 2\\replays\\json\\{46215591}.json')
+#Lux.interact(agents, 1000, seed=seed, log=log.getLog(), show_steps=True, v=2)
+Lux.play(bots, seed=seed)
+#Lux.tornament('bots/')

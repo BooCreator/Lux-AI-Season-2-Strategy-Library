@@ -167,7 +167,7 @@ class RobotStrategy:
                         start_pos = ct.copy()
                     # --- если не можем, то идём на базу ---
                     else:
-                        actions.buildMove(item.getNeareastPoint(unit.pos), True, lock_map=lock_map)
+                        actions.buildMove(item.getNeareastPoint(start_pos), True, lock_map=lock_map)
                         break
                 else: break
         # --- если робот не на фабрике и он - давитель ---
@@ -230,7 +230,7 @@ class RobotStrategy:
                     start_pos = ct.copy()
                 # --- если не можем, то идём на базу ---
                 else:
-                    actions.buildMove(item.getNeareastPoint(unit.pos), True, lock_map=lock_map)
+                    actions.buildMove(item.getNeareastPoint(start_pos), True, lock_map=lock_map)
                     break
         # --- если робот заряжатель ---
         elif task == ROBOT_TASK.ENERGIZER:
