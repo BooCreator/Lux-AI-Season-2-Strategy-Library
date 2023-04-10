@@ -7,9 +7,9 @@ from lux.kit import EnvConfig
 class FactoryStrategy:
     ''' Класс для стратегии фабрик на стадии игры '''
 
-    l_ts = 750
+    l_ts = 1000
     l_max = 10
-    max_to = 500
+    max_to = 250
 
 
     #@time_wrapper('mean_water_getFactoryActions', 5)
