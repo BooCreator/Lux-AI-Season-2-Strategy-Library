@@ -8,8 +8,8 @@ bots = [
     {'file':'./bots/thirteen_bot/main.py', 'name':'thirteen_bot'},
 ]
 
-Lux.play(bots, seed=598640900)
-#Lux.tornament('bots/')
+#Lux.play(bots, seed=598640900)
+Lux.tornament('bots/')
 #zip_name = Lux.buildSubmission('thirteen_bot') # zip_name == 'example_2023-02-09_15-38-21.tar.gz'
 #Lux.sendSubmission(zip_name, 'third bot')
 

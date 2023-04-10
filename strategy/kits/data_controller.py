@@ -14,6 +14,7 @@ class DataController:
     free_robots = []
     factories = {}
     e_factories = {}
+    e_lichens = []
     robots = {}
     player = ''
     eyes: Eyes = None
@@ -25,6 +26,7 @@ class DataController:
         self.robots = {}
         self.player = ''
         self.eyes = Eyes(env_cfg.map_size)
+        self.e_lichens = []
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Обновить состояние стратегии (фабрики, роботы) ------------------------------------------------------
     # ------- Инициализация происходит только при первом запуск -------------------------------------------------
@@ -70,6 +72,8 @@ class DataController:
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def checkFactories(self, game_state:GameState):
         ''' Проверить фабрики в данных стратегии '''
+        self.eyes.clear(['e_lichen'])
+        
         # обновляем словарь с фабриками
         for pl in game_state.factories:
             if pl == self.player:
@@ -89,10 +93,15 @@ class DataController:
                         if unit_id not in self.e_factories.keys():
                             self.e_factories[unit_id] = factory.pos
                             self.eyes.update('factories', factory.pos-1, np.ones((3,3), dtype=int), check_keys=False)
+                            self.e_lichens.append(factory.strain_id)
                     for unit_id in self.e_factories.copy().keys():
                         if unit_id not in game_state.factories[pl].keys():
                             self.eyes.update('factories', self.e_factories.get(unit_id)-1, np.zeros((3,3), dtype=int))
                             del self.e_factories[unit_id]
+        lichen = np.zeros((48, 48), dtype=int)
+        for id in self.e_lichens:
+            lichen = np.where(game_state.board.lichen_strains == id, game_state.board.lichen, lichen)
+        self.eyes.update('e_lichen', [0, 0], lichen)
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Проверить роботов в данных стратегии ----------------------------------------------------------------
     # ------- Удаляем робота, если он не существует -------------------------------------------------------------

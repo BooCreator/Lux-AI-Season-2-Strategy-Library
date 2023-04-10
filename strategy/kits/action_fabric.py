@@ -22,6 +22,7 @@ class ActionsFabric:
     last_energy_cost = 0
     resource_gain =  {'full': 0, 'last': 0}
     rubble_gain = {'full': 0, 'last': 0}
+    lichen_gain = {'full': 0, 'last': 0}
     action_cost = 1
     move_map = []
     steps = 0
@@ -30,6 +31,7 @@ class ActionsFabric:
         self.action_cost = unit.robot.action_queue_cost(game_state)
         self.resource_gain = {'full': 0, 'last': 0}
         self.rubble_gain = {'full': 0, 'last': 0}
+        self.lichen_gain = {'full': 0, 'last': 0}
         self.energy_cost = self.action_cost
         self.max_actions = max_actions
         self.game_state = game_state
@@ -159,6 +161,24 @@ class ActionsFabric:
             self.actions.append(self.unit.robot.dig(n=dig_count))
             self.rubble_gain['full'] += dig_gain
             self.rubble_gain['last'] = dig_gain
+            self.energy_cost += dig_cost
+            self.last_energy_cost = dig_cost
+            self.steps += dig_count
+            return True
+        return False
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Добавить действие "копать лишайник" -------------------------------------------------------------------
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    #@time_wrapper('af_buildDigRubble', 6)
+    def buildDigLichen(self, count:int=100, reserve:int=0) -> bool:
+        ''' Добавить действие "копать щебень" '''
+        if not self.check(): return False
+        dig_count, dig_cost, dig_gain = calcDigCount(self.unit.robot, count=count, reserve_energy=self.energy_cost+reserve,
+                                                      dig_type=DIG_TYPES.LICHEN)
+        if dig_count > 0:
+            self.actions.append(self.unit.robot.dig(n=dig_count))
+            self.lichen_gain['full'] += dig_gain
+            self.lichen_gain['last'] = dig_gain
             self.energy_cost += dig_cost
             self.last_energy_cost = dig_cost
             self.steps += dig_count

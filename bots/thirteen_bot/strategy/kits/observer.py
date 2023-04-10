@@ -188,6 +188,8 @@ class Observer:
             return self.findResource(RES.ice if task == ROBOT_TASK.ICE_MINER else RES.ore)
         elif task == ROBOT_TASK.CLEANER:
             return self.findRubble(unit)
+        elif task == ROBOT_TASK.DESTROYER:
+            return self.findLichen(unit)
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Расчёт матрицы поиска ближайшего ресурса ------------------------------------------------------------
     # ------- lock_map: 0 - lock, 1 - alloy ---------------------------------------------------------------------
@@ -208,6 +210,18 @@ class Observer:
         ore_map = self.game_state.board.ore
         eyes = self.eyes
         return rubble_map*np.where(eyes.sum(['units', ore_map, ice_map]) > 0, 0, 1)
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Расчёт матрицы поиска ближайшего лишайника ----------------------------------------------------------
+    # ------- lock_map: 0 - lock, 1 - alloy ---------------------------------------------------------------------
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    #@time_wrapper('obs_findLichen', 7)
+    def findLichen(self, unit:Unit):
+        eyes = self.eyes
+        lichen = eyes.get('e_lichen').copy()
+        if  ROBOT_TYPE.getType(unit.unit_type) == ROBOT_TYPE.LIGHT:
+            return np.where(lichen < max(np.min(lichen) * 1.25, 5), 0, 1)
+        else:
+            return np.where(lichen > max(np.max(lichen) * 0.75, 20), 0, 1)
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Расчёт матрицы возможных ходов для столкновения с противником ---------------------------------------
     # ------- lock_map: 0 - lock, 1 - alloy ---------------------------------------------------------------------
