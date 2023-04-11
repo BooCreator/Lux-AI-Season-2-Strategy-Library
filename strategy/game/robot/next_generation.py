@@ -145,31 +145,35 @@ class RobotStrategy:
             full_energy_cost = sum(move_cost)
             while not actions.isFull():
                 # --- находим ближайший щебень ---
+                m_actions, move_cost = [], []
+                move_map = np.zeros((48, 48), dtype=int)
                 ct = findClosestTile(start_pos, rubble_map, lock_map=lock_find_map)
                 if getDistance(start_pos, ct) > 25:
                     robot.setTask(ROBOT_TASK.DESTROYER)
+                    RobotStrategy.getActionsOnTask(robot, ROBOT_TASK.DESTROYER, game_state, obs, actions)
                     break
-                # --- строим маршрут к ресурсу ---
-                m_actions, move_cost, move_map = findPathActions(unit, game_state, dec=start_pos, to=ct, lock_map=lock_map, get_move_map=True)
-                if len(m_actions) > 0:
+                if ct[0] != start_pos[0] or ct[1] != start_pos[1]:
+                    # --- строим маршрут к ресурсу ---
+                    m_actions, move_cost, move_map = findPathActions(unit, game_state, dec=start_pos, to=ct, lock_map=lock_map, get_move_map=True)
                     full_energy_cost += sum(move_cost)
-                    # --- смотрим, можем ли мы копнуть хотябы пару раз ---
-                    dig_count, __, __ = calcDigCount(unit, count=rubble_map[ct[0]][ct[1]], reserve_energy=actions.energy_cost+full_energy_cost,
+                else:
+                    move_map[ct[0], ct[1]] = 1
+                # --- смотрим, можем ли мы копнуть хотябы пару раз ---
+                dig_count, __, __ = calcDigCount(unit, count=rubble_map[ct[0]][ct[1]], reserve_energy=actions.energy_cost+full_energy_cost,
                                                  dig_type=DIG_TYPES.RUBBLE)
-                    if dig_count > 0:
-                        actions.extend(m_actions, move_cost, move_map)
-                        if move_map[ct[0]][ct[1]] > 0:
-                            # --- копаем ---
-                            if actions.buildDigRubble(rubble_map[ct[0]][ct[1]], reserve=full_energy_cost):
+                if dig_count > 0:
+                    actions.extend(m_actions, move_cost, move_map)
+                    if move_map[ct[0]][ct[1]] > 0:
+                        # --- копаем ---
+                        if actions.buildDigRubble(rubble_map[ct[0]][ct[1]], reserve=full_energy_cost):
                                 rubble_map[ct[0]][ct[1]] -= min(actions.rubble_gain.get('last', 0), rubble_map[ct[0]][ct[1]])
-                            else: break
                         else: break
-                        start_pos = ct.copy()
-                    # --- если не можем, то идём на базу ---
-                    else:
-                        actions.buildMove(item.getNeareastPoint(start_pos), True, lock_map=lock_map)
-                        break
-                else: break
+                    else: break
+                    start_pos = ct.copy()
+                # --- если не можем, то идём на базу ---
+                else:
+                    obs.addReturn(unit.unit_id)
+                    break
         # --- если робот не на фабрике и он - давитель ---
         elif task == ROBOT_TASK.WARRION:
             # --- строим маршрут к фабрике ---
@@ -197,7 +201,7 @@ class RobotStrategy:
         elif task == ROBOT_TASK.LEAVER:
             # --- выясняем куда мы можем шагнуть ---
             if not actions.buildMove(item.getNeareastPoint(unit.pos), True, 1, lock_map):
-                actions.buildMove(item.getNeareastPoint(unit.pos), True, 1)
+                actions.buildMove(item.getNeareastPoint(unit.pos), True, 1, lock_map=np.where(eyes.get('factories')+eyes.get('units') > 0, 0, 1))
         # --- если робот не на фабрике и он - уничтожитель ---
         elif task == ROBOT_TASK.DESTROYER:
             # --- строим маршрут к фабрике ---
@@ -230,7 +234,7 @@ class RobotStrategy:
                     start_pos = ct.copy()
                 # --- если не можем, то идём на базу ---
                 else:
-                    actions.buildMove(item.getNeareastPoint(start_pos), True, lock_map=lock_map)
+                    obs.addReturn(unit.unit_id)
                     break
         # --- если робот заряжатель ---
         elif task == ROBOT_TASK.ENERGIZER:
