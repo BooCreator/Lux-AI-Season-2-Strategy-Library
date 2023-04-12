@@ -429,26 +429,28 @@ def findPath(dec:np.ndarray, to:np.ndarray, lock_map:np.ndarray=None, steps:int=
 # ----- Получить список действий движения со стоимостью по энергии ------------------------------------------
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 def findPathActions(unit:Unit, game_state:GameState, *, dec:np.ndarray=None, to:np.ndarray=None, 
-                    lock_map:np.ndarray=None, steps:int=25, get_move_map:bool=False):
+                    lock_map:np.ndarray=None, steps:int=25, get_move_map:bool=False, reserve:int=0):
     ''' Получить список действий движения со стоимостью по энергии 
         * lock_map: 0 - lock, 1 - alloy '''
+    energy = unit.power - reserve
     actions, move_cost, spos = [], [], unit.pos
     lock_map = lock_map if lock_map is not None else np.ones(game_state.board.ice.shape, dtype=int)
-    points, moves = findPath(spos if dec is None else dec, spos if to is None else to, lock_map, steps=steps)
-
-    if get_move_map:
-        move_map = np.zeros(lock_map.shape, dtype=int)
-        for i, point in enumerate(points):
-            move_map[point[0], point[1]] = i+1
-
+    __, moves = findPath(spos if dec is None else dec, spos if to is None else to, lock_map, steps=steps, sum_n=False)
+    move_map = np.zeros(lock_map.shape, dtype=int)
+    step = 0
     for [d, point, n] in moves:
-        cost = 0
-        unit.pos = point
-        actions.append(unit.move(d, repeat=0, n=n))
-        for i in range(n):
-            cost += unit.move_cost(game_state, d) or 0
+        # --- если энергии на ход не хватит, то заканчиваем маршрут ---
+        cost = unit.move_cost(game_state, d) or 0
+        if cost >= energy: break
+        # --- если хватит, то делаем шаг ---
+        step += 1
         move_cost.append(cost)
-
+        move_map[point[0], point[1]] = step
+        if len(actions) > 0 and actions[-1][0] == 0 and actions[-1][1] == d:
+            actions[-1][-1] += 1
+        else:
+            actions.append(unit.move(d, repeat=0, n=n))
+        unit.pos = point
     unit.pos = spos
     return (actions, move_cost, move_map) if get_move_map else (actions, move_cost)
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
