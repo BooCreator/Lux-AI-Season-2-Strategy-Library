@@ -60,17 +60,22 @@ class Observer:
     # ----- Проверить и изменить задачу для роботов -------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def setRobotNewTask(self, robot:RobotData, step:int) -> list:
-        task_changed = False
+        # --- до 20 хода все лёгкие роботы идут на руду, затем остаётся 1 ---
+        # --- первый тяжёлый робот всегда добывает лёд ---
+        # --- если тяжёлых роботов нет, то лёд добывает лёгкий робот ---
+        # --- если робот уничтожителль, то задачу он не меняет ---
+        # --- до 20 хода пе меняем задачи ---
+        need_return, task_changed = False, False
         if robot.isTask(ROBOT_TASK.JOBLESS) or step > 150:
             if not robot.isTask(ROBOT_TASK.DESTROYER):
-                task_changed = False
                 if robot.isType(ROBOT_TYPE.HEAVY):
-                    if robot.factory.getCount(unit=robot, type_is=ROBOT_TYPE.HEAVY, task_is=ROBOT_TASK.ICE_MINER) == 0:
+                    if robot.factory.getCount(unit=robot, type_is=ROBOT_TYPE.HEAVY, task_is=ROBOT_TASK.ICE_MINER) == 0:# and step > 50:
                         task_changed = robot.setTask(ROBOT_TASK.ICE_MINER)
                     elif robot.factory.getCount(unit=robot, type_is=ROBOT_TYPE.HEAVY, task_is=ROBOT_TASK.ORE_MINER) == 0:
                         task_changed = robot.setTask(ROBOT_TASK.ORE_MINER)
                     else:
                         task_changed = robot.setTask(ROBOT_TASK.CLEANER)
+                        need_return = task_changed
                 else:
                     if robot.factory.getCount(unit=robot, task_is=ROBOT_TASK.ICE_MINER) == 0:
                         task_changed = robot.setTask(ROBOT_TASK.ICE_MINER)
@@ -78,9 +83,8 @@ class Observer:
                         task_changed = robot.setTask(ROBOT_TASK.ORE_MINER)
                     else:
                         task_changed = robot.setTask(ROBOT_TASK.CLEANER)
-                # --- если базовая задача была изменена - сначала возвращаемся на базу ---
-                
-        return task_changed
+                        need_return = task_changed
+        return need_return, task_changed
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Проверить роботов и раздать задачи ------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -130,7 +134,9 @@ class Observer:
             # --- если вражеский робот не может нас задавить ---
             else:
                 # --- проверяем задачу робота ---
-                if  self.setRobotNewTask(robot, step):
+                need_return, task_changed = self.setRobotNewTask(robot, step)
+                if need_return:
+                    # --- если нужно вернуться на базу, то возвращаемся --- 
                     tasks.append(ROBOT_TASK.RETURN)
                     has_robots.append(unit_id)
                     robots.append(robot)
@@ -148,8 +154,13 @@ class Observer:
                     robots.append(robot)
                 # --- если с фабрикой всё ок ---
                 else:
+                    # --- если мы изменили задачу роботу ---
+                    if task_changed:
+                        has_robots.append(unit_id)
+                        tasks.append(robot_task)
+                        robots.append(robot)
                     # --- если робот стоит на месте ---
-                    if unit.pos[0] == pos[0] and unit.pos[1] == pos[1]:
+                    elif unit.pos[0] == pos[0] and unit.pos[1] == pos[1]:
                         # --- проверяем, есть ли действия у робота, если нет - задаём ---
                         if len(robot.robot.action_queue) == 0:
                             has_robots.append(unit_id)
