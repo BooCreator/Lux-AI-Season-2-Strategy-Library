@@ -57,7 +57,7 @@ class RobotStrategy:
                 actions.buildResourceUnload(item.getNeareastPoint(unit.pos))
                 actions.buildTakeEnergy(take_energy)
                 obs.removeReturn(unit.unit_id)
-            elif robot.on_position(item.factory.pos, size=5) and (task != ROBOT_TASK.LEAVER or task != ROBOT_TASK.WARRION):
+            elif robot.on_position(item.factory.pos, size=5) and (task != ROBOT_TASK.LEAVER and task != ROBOT_TASK.WARRION):
                 # --- выгружаем ресурс, если выгрузили, то удаляем из возвращающихся ---
                 if actions.buildResourceUnload(item.getNeareastPoint(unit.pos)):
                     obs.removeReturn(unit.unit_id)
@@ -129,8 +129,8 @@ class RobotStrategy:
                     pass
                 # --- строим маршрут к фабрике ---
                 __, move_cost, move_map = findPathActions(unit, game_state, to=item.getNeareastPoint(unit.pos), lock_map=lock_map, dec=ct, get_move_map=True)
-                if actions.buildCarrierMove(ct, rubble_map, dec=dec, border=20, lock_map=lock_map):
-                #if actions.buildMove(ct, dec=dec, border=20, lock_map=lock_map):
+                if actions.buildMove(ct, dec=dec, border=20, lock_map=lock_map):
+                    move_map = actions.getMoveMap()[-1]
                     if move_map[ct[0]][ct[1]] > 0:
                         actions.buildDigResource(reserve=sum(move_cost))
                 # --- иначе - идём на базу ---
@@ -139,10 +139,10 @@ class RobotStrategy:
         # --- если робот не на фабрике и он - чистильщик ---
         elif task == ROBOT_TASK.CLEANER:
             # --- строим маршрут к фабрике ---
+            __, f_move_cost = findPathActions(unit, game_state, to=item.getNeareastPoint(unit.pos), lock_map=lock_map)
             lock_find_map = obs.getLockMap(unit, task, MAP_TYPE.FIND)
-            m_actions, move_cost = findPathActions(unit, game_state, to=item.getNeareastPoint(unit.pos), lock_map=lock_map)
+            to_factory_cost = sum(f_move_cost)
             start_pos = unit.pos
-            full_energy_cost = sum(move_cost)
             while not actions.isFull():
                 # --- находим ближайший щебень ---
                 m_actions, move_cost = [], []
@@ -155,17 +155,17 @@ class RobotStrategy:
                 if ct[0] != start_pos[0] or ct[1] != start_pos[1]:
                     # --- строим маршрут к ресурсу ---
                     m_actions, move_cost, move_map = findPathActions(unit, game_state, dec=start_pos, to=ct, lock_map=lock_map, get_move_map=True)
-                    full_energy_cost += sum(move_cost)
+                    to_factory_cost += sum(move_cost)
                 else:
                     move_map[ct[0], ct[1]] = 1
                 # --- смотрим, можем ли мы копнуть хотябы пару раз ---
-                dig_count, __, __ = calcDigCount(unit, count=rubble_map[ct[0]][ct[1]], reserve_energy=actions.energy_cost+full_energy_cost,
+                dig_count, __, __ = calcDigCount(unit, count=rubble_map[ct[0]][ct[1]], reserve_energy=actions.energy_cost+to_factory_cost,
                                                  dig_type=DIG_TYPES.RUBBLE)
                 if dig_count > 0:
                     actions.extend(m_actions, move_cost, move_map)
                     if move_map[ct[0]][ct[1]] > 0:
                         # --- копаем ---
-                        if actions.buildDigRubble(rubble_map[ct[0]][ct[1]], reserve=full_energy_cost):
+                        if actions.buildDigRubble(rubble_map[ct[0]][ct[1]], reserve=to_factory_cost):
                                 rubble_map[ct[0]][ct[1]] -= min(actions.rubble_gain.get('last', 0), rubble_map[ct[0]][ct[1]])
                         else: break
                     else: break
@@ -205,10 +205,10 @@ class RobotStrategy:
         # --- если робот не на фабрике и он - уничтожитель ---
         elif task == ROBOT_TASK.DESTROYER:
             # --- строим маршрут к фабрике ---
+            __, f_move_cost = findPathActions(unit, game_state, to=item.getNeareastPoint(unit.pos), lock_map=lock_map)
             lock_find_map = obs.getLockMap(unit, task, MAP_TYPE.FIND)
-            m_actions, move_cost = findPathActions(unit, game_state, to=item.getNeareastPoint(unit.pos), lock_map=lock_map)
+            to_factory_cost = sum(f_move_cost)
             start_pos = unit.pos
-            full_energy_cost = sum(move_cost)
             while not actions.isFull():
                 # --- находим ближайший лишайник ---
                 m_actions, move_cost = [], []
@@ -217,17 +217,17 @@ class RobotStrategy:
                 if ct[0] != start_pos[0] or ct[1] != start_pos[1]:
                     # --- строим маршрут к ресурсу ---
                     m_actions, move_cost, move_map = findPathActions(unit, game_state, dec=start_pos, to=ct, lock_map=lock_map, get_move_map=True)
-                    full_energy_cost += sum(move_cost)
+                    to_factory_cost += sum(move_cost)
                 else:
                     move_map[ct[0], ct[1]] = 1
                 # --- смотрим, можем ли мы копнуть хотябы пару раз ---
-                dig_count, __, __ = calcDigCount(unit, count=lichen[ct[0]][ct[1]], reserve_energy=actions.energy_cost+full_energy_cost,
+                dig_count, __, __ = calcDigCount(unit, count=lichen[ct[0]][ct[1]], reserve_energy=actions.energy_cost+to_factory_cost,
                                              dig_type=DIG_TYPES.LICHEN)
                 if dig_count > 0:
                     actions.extend(m_actions, move_cost, move_map)
                     if move_map[ct[0]][ct[1]] > 0:
                         # --- копаем ---
-                        if actions.buildDigLichen(lichen[ct[0]][ct[1]], reserve=full_energy_cost):
+                        if actions.buildDigLichen(lichen[ct[0]][ct[1]], reserve=to_factory_cost):
                             lichen[ct[0]][ct[1]] -= min(actions.lichen_gain.get('last', 0), lichen[ct[0]][ct[1]])
                         else: break
                     else: break
@@ -238,9 +238,9 @@ class RobotStrategy:
                     break
         # --- если робот заряжатель ---
         elif task == ROBOT_TASK.ENERGIZER:
-            # --- выясняем куда мы можем шагнуть ---
-            #if not actions.buildMove(item.getNeareastPoint(unit.pos), True, 1, lock_map):
-            #    actions.buildMove(item.getNeareastPoint(unit.pos), True, 1)
+            pass
+        # --- если робот копатель траншей ---
+        elif task == ROBOT_TASK.CARRIER:
             pass
         return actions
 # ===============================================================================================================

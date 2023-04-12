@@ -453,35 +453,3 @@ def findPathActions(unit:Unit, game_state:GameState, *, dec:np.ndarray=None, to:
         unit.pos = point
     unit.pos = spos
     return (actions, move_cost, move_map) if get_move_map else (actions, move_cost)
-# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-# ----- Получить список действий движения со стоимостью по энергии ------------------------------------------
-# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-def findPathAndDigActions(unit:Unit, game_state:GameState, rubble:np.ndarray, *, dec:np.ndarray=None, to:np.ndarray=None, 
-                    lock_map:np.ndarray=None, steps:int=25, get_move_map:bool=False, reserve:int=0):
-    ''' Получить список действий движения со стоимостью по энергии 
-        * lock_map: 0 - lock, 1 - alloy '''
-    actions, move_cost, action_cost, full_cost, spos = [], [], [], [], unit.pos
-    lock_map = lock_map if lock_map is not None else np.ones(game_state.board.ice.shape, dtype=int)
-    __, moves = findPath(spos if dec is None else dec, spos if to is None else to, lock_map, steps=steps, sum_n=False)
-    move_map = np.zeros(lock_map.shape, dtype=int)
-    step = 0
-    for [d, point, n] in moves:
-        if rubble[unit.pos[0], unit.pos[1]] > 0:
-            count, cost, gain = calcDigCount(unit, count=rubble[unit.pos[0], unit.pos[1]],
-                                             reserve_energy=sum(move_cost)*2+sum(action_cost)+reserve, dig_type=DIG_TYPES.RUBBLE)
-            if count > 0:
-                actions.append(unit.dig(n=count))
-                full_cost.append(cost)
-                action_cost.append(cost)
-                step += count
-        step += 1
-        move_map[point[0], point[1]] = step
-        move_cost.append(unit.move_cost(game_state, d) or 0)
-        full_cost.append(move_cost[-1])
-        if len(actions) > 0 and actions[-1][0] == 0 and actions[-1][1] == d:
-            actions[-1][-1] += 1
-        else:
-            actions.append(unit.move(d, repeat=0, n=n))
-        unit.pos = point
-    unit.pos = spos
-    return (actions, full_cost, move_map) if get_move_map else (actions, full_cost)

@@ -21,8 +21,9 @@ class ROBOT_TASK:
     CLEANER   = 7 # чистит щебень округ базы
     DESTROYER = 8 # уничтожает лишайник
     ENERGIZER = 9 # если не хватает энергии, чтобы сделать шаг
+    CARRIER   = 10 # если не хватает энергии, чтобы сделать шаг
     # общие - задачи, которые могут как назначаться одноразово, так и быть постоянными
-    WARRION   = 10 # давит противников
+    WARRION   = 11 # давит противников
     def getTask(task_name:str) -> int:
         if type(task_name) is int: return task_name 
         return -1

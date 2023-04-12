@@ -57,7 +57,7 @@ class RobotStrategy:
                 actions.buildResourceUnload(item.getNeareastPoint(unit.pos))
                 actions.buildTakeEnergy(take_energy)
                 obs.removeReturn(unit.unit_id)
-            elif robot.on_position(item.factory.pos, size=5) and (task != ROBOT_TASK.LEAVER or task != ROBOT_TASK.WARRION):
+            elif robot.on_position(item.factory.pos, size=5) and (task != ROBOT_TASK.LEAVER and task != ROBOT_TASK.WARRION):
                 # --- выгружаем ресурс, если выгрузили, то удаляем из возвращающихся ---
                 if actions.buildResourceUnload(item.getNeareastPoint(unit.pos)):
                     obs.removeReturn(unit.unit_id)
@@ -129,8 +129,8 @@ class RobotStrategy:
                     pass
                 # --- строим маршрут к фабрике ---
                 __, move_cost, move_map = findPathActions(unit, game_state, to=item.getNeareastPoint(unit.pos), lock_map=lock_map, dec=ct, get_move_map=True)
-                if actions.buildCarrierMove(ct, rubble_map, dec=dec, border=20, lock_map=lock_map):
-                #if actions.buildMove(ct, dec=dec, border=20, lock_map=lock_map):
+                if actions.buildMove(ct, dec=dec, border=20, lock_map=lock_map):
+                    move_map = actions.getMoveMap()[-1]
                     if move_map[ct[0]][ct[1]] > 0:
                         actions.buildDigResource(reserve=sum(move_cost))
                 # --- иначе - идём на базу ---
@@ -238,6 +238,9 @@ class RobotStrategy:
                     break
         # --- если робот заряжатель ---
         elif task == ROBOT_TASK.ENERGIZER:
+            pass
+        # --- если робот копатель траншей ---
+        elif task == ROBOT_TASK.CARRIER:
             pass
         return actions
 # ===============================================================================================================

@@ -117,25 +117,6 @@ class ActionsFabric:
             return self.trimActions()
         return False
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    # ----- Добавить в действия маршрут с копанием щебня --------------------------------------------------------
-    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    #@time_wrapper('af_buildMove', 6)
-    def buildCarrierMove(self, to:np.ndarray, rubble:np.ndarray, trim:bool=False, border:int=20, lock_map:np.ndarray=None, *, dec:np.ndarray = None, reserve:int=0) -> bool:
-        ''' Добавить в действия маршрут '''
-        if not self.check(): return False
-        dec = self.unit.robot.pos if dec is None else dec
-        if getDistance(dec, to) > border and not trim: return False
-        m_actions, move_cost, move_map = findPathAndDigActions(self.unit.robot, self.game_state, rubble, to=to, steps=self.max_actions-len(self.actions)+3,
-                                               dec=dec, lock_map=lock_map, get_move_map=True, reserve=self.energy_cost)
-        if len(m_actions) > 0:
-            self.move_map.append(np.where(move_map > 0, move_map + self.steps, 0))
-            self.actions.extend(m_actions[:min(border, self.max_actions-len(self.actions))])
-            self.energy_cost += sum(move_cost[:min(border, self.max_actions-len(self.actions))])
-            self.last_energy_cost = sum(move_cost[:min(border, self.max_actions-len(self.actions))])
-            self.steps += np.max(move_map)
-            return self.trimActions()
-        return False
-    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Добавить действие "копать ресурс" -------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     #@time_wrapper('af_buildDigResource', 6)
