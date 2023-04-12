@@ -132,7 +132,7 @@ class RobotStrategy:
                 if actions.buildCarrierMove(ct, rubble_map, dec=dec, border=20, lock_map=lock_map):
                 #if actions.buildMove(ct, dec=dec, border=20, lock_map=lock_map):
                     if move_map[ct[0]][ct[1]] > 0:
-                        actions.buildDigResource(reserve=actions.last_energy_cost + sum(move_cost))
+                        actions.buildDigResource(reserve=sum(move_cost))
                 # --- иначе - идём на базу ---
                 else:
                     obs.addReturn(unit.unit_id)
