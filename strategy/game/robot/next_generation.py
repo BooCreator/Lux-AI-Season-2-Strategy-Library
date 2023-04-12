@@ -139,10 +139,10 @@ class RobotStrategy:
         # --- если робот не на фабрике и он - чистильщик ---
         elif task == ROBOT_TASK.CLEANER:
             # --- строим маршрут к фабрике ---
+            __, f_move_cost = findPathActions(unit, game_state, to=item.getNeareastPoint(unit.pos), lock_map=lock_map)
             lock_find_map = obs.getLockMap(unit, task, MAP_TYPE.FIND)
-            m_actions, move_cost = findPathActions(unit, game_state, to=item.getNeareastPoint(unit.pos), lock_map=lock_map)
+            to_factory_cost = sum(f_move_cost)
             start_pos = unit.pos
-            full_energy_cost = sum(move_cost)
             while not actions.isFull():
                 # --- находим ближайший щебень ---
                 m_actions, move_cost = [], []
@@ -155,17 +155,17 @@ class RobotStrategy:
                 if ct[0] != start_pos[0] or ct[1] != start_pos[1]:
                     # --- строим маршрут к ресурсу ---
                     m_actions, move_cost, move_map = findPathActions(unit, game_state, dec=start_pos, to=ct, lock_map=lock_map, get_move_map=True)
-                    full_energy_cost += sum(move_cost)
+                    to_factory_cost += sum(move_cost)
                 else:
                     move_map[ct[0], ct[1]] = 1
                 # --- смотрим, можем ли мы копнуть хотябы пару раз ---
-                dig_count, __, __ = calcDigCount(unit, count=rubble_map[ct[0]][ct[1]], reserve_energy=actions.energy_cost+full_energy_cost,
+                dig_count, __, __ = calcDigCount(unit, count=rubble_map[ct[0]][ct[1]], reserve_energy=actions.energy_cost+to_factory_cost,
                                                  dig_type=DIG_TYPES.RUBBLE)
                 if dig_count > 0:
                     actions.extend(m_actions, move_cost, move_map)
                     if move_map[ct[0]][ct[1]] > 0:
                         # --- копаем ---
-                        if actions.buildDigRubble(rubble_map[ct[0]][ct[1]], reserve=full_energy_cost):
+                        if actions.buildDigRubble(rubble_map[ct[0]][ct[1]], reserve=to_factory_cost):
                                 rubble_map[ct[0]][ct[1]] -= min(actions.rubble_gain.get('last', 0), rubble_map[ct[0]][ct[1]])
                         else: break
                     else: break
