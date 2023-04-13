@@ -124,28 +124,28 @@ class Observer:
                     tasks.append(ROBOT_TASK.RETURN)
                     has_robots.append(unit_id)
                     robots.append(robot)
-                    continue
-                robot_task = ROBOT_TASK.RETURN if unit_id in self.return_robots else robot.robot_task
-                # --- если мы изменили задачу роботу ---
-                if task_changed:
-                    has_robots.append(unit_id)
-                    tasks.append(robot_task)
-                    robots.append(robot)
-                # --- если робот стоит на месте ---
-                elif unit.pos[0] == pos[0] and unit.pos[1] == pos[1]:
-                    # --- проверяем, есть ли действия у робота, если нет - задаём ---
-                    if len(robot.robot.action_queue) == 0:
+                else:
+                    robot_task = ROBOT_TASK.RETURN if unit_id in self.return_robots else robot.robot_task
+                    # --- если мы изменили задачу роботу ---
+                    if task_changed:
                         has_robots.append(unit_id)
                         tasks.append(robot_task)
                         robots.append(robot)
-                else:
-                    # --- выясняем, не шагаем ли мы на союзника ---
-                    if eyes.get('units')[pos[0], pos[1]] -1 > 0:
-                        # --- если да, то пересчитываем маршрут ---
-                        tasks.append(ROBOT_TASK.WALKER)
-                        has_robots.append(unit_id)
-                        robots.append(robot)
-            # --- если мы меняем робту задача, то пересчитываем ему units ---
+                    # --- если робот стоит на месте ---
+                    elif unit.pos[0] == pos[0] and unit.pos[1] == pos[1]:
+                        # --- проверяем, есть ли действия у робота, если нет - задаём ---
+                        if len(robot.robot.action_queue) == 0:
+                            has_robots.append(unit_id)
+                            tasks.append(robot_task)
+                            robots.append(robot)
+                    else:
+                        # --- выясняем, не шагаем ли мы на союзника ---
+                        if eyes.get('units')[pos[0], pos[1]] -1 > 0:
+                            # --- если да, то пересчитываем маршрут ---
+                            tasks.append(ROBOT_TASK.WALKER)
+                            has_robots.append(unit_id)
+                            robots.append(robot)
+            # --- если мы меняем роботу задачу, то пересчитываем units ---
             if unit_id in has_robots:
                 eyes.update('units', pos, -1, collision=lambda a,b: a+b)
                 eyes.update('units', unit.pos, 1, collision=lambda a,b: a+b)
