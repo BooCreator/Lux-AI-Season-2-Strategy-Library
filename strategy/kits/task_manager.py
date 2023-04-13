@@ -16,25 +16,30 @@ from lux.kit import EnvConfig
 
 class TaskManager:
 
+    # --- до 20 хода все лёгкие роботы идут на руду, затем остаётся 1 ---
+    # --- первый тяжёлый робот всегда добывает лёд ---
+    # --- если тяжёлых роботов нет, то лёд добывает лёгкий робот ---
+    # --- если робот уничтожителль, то задачу он не меняет ---
+    # --- до 20 хода пе меняем задачи ---
+
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    # ----- Проверить и изменить задачу для роботов -------------------------------------------------------------
+    # ----- Установить задачу роботу ----------------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def setRobotNewTask(self, gs:GameState, robot:RobotData, step:int) -> list:
-        # --- до 20 хода все лёгкие роботы идут на руду, затем остаётся 1 ---
-        # --- первый тяжёлый робот всегда добывает лёд ---
-        # --- если тяжёлых роботов нет, то лёд добывает лёгкий робот ---
-        # --- если робот уничтожителль, то задачу он не меняет ---
-        # --- до 20 хода пе меняем задачи ---
+        ''' Установить задачу роботу '''
         unit = robot.robot
         item = robot.factory.factory
+        # --- на сколько хватит воды фабрике --- 
+        steps = robot.factory.waterToSteps(gs)
         # --- считаем сколько шагов до связанной фабрики --- 
         moves = getDistance(unit.pos, robot.factory.factory.pos)
-        # --- считаем через сколько фабрика уничтожится --- 
-        steps = robot.factory.waterToSteps(gs)
+        # --- за сколько ходов переработается лёд, который у нас есть ---
+        f_steps = ceil((unit.cargo.ice if unit.cargo.ice >= item.env_cfg.ICE_WATER_RATIO else 0)/item.env_cfg.FACTORY_PROCESSING_RATE_WATER)
         # --- если у нас есть лёд и фабрика скоро уничтожится - везём домой лёд ---
-        if unit.cargo.ice >= item.env_cfg.ICE_WATER_RATIO and (steps <= moves+3 or step >= 990 - moves) \
+        if f_steps > 0 and (steps <= moves*2 or step >= 999-moves-f_steps) \
             and not robot.isTask(ROBOT_TASK.RETURN):
             return True, False
+        # --- если с фабрикой всё ок ---
         need_return, task_changed = False, False
         if not robot.isTask(ROBOT_TASK.DESTROYER):
             if robot.isType(ROBOT_TYPE.HEAVY):

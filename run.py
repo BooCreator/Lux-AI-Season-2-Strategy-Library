@@ -43,7 +43,7 @@ bots = [ {'file':'./bots/fourteen_bot/main.py', 'name':'fourteen_bot'},]
 
 agents = {'player_0':[Agent, ddf], 'player_1':[Agent, ddf]}
 
-seed = 990277527 # 598640900 (плато+горы) # 990277527 (каньон)
+seed = 598640900 # 598640900 (плато+горы) # 990277527 (каньон)
 
 
 #Lux.interact(agents, 1000, seed=seed, log=log.getLog(), show_steps=True, v=0)
