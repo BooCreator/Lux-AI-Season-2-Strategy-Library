@@ -66,26 +66,25 @@ class Observer:
         # --- если робот уничтожителль, то задачу он не меняет ---
         # --- до 20 хода пе меняем задачи ---
         need_return, task_changed = False, False
-        if robot.isTask(ROBOT_TASK.JOBLESS) or step > 50:
-            if not robot.isTask(ROBOT_TASK.DESTROYER):
-                if robot.isType(ROBOT_TYPE.HEAVY):
-                    if step < 50:
-                        task_changed = robot.setTask(ROBOT_TASK.CARRIER)
-                    elif robot.factory.getCount(unit=robot, type_is=ROBOT_TYPE.HEAVY, task_is=ROBOT_TASK.ICE_MINER) == 0:
-                        task_changed = robot.setTask(ROBOT_TASK.ICE_MINER)
-                    elif robot.factory.getCount(unit=robot, type_is=ROBOT_TYPE.HEAVY, task_is=ROBOT_TASK.ORE_MINER) == 0:
-                        task_changed = robot.setTask(ROBOT_TASK.ORE_MINER)
-                    else:
-                        task_changed = robot.setTask(ROBOT_TASK.CLEANER)
-                        need_return = task_changed
+        if not robot.isTask(ROBOT_TASK.DESTROYER):
+            if robot.isType(ROBOT_TYPE.HEAVY):
+                if step < 50 and not robot.isTask(ROBOT_TASK.ICE_MINER):
+                    task_changed = robot.setTask(ROBOT_TASK.CARRIER)
+                elif robot.factory.getCount(unit=robot, type_is=ROBOT_TYPE.HEAVY, task_is=ROBOT_TASK.ICE_MINER) == 0:
+                    task_changed = robot.setTask(ROBOT_TASK.ICE_MINER)
+                elif robot.factory.getCount(unit=robot, type_is=ROBOT_TYPE.HEAVY, task_is=ROBOT_TASK.ORE_MINER) == 0:
+                    task_changed = robot.setTask(ROBOT_TASK.ORE_MINER)
                 else:
-                    if robot.factory.getCount(unit=robot, task_is=ROBOT_TASK.ICE_MINER) == 0:
-                        task_changed = robot.setTask(ROBOT_TASK.ICE_MINER)
-                    elif robot.factory.getCount(unit=robot, task_is=ROBOT_TASK.ORE_MINER) == 0:
-                        task_changed = robot.setTask(ROBOT_TASK.ORE_MINER)
-                    else:
-                        task_changed = robot.setTask(ROBOT_TASK.CLEANER)
-                        need_return = task_changed
+                    task_changed = robot.setTask(ROBOT_TASK.CLEANER)
+                    need_return = task_changed
+            else:
+                if robot.factory.getCount(unit=robot, task_is=ROBOT_TASK.ICE_MINER) == 0:
+                    task_changed = robot.setTask(ROBOT_TASK.ICE_MINER)
+                elif robot.factory.getCount(unit=robot, task_is=ROBOT_TASK.ORE_MINER) == 0:
+                    task_changed = robot.setTask(ROBOT_TASK.ORE_MINER)
+                else:
+                    task_changed = robot.setTask(ROBOT_TASK.CLEANER)
+                    need_return = task_changed
         return need_return, task_changed
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Проверить роботов и раздать задачи ------------------------------------------------------------------

@@ -453,3 +453,66 @@ def findPathActions(unit:Unit, game_state:GameState, *, dec:np.ndarray=None, to:
         unit.pos = point
     unit.pos = spos
     return (actions, move_cost, move_map) if get_move_map else (actions, move_cost)
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+# ----- Получить список действий движения со стоимостью по энергии ------------------------------------------
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+def findPathAndDigActions(unit:Unit, game_state:GameState, rubble:np.ndarray, *, dec:np.ndarray=None, to:np.ndarray=None, 
+                    lock_map:np.ndarray=None, steps:int=25, get_move_map:bool=False, reserve:int=0):
+    ''' Получить список действий движения со стоимостью по энергии 
+        * lock_map: 0 - lock, 1 - alloy '''
+    rubble = rubble.copy()
+    energy = unit.power - reserve
+    full_cost, temp_moves = [], []
+    actions, move_cost, spos = [], [], unit.pos
+    lock_map = lock_map if lock_map is not None else np.ones(game_state.board.ice.shape, dtype=int)
+    __, moves = findPath(spos if dec is None else dec, spos if to is None else to, lock_map, steps=steps, sum_n=False)
+    move_map, moves_map = np.zeros(lock_map.shape, dtype=int), np.zeros(lock_map.shape, dtype=int)
+    step = 0
+    for [d, point, n] in moves:
+        # --- если мы стоим на щебне, то пытаемся копать ---
+        if rubble[unit.pos[0], unit.pos[1]] > 0:
+            count, cost, gain = calcDigCount(unit, count=rubble[unit.pos[0], unit.pos[1]], dig_type=DIG_TYPES.RUBBLE, 
+                                             reserve_energy=sum(full_cost)+reserve)
+            if count > 0:
+                rubble[unit.pos[0], unit.pos[1]] -= gain
+                actions.append(unit.dig(n=count))
+                full_cost.append(cost)
+                energy -= cost
+                step += count
+            else: break
+        # --- добавляем маршрут ---
+        m_cost = unit.move_cost(game_state, d) or 0
+        if m_cost >= energy: break
+        step += 1
+        moves_map[point[0], point[1]] = step
+        move_cost.append(m_cost)
+        energy -= m_cost
+        if len(temp_moves) > 0 and temp_moves[-1][0] == 0 and temp_moves[-1][1] == d:
+            temp_moves[-1][-1] += 1
+        else:
+            temp_moves.append(unit.move(d, repeat=0, n=n))
+        # --- если мы идём на щебень, то пытаемся копать ---
+        if rubble[point[0], point[1]] > 0:
+            # --- если энергии на ход не хватит, то заканчиваем маршрут ---
+            count, cost, gain = calcDigCount(unit, count=rubble[point[0], point[1]], dig_type=DIG_TYPES.RUBBLE, 
+                                             reserve_energy=sum(full_cost)+sum(move_cost)*2+reserve)
+            if count > 0:
+                # --- делаем шаг ---
+                moves_map += moves_map
+                full_cost.extend(move_cost)
+                actions.extend(temp_moves)
+
+                moves_map = np.zeros(lock_map.shape, dtype=int)
+                move_cost.clear()
+                temp_moves.clear()
+
+                rubble[point[0], point[1]] -= gain
+                actions.append(unit.dig(n=count))
+                full_cost.append(cost)
+                energy -= cost
+                step += count
+            else: break
+        if rubble[point[0], point[1]] > 0: break
+        unit.pos = point
+    unit.pos = spos
+    return (actions, move_cost, move_map) if get_move_map else (actions, move_cost)

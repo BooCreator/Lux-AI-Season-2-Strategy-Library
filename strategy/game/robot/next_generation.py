@@ -84,24 +84,33 @@ class RobotStrategy:
         
         # --- если робот идёт на базу ---
         if task == ROBOT_TASK.RETURN:
+            # --- находим ближайшую точку базы к роботу ---
             ct = item.getNeareastPoint(unit.pos)
+            # --- строим маршрут к базе ---
             m_actions, move_cost, move_map = findPathActions(unit, game_state, to=ct, lock_map=lock_map, get_move_map=True)
+            # --- если у робота есть ресурс и мы не стоим возле базы, то идём до базы, а не на базу ---
             if robot.getResCount() > 0 and move_map[ct[0], ct[1]] > 0 and getDistance(ct, unit.pos) > 1:
                 m_actions[-1][-1] -= 1
                 if m_actions[-1][-1] == 0:
                     del m_actions[-1]
                     del move_cost[-1]
                 move_map[ct[0], ct[1]] = 0
+            # --- идём ---
             actions.extend(m_actions, move_cost, move_map)
             obs.addReturn(unit.unit_id)
         # --- если робот заряжается ---
         elif task == ROBOT_TASK.RECHARGE:
+            # --- заряжаемся, чтобы можно было сделать следующий шаг ---
             actions.buildReharge(getNextMoveEnergyCost(game_state, unit))
+            # --- идём на базу ---
+            obs.addReturn(unit.unit_id)
         # --- если робот не на фабрике и он - копатель ---
         elif task == ROBOT_TASK.ICE_MINER or task == ROBOT_TASK.ORE_MINER:
-            eyes.update('units', unit.pos, -1, collision=lambda a,b: a+b)
-            resource = (ice_map if task == ROBOT_TASK.ICE_MINER else ore_map)*np.where(eyes.get('units') > 0, 0, 1)
-            eyes.update('units', unit.pos, 1, collision=lambda a,b: a+b)
+            # --- находим ближайший не занятый ресурс ---
+            units = eyes.get('units')
+            units[unit.pos[0], unit.pos[1]] -= 1
+            resource = (ice_map if task == ROBOT_TASK.ICE_MINER else ore_map)*np.where(units > 0, 0, 1)
+            units[unit.pos[0], unit.pos[1]] += 1
             # --- если робот на блоке с ресурсом ---
             if robot.onResourcePoint(resource) :
                 space = unit.cargo.ice if task == ROBOT_TASK.ICE_MINER else unit.cargo.ore
@@ -118,17 +127,14 @@ class RobotStrategy:
                 ct = findClosestTile(item.factory.pos, resource, lock_map=obs.getLockMap(unit, task, map_type=MAP_TYPE.FIND))
                 # --- находим ближайшую точку фабрики к ресурсу ---
                 pt = item.getNeareastPoint(ct)
-                # --- если расстояние от ближайшей свободной точки фабрики до ресурса меньше чем от позиции робота ---
                 dec = unit.pos
+                # --- если расстояние от ближайшей свободной точки фабрики до ресурса меньше чем от позиции робота ---
                 if getDistance(pt, ct) < getDistance(unit.pos, ct):
                     # --- то идём от неё ---
                     if actions.buildMove(pt, lock_map=lock_map):
                         dec = pt
-                else:
-                    # --- иначе идём от робота ---
-                    pass
-                # --- строим маршрут к фабрике ---
-                __, move_cost, move_map = findPathActions(unit, game_state, to=item.getNeareastPoint(unit.pos), lock_map=lock_map, dec=ct, get_move_map=True)
+                # --- строим маршрут к фабрике от ресурса ---
+                m_actions, move_cost, move_map = findPathActions(unit, game_state, to=item.getNeareastPoint(unit.pos), lock_map=lock_map, dec=ct, get_move_map=True)
                 if actions.buildMove(ct, dec=dec, border=20, lock_map=lock_map):
                     move_map = actions.getMoveMap()[-1]
                     if move_map[ct[0]][ct[1]] > 0:
@@ -145,28 +151,27 @@ class RobotStrategy:
             start_pos = unit.pos
             while not actions.isFull():
                 # --- находим ближайший щебень ---
-                m_actions, move_cost = [], []
-                move_map = np.zeros((48, 48), dtype=int)
+                m_actions, move_cost, move_map = [], [], np.zeros((48, 48), dtype=int)
                 ct = findClosestTile(start_pos, rubble_map, lock_map=lock_find_map)
-                if getDistance(start_pos, ct) > 25:
-                    robot.setTask(ROBOT_TASK.DESTROYER)
-                    RobotStrategy.getActionsOnTask(robot, ROBOT_TASK.DESTROYER, game_state, obs, actions)
-                    break
-                if ct[0] != start_pos[0] or ct[1] != start_pos[1]:
-                    # --- строим маршрут к ресурсу ---
-                    m_actions, move_cost, move_map = findPathActions(unit, game_state, dec=start_pos, to=ct, lock_map=lock_map, get_move_map=True)
-                    to_factory_cost += sum(move_cost)
-                else:
+                # --- если мы стоим на щебне, то будем копать его ---
+                if ct[0] == start_pos[0] and ct[1] == start_pos[1]:
                     move_map[ct[0], ct[1]] = 1
-                # --- смотрим, можем ли мы копнуть хотябы пару раз ---
+                else:
+                    # --- строим маршрут к ресурсу ---
+                    m_actions, move_cost, move_map = findPathActions(unit, game_state, dec=start_pos, to=ct, lock_map=lock_map, get_move_map=True, 
+                                                                     reserve=actions.energy_cost+to_factory_cost)
+                    to_factory_cost += sum(move_cost)
+                
                 dig_count, __, __ = calcDigCount(unit, count=rubble_map[ct[0]][ct[1]], reserve_energy=actions.energy_cost+to_factory_cost,
                                                  dig_type=DIG_TYPES.RUBBLE)
+                # --- смотрим, можем ли мы копнуть хотябы раз ---
                 if dig_count > 0:
+                    # --- добавляем маршрут ---
                     actions.extend(m_actions, move_cost, move_map)
+                    # --- если дошли до щебня, то копаем ---
                     if move_map[ct[0]][ct[1]] > 0:
-                        # --- копаем ---
                         if actions.buildDigRubble(rubble_map[ct[0]][ct[1]], reserve=to_factory_cost):
-                                rubble_map[ct[0]][ct[1]] -= min(actions.rubble_gain.get('last', 0), rubble_map[ct[0]][ct[1]])
+                            rubble_map[ct[0]][ct[1]] -= min(actions.rubble_gain.get('last', 0), rubble_map[ct[0]][ct[1]])
                         else: break
                     else: break
                     start_pos = ct.copy()
@@ -178,7 +183,7 @@ class RobotStrategy:
         elif task == ROBOT_TASK.WARRION:
             # --- строим маршрут к фабрике ---
             m_actions, move_cost, move_map = findPathActions(unit, game_state, to=item.getNeareastPoint(unit.pos), lock_map=lock_map, get_move_map=True)
-            # --- ищем ближайшего врага ---
+            # --- ищем доступный шаг на врага ---
             next_pos = findClosestTile(unit.pos, eyes.get('e_move')*lock_map, dec_is_none=False)
             if next_pos is None:
                 # --- если не нашли, то пытаемся пойти хоть куда-то ---
@@ -194,7 +199,7 @@ class RobotStrategy:
                 m_actions = e_actions
                 move_cost = e_move_cost
                 move_map  = e_move_map
-            # --- делаем один шаг, если можем сделать шаг ---
+            # --- делаем шаг, если можем сделать шаг ---
             if len(m_actions) > 0:
                 actions.extend(m_actions, move_cost, move_map)
         # --- если робот не на фабрике и он - убегатель ---
@@ -241,7 +246,29 @@ class RobotStrategy:
             pass
         # --- если робот копатель траншей ---
         elif task == ROBOT_TASK.CARRIER:
-            pass
+            # --- находим ближайший ресурс ---
+            ct = findClosestTile(item.factory.pos, ore_map)
+            # --- находим ближайшую точку фабрики к ресурсу ---
+            pt = item.getNeareastPoint(ct)
+            # --- если расстояние от ближайшей свободной точки фабрики до ресурса меньше чем от позиции робота ---
+            dec = unit.pos
+            if getDistance(pt, ct) < getDistance(unit.pos, ct):
+                # --- то идём от неё ---
+                if actions.buildMove(pt, lock_map=lock_map):
+                    dec = pt
+            else:
+                # --- иначе идём от робота ---
+                pass
+            # --- строим маршрут к фабрике ---
+            __, f_move_cost = findPathActions(unit, game_state, to=pt, lock_map=lock_map)
+            # --- строим маршрут с копанием ---
+            m_actions, move_cost, move_map = findPathAndDigActions(unit, game_state, rubble_map, dec=dec, to=ct, lock_map=lock_map, get_move_map=True, 
+                                                                reserve=actions.energy_cost + sum(f_move_cost))
+            # --- если можем что-то сделать, то делаем, иначе - идём на базу ---
+            if len(m_actions) > 0:
+                actions.extend(m_actions, move_cost, move_map)
+            else:
+                obs.addReturn(unit.unit_id)
         return actions
 # ===============================================================================================================
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =

@@ -87,7 +87,7 @@ class FactoryData:
         for i, point in enumerate(points):
             f_pt = point - (self.factory.pos-1)
             if lock_map[f_pt[0], f_pt[1]] == 0:
-                distances[i] *= 2
+                distances[i] += np.max(distances)
         pt = points[np.argmin(distances)]
         return pt
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
