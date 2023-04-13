@@ -150,6 +150,7 @@ class RobotStrategy:
         # --- если робот не на фабрике и он - чистильщик ---
         elif task == ROBOT_TASK.CLEANER:
             # --- строим маршрут к фабрике ---
+            target = rubble_map
             __, f_move_cost = findPathActions(unit, game_state, to=item.getNeareastPoint(unit.pos), lock_map=lock_map)
             lock_find_map = obs.getLockMap(unit, task, MAP_TYPE.FIND)
             to_factory_cost = sum(f_move_cost)
@@ -157,7 +158,7 @@ class RobotStrategy:
             while not actions.isFull():
                 # --- находим ближайший щебень ---
                 m_actions, move_cost, move_map = [], [], np.zeros((48, 48), dtype=int)
-                ct = findClosestTile(start_pos, rubble_map, lock_map=lock_find_map)
+                ct = findClosestTile(start_pos, target, lock_map=lock_find_map)
                 # --- если мы стоим на щебне, то будем копать его ---
                 if ct[0] == start_pos[0] and ct[1] == start_pos[1]:
                     move_map[ct[0], ct[1]] = 1
@@ -167,7 +168,7 @@ class RobotStrategy:
                                                                      reserve=actions.energy_cost+to_factory_cost)
                     to_factory_cost += sum(move_cost)
                 
-                dig_count, __, __ = calcDigCount(unit, count=rubble_map[ct[0]][ct[1]], reserve_energy=actions.energy_cost+to_factory_cost,
+                dig_count, __, __ = calcDigCount(unit, count=target[ct[0]][ct[1]], reserve_energy=actions.energy_cost+to_factory_cost,
                                                  dig_type=DIG_TYPES.RUBBLE)
                 # --- смотрим, можем ли мы копнуть хотябы раз ---
                 if dig_count > 0:
@@ -175,8 +176,8 @@ class RobotStrategy:
                     actions.extend(m_actions, move_cost, move_map)
                     # --- если дошли до щебня, то копаем ---
                     if move_map[ct[0]][ct[1]] > 0:
-                        if actions.buildDigRubble(rubble_map[ct[0]][ct[1]], reserve=to_factory_cost):
-                            rubble_map[ct[0]][ct[1]] -= min(actions.rubble_gain.get('last', 0), rubble_map[ct[0]][ct[1]])
+                        if actions.buildDigRubble(target[ct[0]][ct[1]], reserve=to_factory_cost):
+                            target[ct[0]][ct[1]] -= min(actions.rubble_gain.get('last', 0), target[ct[0]][ct[1]])
                         else: break
                     else: break
                     start_pos = ct.copy()
@@ -215,30 +216,33 @@ class RobotStrategy:
         # --- если робот не на фабрике и он - уничтожитель ---
         elif task == ROBOT_TASK.DESTROYER:
             # --- строим маршрут к фабрике ---
+            target = lichen
             __, f_move_cost = findPathActions(unit, game_state, to=item.getNeareastPoint(unit.pos), lock_map=lock_map)
             lock_find_map = obs.getLockMap(unit, task, MAP_TYPE.FIND)
             to_factory_cost = sum(f_move_cost)
             start_pos = unit.pos
             while not actions.isFull():
                 # --- находим ближайший лишайник ---
-                m_actions, move_cost = [], []
-                move_map = np.zeros((48, 48), dtype=int)
-                ct = findClosestTile(start_pos, lichen, lock_map=lock_find_map)
-                if ct[0] != start_pos[0] or ct[1] != start_pos[1]:
-                    # --- строим маршрут к ресурсу ---
-                    m_actions, move_cost, move_map = findPathActions(unit, game_state, dec=start_pos, to=ct, lock_map=lock_map, get_move_map=True)
-                    to_factory_cost += sum(move_cost)
-                else:
+                m_actions, move_cost, move_map = [], [], np.zeros((48, 48), dtype=int)
+                ct = findClosestTile(start_pos, target, lock_map=lock_find_map)
+                # --- если мы стоим на лишайнике, то будем копать его ---
+                if ct[0] == start_pos[0] and ct[1] == start_pos[1]:
                     move_map[ct[0], ct[1]] = 1
+                else:
+                    # --- строим маршрут к ресурсу ---
+                    m_actions, move_cost, move_map = findPathActions(unit, game_state, dec=start_pos, to=ct, lock_map=lock_map, get_move_map=True, 
+                                                                     reserve=actions.energy_cost+to_factory_cost)
+                    to_factory_cost += sum(move_cost)
                 # --- смотрим, можем ли мы копнуть хотябы пару раз ---
-                dig_count, __, __ = calcDigCount(unit, count=lichen[ct[0]][ct[1]], reserve_energy=actions.energy_cost+to_factory_cost,
+                dig_count, __, __ = calcDigCount(unit, count=target[ct[0]][ct[1]], reserve_energy=actions.energy_cost+to_factory_cost,
                                              dig_type=DIG_TYPES.LICHEN)
                 if dig_count > 0:
+                    # --- добавляем маршрут ---
                     actions.extend(m_actions, move_cost, move_map)
+                    # --- если дошли до щебня, то копаем ---
                     if move_map[ct[0]][ct[1]] > 0:
-                        # --- копаем ---
-                        if actions.buildDigLichen(lichen[ct[0]][ct[1]], reserve=to_factory_cost):
-                            lichen[ct[0]][ct[1]] -= min(actions.lichen_gain.get('last', 0), lichen[ct[0]][ct[1]])
+                        if actions.buildDigLichen(target[ct[0]][ct[1]], reserve=to_factory_cost):
+                            target[ct[0]][ct[1]] -= min(actions.lichen_gain.get('last', 0), target[ct[0]][ct[1]])
                         else: break
                     else: break
                     start_pos = ct.copy()
