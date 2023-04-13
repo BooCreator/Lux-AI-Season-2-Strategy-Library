@@ -118,7 +118,7 @@ class Observer:
             # --- если вражеский робот не может нас задавить ---
             else:
                 # --- проверяем задачу робота ---
-                need_return, task_changed = self.task_manager.setRobotNewTask(robot, step)
+                need_return, task_changed = self.task_manager.setRobotNewTask(game_state, robot, step)
                 if need_return:
                     # --- если нужно вернуться на базу, то возвращаемся --- 
                     tasks.append(ROBOT_TASK.RETURN)
@@ -126,37 +126,25 @@ class Observer:
                     robots.append(robot)
                     continue
                 robot_task = ROBOT_TASK.RETURN if unit_id in self.return_robots else robot.robot_task
-                # --- считаем сколько шагов до связанной фабрики --- 
-                moves = getDistance(unit.pos, robot.factory.factory.pos)
-                # --- считаем через сколько фабрика уничтожится --- 
-                steps = robot.factory.waterToSteps(game_state)
-                # --- если у нас есть лёд и фабрика скоро уничтожится - везём домой лёд ---
-                if unit.cargo.ice >= item.env_cfg.ICE_WATER_RATIO and (steps <= moves+3 or step >= 990 - moves) \
-                    and robot_task != ROBOT_TASK.RETURN:
-                    tasks.append(ROBOT_TASK.RETURN)
+                # --- если мы изменили задачу роботу ---
+                if task_changed:
                     has_robots.append(unit_id)
+                    tasks.append(robot_task)
                     robots.append(robot)
-                # --- если с фабрикой всё ок ---
-                else:
-                    # --- если мы изменили задачу роботу ---
-                    if task_changed:
+                # --- если робот стоит на месте ---
+                elif unit.pos[0] == pos[0] and unit.pos[1] == pos[1]:
+                    # --- проверяем, есть ли действия у робота, если нет - задаём ---
+                    if len(robot.robot.action_queue) == 0:
                         has_robots.append(unit_id)
                         tasks.append(robot_task)
                         robots.append(robot)
-                    # --- если робот стоит на месте ---
-                    elif unit.pos[0] == pos[0] and unit.pos[1] == pos[1]:
-                        # --- проверяем, есть ли действия у робота, если нет - задаём ---
-                        if len(robot.robot.action_queue) == 0:
-                            has_robots.append(unit_id)
-                            tasks.append(robot_task)
-                            robots.append(robot)
-                    else:
-                        # --- выясняем, не шагаем ли мы на союзника ---
-                        if eyes.get('units')[pos[0], pos[1]] -1 > 0:
-                            # --- если да, то пересчитываем маршрут ---
-                            tasks.append(ROBOT_TASK.WALKER)
-                            has_robots.append(unit_id)
-                            robots.append(robot)
+                else:
+                    # --- выясняем, не шагаем ли мы на союзника ---
+                    if eyes.get('units')[pos[0], pos[1]] -1 > 0:
+                        # --- если да, то пересчитываем маршрут ---
+                        tasks.append(ROBOT_TASK.WALKER)
+                        has_robots.append(unit_id)
+                        robots.append(robot)
             # --- если мы меняем робту задача, то пересчитываем ему units ---
             if unit_id in has_robots:
                 eyes.update('units', pos, -1, collision=lambda a,b: a+b)
