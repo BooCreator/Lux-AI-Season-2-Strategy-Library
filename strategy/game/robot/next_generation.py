@@ -1,3 +1,4 @@
+from collections import defaultdict
 import numpy as np
 from lux.unit import Unit
 from strategy.kits.action_fabric import ActionsFabric
@@ -39,23 +40,27 @@ class RobotStrategy:
         obs.game_state = game_state
         obs.eyes = eyes
         result = {}
+        f_energy = {}
         # --- перебираем всех роботов и их задачи ---
         for robot, task in zip(robots, tasks):
             robot: RobotData
             unit, item = robot.robot, robot.factory
             actions = ActionsFabric(game_state, robot)
-           
+            if f_energy.get(item.factory.unit_id) is None:
+                f_energy[item.factory.unit_id] = item.getActionEnergyCost()
             if task == ROBOT_TASK.WALKER:
                 task = robot.robot_task
             # --- если робот находится на своей фабрике ---
             elif robot.on_position(item.factory.pos, size=3):
                 # --- добавляем действия взятия энергии ---
-                take_energy = min(unit.unit_cfg.BATTERY_CAPACITY - unit.power, item.factory.power)
+                take_energy = min(unit.unit_cfg.BATTERY_CAPACITY-unit.power, 
+                                  item.factory.power-f_energy.get(item.factory.unit_id, 0))
                 # --- устанавливаем базовую задачу робота ---
                 task = robot.robot_task if task == ROBOT_TASK.RETURN else task
                 # --- если робот вернулся от куда-то, то удаляем его из массива ---
                 actions.buildResourceUnload(item.getNeareastPoint(unit.pos))
-                actions.buildTakeEnergy(take_energy)
+                if actions.buildTakeEnergy(take_energy):
+                    f_energy[item.factory.unit_id] += take_energy
                 obs.removeReturn(unit.unit_id)
             elif robot.on_position(item.factory.pos, size=5) and (task != ROBOT_TASK.LEAVER and task != ROBOT_TASK.WARRION):
                 # --- выгружаем ресурс, если выгрузили, то удаляем из возвращающихся ---
@@ -256,9 +261,6 @@ class RobotStrategy:
                 # --- то идём от неё ---
                 if actions.buildMove(pt, lock_map=lock_map):
                     dec = pt
-            else:
-                # --- иначе идём от робота ---
-                pass
             # --- строим маршрут к фабрике ---
             __, f_move_cost = findPathActions(unit, game_state, to=pt, lock_map=lock_map)
             # --- строим маршрут с копанием ---

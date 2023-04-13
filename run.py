@@ -46,6 +46,6 @@ agents = {'player_0':[Agent, ddf], 'player_1':[Agent, ddf]}
 seed = 990277527 # 598640900 (плато+горы) # 990277527 (каньон)
 
 
-#Lux.interact(agents, 1000, seed=seed, log=log.getLog(), show_steps=True, v=2)
+#Lux.interact(agents, 100, seed=seed, log=log.getLog(), show_steps=True, v=2)
 Lux.play(bots, seed=seed)
 #Lux.tornament('bots/')
