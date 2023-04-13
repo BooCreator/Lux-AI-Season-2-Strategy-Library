@@ -5,6 +5,7 @@ from lux.unit import Unit
 from strategy.kits.data_controller import DataController
 from strategy.kits.decorators import time_wrapper
 from strategy.kits.robot_struct import ROBOT_TASK, ROBOT_TYPE
+from strategy.kits.task_manager import TaskManager
 from strategy.kits.utils import *
 
 from strategy.kits.eyes import Eyes
@@ -29,6 +30,17 @@ class Observer:
     eyes:Eyes = None
     game_state:GameState = None
     step:int = 0
+    task_manager:TaskManager = None
+
+
+    def __init__(self):
+        self.return_robots = []
+        self.moves_map = defaultdict(list)
+        self.lock_map = np.ones((48, 48), dtype=int)
+        self.eyes:Eyes = None
+        self.game_state:GameState = None
+        self.step:int = 0
+        self.task_manager = TaskManager()
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Правим матрицу ходов для каждого шага ---------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -56,36 +68,7 @@ class Observer:
             for map in maps:
                 result = np.where(map > 0, 0, result)
         return result
-    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    # ----- Проверить и изменить задачу для роботов -------------------------------------------------------------
-    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def setRobotNewTask(self, robot:RobotData, step:int) -> list:
-        # --- до 20 хода все лёгкие роботы идут на руду, затем остаётся 1 ---
-        # --- первый тяжёлый робот всегда добывает лёд ---
-        # --- если тяжёлых роботов нет, то лёд добывает лёгкий робот ---
-        # --- если робот уничтожителль, то задачу он не меняет ---
-        # --- до 20 хода пе меняем задачи ---
-        need_return, task_changed = False, False
-        if not robot.isTask(ROBOT_TASK.DESTROYER):
-            if robot.isType(ROBOT_TYPE.HEAVY):
-                if step < 50 and not robot.isTask(ROBOT_TASK.ICE_MINER):
-                    task_changed = robot.setTask(ROBOT_TASK.CARRIER)
-                elif robot.factory.getCount(unit=robot, type_is=ROBOT_TYPE.HEAVY, task_is=ROBOT_TASK.ICE_MINER) == 0:
-                    task_changed = robot.setTask(ROBOT_TASK.ICE_MINER)
-                elif robot.factory.getCount(unit=robot, type_is=ROBOT_TYPE.HEAVY, task_is=ROBOT_TASK.ORE_MINER) == 0:
-                    task_changed = robot.setTask(ROBOT_TASK.ORE_MINER)
-                else:
-                    task_changed = robot.setTask(ROBOT_TASK.CLEANER)
-                    need_return = task_changed
-            else:
-                if robot.factory.getCount(unit=robot, task_is=ROBOT_TASK.ICE_MINER) == 0:
-                    task_changed = robot.setTask(ROBOT_TASK.ICE_MINER)
-                elif robot.factory.getCount(unit=robot, task_is=ROBOT_TASK.ORE_MINER) == 0:
-                    task_changed = robot.setTask(ROBOT_TASK.ORE_MINER)
-                else:
-                    task_changed = robot.setTask(ROBOT_TASK.CLEANER)
-                    need_return = task_changed
-        return need_return, task_changed
+    
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Проверить роботов и раздать задачи ------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -135,7 +118,7 @@ class Observer:
             # --- если вражеский робот не может нас задавить ---
             else:
                 # --- проверяем задачу робота ---
-                need_return, task_changed = self.setRobotNewTask(robot, step)
+                need_return, task_changed = self.task_manager.setRobotNewTask(robot, step)
                 if need_return:
                     # --- если нужно вернуться на базу, то возвращаемся --- 
                     tasks.append(ROBOT_TASK.RETURN)
