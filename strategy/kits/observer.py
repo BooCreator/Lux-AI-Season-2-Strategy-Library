@@ -118,7 +118,7 @@ class Observer:
             # --- если вражеский робот не может нас задавить ---
             else:
                 # --- проверяем задачу робота ---
-                need_return, task_changed = self.task_manager.setRobotNewTask(game_state, robot, step)
+                need_return, task_changed = self.task_manager.setRobotNewTask(game_state, robot, step, eyes)
                 if need_return:
                     # --- если нужно вернуться на базу, то возвращаемся --- 
                     tasks.append(ROBOT_TASK.RETURN)

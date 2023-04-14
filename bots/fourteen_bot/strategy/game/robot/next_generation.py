@@ -133,22 +133,20 @@ class RobotStrategy:
                 # --- находим ближайшую точку фабрики к ресурсу ---
                 pt = item.getNeareastPoint(ct)
                 dec = unit.pos
-                # --- если расстояние до ресурса < 25, то строим маршрут ---
-                if getDistance(pt, ct) < 10:
-                    # --- если расстояние от ближайшей свободной точки фабрики до ресурса меньше чем от позиции робота ---
-                    if getDistance(pt, ct) < getDistance(unit.pos, ct):
-                        # --- то идём от неё ---
-                        if actions.buildMove(pt, lock_map=lock_map):
-                            dec = pt
-                    # --- строим маршрут к фабрике от ресурса ---
-                    m_actions, move_cost, move_map = findPathActions(unit, game_state, to=item.getNeareastPoint(unit.pos), lock_map=lock_map, dec=ct, get_move_map=True)
-                    if actions.buildMove(ct, dec=dec, border=20, lock_map=lock_map):
-                        move_map = actions.getMoveMap()[-1]
-                        if move_map[ct[0]][ct[1]] > 0:
-                            actions.buildDigResource(reserve=sum(move_cost))
-                    # --- иначе - идём на базу ---
-                    else:
-                        obs.addReturn(unit.unit_id)
+                # --- если расстояние от ближайшей свободной точки фабрики до ресурса меньше чем от позиции робота ---
+                if getDistance(pt, ct) < getDistance(unit.pos, ct):
+                    # --- то идём от неё ---
+                    if actions.buildMove(pt, lock_map=lock_map):
+                        dec = pt
+                # --- строим маршрут к фабрике от ресурса ---
+                m_actions, move_cost, move_map = findPathActions(unit, game_state, to=item.getNeareastPoint(unit.pos), lock_map=lock_map, dec=ct, get_move_map=True)
+                if actions.buildMove(ct, dec=dec, border=20, lock_map=lock_map):
+                    move_map = actions.getMoveMap()[-1]
+                    if move_map[ct[0]][ct[1]] > 0:
+                        actions.buildDigResource(reserve=sum(move_cost))
+                # --- иначе - идём на базу ---
+                else:
+                    obs.addReturn(unit.unit_id)
         # --- если робот не на фабрике и он - чистильщик ---
         elif task == ROBOT_TASK.CLEANER:
             # --- строим маршрут к фабрике ---
