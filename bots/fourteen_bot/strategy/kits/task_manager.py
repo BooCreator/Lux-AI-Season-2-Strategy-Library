@@ -26,7 +26,7 @@ class TaskManager:
     # --- до 20 хода пе меняем задачи ---
     res_count = defaultdict(dict)
     i_n = 3
-    o_n = 5
+    o_n = 9
     r_n = 13
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def __init__(self) -> None:
@@ -91,7 +91,7 @@ class TaskManager:
         unit = robot.robot
         item = robot.factory.factory
         i_max = self.res_count[item.unit_id]['ice']
-        o_max = self.res_count[item.unit_id]['ore']
+        o_max = min(self.res_count[item.unit_id]['ore'], floor(robot.factory.getCount(type_is=ROBOT_TYPE.LIGHT)/2))
         need_return, task_changed = False, False
         if robot.factory.getCount(unit=robot, task_is=ROBOT_TASK.ICE_MINER) < min(max(round(step-850)/150*i_max, 1), i_max):
             task_changed = robot.setTask(ROBOT_TASK.ICE_MINER)
