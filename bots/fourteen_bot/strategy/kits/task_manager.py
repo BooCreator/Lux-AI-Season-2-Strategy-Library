@@ -25,9 +25,13 @@ class TaskManager:
     # --- если робот уничтожителль, то задачу он не меняет ---
     # --- до 20 хода пе меняем задачи ---
     res_count = defaultdict(dict)
-
+    i_n = 3
+    o_n = 4
+    r_n = 13
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def __init__(self) -> None:
+        self.i_n = 3
+        self.o_n = 5
         self.res_count = defaultdict(dict)
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Установить задачу роботу ----------------------------------------------------------------------------
@@ -67,14 +71,17 @@ class TaskManager:
         ''' Установить задачу тяжёлому роботу '''
         unit = robot.robot
         item = robot.factory.factory
+        l_max = self.res_count[item.unit_id]['ore']
         need_return, task_changed = False, False
         if step < 50:
             task_changed = robot.setTask(ROBOT_TASK.CARRIER)
-        elif robot.factory.getCount(unit=robot, type_is=ROBOT_TYPE.HEAVY, task_is=ROBOT_TASK.ICE_MINER) < 1:#self.res_count[item.unit_id]['ice']:
+        elif robot.factory.getCount(unit=robot, type_is=ROBOT_TYPE.HEAVY, task_is=ROBOT_TASK.ICE_MINER) < 1 and \
+            getDistance(unit.pos, findClosestTile(item.pos, gs.board.ice)) < self.i_n*2: #self.res_count[item.unit_id]['ice']:
             task_changed = robot.setTask(ROBOT_TASK.ICE_MINER)
-        elif robot.factory.getCount(unit=robot, type_is=ROBOT_TYPE.HEAVY, task_is=ROBOT_TASK.ORE_MINER) < 1:#self.res_count[item.unit_id]['ore']:
+        elif robot.factory.getCount(unit=robot, type_is=ROBOT_TYPE.HEAVY, task_is=ROBOT_TASK.ORE_MINER) < 1 and \
+            getDistance(unit.pos, findClosestTile(item.pos, gs.board.ore)) < self.o_n*2: #max(min(round(280+700-step)/280*l_max, l_max), 1):
             task_changed = robot.setTask(ROBOT_TASK.ORE_MINER)
-        elif getDistance(unit.pos, findClosestTile(item.pos, gs.board.rubble)) < 25: #self.res_count['rubble'] > 0:
+        elif getDistance(unit.pos, findClosestTile(item.pos, gs.board.rubble)) < self.r_n*2: #self.res_count['rubble'] > 0:
             task_changed = robot.setTask(ROBOT_TASK.CLEANER)
             need_return = task_changed
         else:
@@ -87,12 +94,15 @@ class TaskManager:
         ''' Установить задачу лёгкому роботу '''
         unit = robot.robot
         item = robot.factory.factory
+        l_max = self.res_count[item.unit_id]['ore']
         need_return, task_changed = False, False
-        if robot.factory.getCount(unit=robot, task_is=ROBOT_TASK.ICE_MINER) < 1:#self.res_count[item.unit_id]['ice']:
+        if robot.factory.getCount(unit=robot, task_is=ROBOT_TASK.ICE_MINER) < 1 and \
+            getDistance(unit.pos, findClosestTile(item.pos, gs.board.ice)) < self.i_n*2: #self.res_count[item.unit_id]['ice']:
             task_changed = robot.setTask(ROBOT_TASK.ICE_MINER)
-        elif robot.factory.getCount(unit=robot, task_is=ROBOT_TASK.ORE_MINER) < 1:#self.res_count[item.unit_id]['ore']:
+        elif robot.factory.getCount(unit=robot, task_is=ROBOT_TASK.ORE_MINER) < 1 and \
+            getDistance(unit.pos, findClosestTile(item.pos, gs.board.ore)) < self.o_n*2: #max(min(round(280+700-step)/280*l_max, l_max), 1):
             task_changed = robot.setTask(ROBOT_TASK.ORE_MINER)
-        elif getDistance(unit.pos, findClosestTile(item.pos, gs.board.rubble)) < 25: #self.res_count['rubble'] > 0:
+        elif getDistance(unit.pos, findClosestTile(item.pos, gs.board.rubble)) < self.r_n*2: #self.res_count['rubble'] > 0:
             task_changed = robot.setTask(ROBOT_TASK.CLEANER)
             need_return = task_changed
         else:
