@@ -516,3 +516,10 @@ def findPathAndDigActions(unit:Unit, game_state:GameState, rubble:np.ndarray, *,
         unit.pos = point
     unit.pos = spos
     return (actions, move_cost, move_map) if get_move_map else (actions, move_cost)
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+# ----- Получить список действий движения со стоимостью по энергии ------------------------------------------
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+def getWindow(dec:np.ndarray, to:np.ndarray, matrix:np.ndarray):
+    sx, ex = min(dec[0], to[0]), min(dec[1], to[1])
+    sy, ey = max(dec[0], to[0])+1, max(dec[1], to[1])+1
+    return matrix[max(sx, 0):max(sy, 0), max(ex, 0):max(ey, 0)]

@@ -14,14 +14,21 @@ from strategy.kits.factory import FactoryData
 from lux.kit import GameState
 from lux.kit import EnvConfig
 
+# ===============================================================================================================
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+# ===============================================================================================================
 class TaskManager:
-
+    '''  '''
     # --- до 20 хода все лёгкие роботы идут на руду, затем остаётся 1 ---
     # --- первый тяжёлый робот всегда добывает лёд ---
     # --- если тяжёлых роботов нет, то лёд добывает лёгкий робот ---
     # --- если робот уничтожителль, то задачу он не меняет ---
     # --- до 20 хода пе меняем задачи ---
+    res_count = defaultdict(dict)
 
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    def __init__(self) -> None:
+        self.res_count = defaultdict(dict)
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Установить задачу роботу ----------------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -29,6 +36,13 @@ class TaskManager:
         ''' Установить задачу роботу '''
         unit = robot.robot
         item = robot.factory.factory
+        if item.unit_id not in self.res_count.keys():
+            i_n, o_n = 2, 4
+            # --- считаем количество ресурсов возле фабрики ---
+            ice_matrix = getWindow([item.pos[0]-i_n, item.pos[1]-i_n], [item.pos[0]+i_n, item.pos[1]+i_n], gs.board.ice)
+            ore_matrix = getWindow([item.pos[0]-o_n, item.pos[1]-o_n], [item.pos[0]+o_n, item.pos[1]+o_n], gs.board.ore)
+            self.res_count[item.unit_id]['ice'] = np.sum(ice_matrix)
+            self.res_count[item.unit_id]['ore'] = np.sum(ore_matrix)
         # --- на сколько хватит воды фабрике --- 
         steps = robot.factory.waterToSteps(gs)
         # --- считаем сколько шагов до связанной фабрики --- 
@@ -41,23 +55,49 @@ class TaskManager:
             return True, False
         # --- если с фабрикой всё ок ---
         need_return, task_changed = False, False
-        if not robot.isTask(ROBOT_TASK.DESTROYER):
-            if robot.isType(ROBOT_TYPE.HEAVY):
-                if step < 50 and not robot.isTask(ROBOT_TASK.ICE_MINER):
-                    task_changed = robot.setTask(ROBOT_TASK.CARRIER)
-                elif robot.factory.getCount(unit=robot, type_is=ROBOT_TYPE.HEAVY, task_is=ROBOT_TASK.ICE_MINER) == 0:
-                    task_changed = robot.setTask(ROBOT_TASK.ICE_MINER)
-                elif robot.factory.getCount(unit=robot, type_is=ROBOT_TYPE.HEAVY, task_is=ROBOT_TASK.ORE_MINER) == 0:
-                    task_changed = robot.setTask(ROBOT_TASK.ORE_MINER)
-                else:
-                    task_changed = robot.setTask(ROBOT_TASK.CLEANER)
-                    need_return = task_changed
-            else:
-                if robot.factory.getCount(unit=robot, task_is=ROBOT_TASK.ICE_MINER) == 0:
-                    task_changed = robot.setTask(ROBOT_TASK.ICE_MINER)
-                elif robot.factory.getCount(unit=robot, task_is=ROBOT_TASK.ORE_MINER) == 0:
-                    task_changed = robot.setTask(ROBOT_TASK.ORE_MINER)
-                else:
-                    task_changed = robot.setTask(ROBOT_TASK.CLEANER)
-                    need_return = task_changed
+        if robot.isType(ROBOT_TYPE.HEAVY):
+            need_return, task_changed = self.getTaskForHeavy(gs, robot, step)
+        else:
+            need_return, task_changed = self.getTaskForLight(gs, robot, step)    
         return need_return, task_changed
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Установить задачу тяжёлому роботу -------------------------------------------------------------------
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    def getTaskForHeavy(self, gs:GameState, robot:RobotData, step:int) -> list:
+        ''' Установить задачу тяжёлому роботу '''
+        unit = robot.robot
+        item = robot.factory.factory
+        need_return, task_changed = False, False
+        if step < 50:
+            task_changed = robot.setTask(ROBOT_TASK.CARRIER)
+        elif robot.factory.getCount(unit=robot, type_is=ROBOT_TYPE.HEAVY, task_is=ROBOT_TASK.ICE_MINER) < 1:#self.res_count[item.unit_id]['ice']:
+            task_changed = robot.setTask(ROBOT_TASK.ICE_MINER)
+        elif robot.factory.getCount(unit=robot, type_is=ROBOT_TYPE.HEAVY, task_is=ROBOT_TASK.ORE_MINER) < 1:#self.res_count[item.unit_id]['ore']:
+            task_changed = robot.setTask(ROBOT_TASK.ORE_MINER)
+        elif getDistance(unit.pos, findClosestTile(item.pos, gs.board.rubble)) < 25: #self.res_count['rubble'] > 0:
+            task_changed = robot.setTask(ROBOT_TASK.CLEANER)
+            need_return = task_changed
+        else:
+            task_changed = robot.setTask(ROBOT_TASK.DESTROYER)
+        return need_return, task_changed
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Установить задачу лёгкому роботу --------------------------------------------------------------------
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    def getTaskForLight(self, gs:GameState, robot:RobotData, step:int) -> list:
+        ''' Установить задачу лёгкому роботу '''
+        unit = robot.robot
+        item = robot.factory.factory
+        need_return, task_changed = False, False
+        if robot.factory.getCount(unit=robot, task_is=ROBOT_TASK.ICE_MINER) < 1:#self.res_count[item.unit_id]['ice']:
+            task_changed = robot.setTask(ROBOT_TASK.ICE_MINER)
+        elif robot.factory.getCount(unit=robot, task_is=ROBOT_TASK.ORE_MINER) < 1:#self.res_count[item.unit_id]['ore']:
+            task_changed = robot.setTask(ROBOT_TASK.ORE_MINER)
+        elif getDistance(unit.pos, findClosestTile(item.pos, gs.board.rubble)) < 25: #self.res_count['rubble'] > 0:
+            task_changed = robot.setTask(ROBOT_TASK.CLEANER)
+            need_return = task_changed
+        else:
+            task_changed = robot.setTask(ROBOT_TASK.DESTROYER)
+        return need_return, task_changed
+# ===============================================================================================================
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+# ===============================================================================================================
