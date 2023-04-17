@@ -28,6 +28,9 @@ class TaskManager:
     i_n = 3
     o_n = 9
     r_n = 13
+
+    r_min = 5 # 1
+    r_max = 20 # 13
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def __init__(self) -> None:
         self.res_count = defaultdict(dict)
@@ -77,11 +80,14 @@ class TaskManager:
             task_changed = robot.setTask(ROBOT_TASK.ICE_MINER)
         elif robot.factory.getCount(unit=robot, type_is=ROBOT_TYPE.HEAVY, task_is=ROBOT_TASK.ORE_MINER) < min(round(step-700)/280*o_max, o_max):
             task_changed = robot.setTask(ROBOT_TASK.ORE_MINER)
-        elif getDistance(unit.pos, findClosestTile(item.pos, gs.board.rubble)) < self.r_n*2:
+        elif getDistance(unit.pos, findClosestTile(item.pos, gs.board.rubble)) < self.r_n*2 and \
+            robot.factory.getCount(unit=robot, task_is=ROBOT_TASK.CLEANER) < min(max(round(step-0)/1000*self.r_max, self.r_min), self.r_max):
             task_changed = robot.setTask(ROBOT_TASK.CLEANER)
             need_return = task_changed
-        else:
+        elif np.max(eyes.get('e_lichen')) > 0:
             task_changed = robot.setTask(ROBOT_TASK.DESTROYER)
+        else:
+            task_changed = robot.setTask(ROBOT_TASK.WARRION)
         return need_return, task_changed
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Установить задачу лёгкому роботу --------------------------------------------------------------------
@@ -97,11 +103,14 @@ class TaskManager:
             task_changed = robot.setTask(ROBOT_TASK.ICE_MINER)
         elif robot.factory.getCount(unit=robot, task_is=ROBOT_TASK.ORE_MINER) < min(round(280+700-step)/280*o_max, o_max):
             task_changed = robot.setTask(ROBOT_TASK.ORE_MINER)
-        elif getDistance(unit.pos, findClosestTile(item.pos, gs.board.rubble)) < self.r_n*2:
+        elif getDistance(unit.pos, findClosestTile(item.pos, gs.board.rubble)) < self.r_n*2 and \
+            robot.factory.getCount(unit=robot, task_is=ROBOT_TASK.CLEANER) < min(max(round(step-0)/1000*self.r_max, self.r_min), self.r_max):
             task_changed = robot.setTask(ROBOT_TASK.CLEANER)
             need_return = task_changed
-        else:
+        elif np.max(eyes.get('e_lichen')) > 0:
             task_changed = robot.setTask(ROBOT_TASK.DESTROYER)
+        else:
+            task_changed = robot.setTask(ROBOT_TASK.WARRION)
         return need_return, task_changed
 # ===============================================================================================================
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =

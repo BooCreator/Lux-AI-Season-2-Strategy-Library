@@ -55,7 +55,7 @@ class RobotStrategy:
             elif robot.on_position(item.factory.pos, size=3):
                 # --- добавляем действия взятия энергии ---
                 take_energy = min(unit.unit_cfg.BATTERY_CAPACITY-unit.power, 
-                                  item.factory.power-f_energy.get(item.factory.unit_id, 0))
+                                  min(item.factory.power-f_energy.get(item.factory.unit_id, 0), 750))
                 # --- устанавливаем базовую задачу робота ---
                 task = robot.robot_task if task == ROBOT_TASK.RETURN else task
                 # --- если робот вернулся от куда-то, то удаляем его из массива ---
