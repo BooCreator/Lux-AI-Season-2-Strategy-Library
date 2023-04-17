@@ -1,3 +1,4 @@
+import numpy as np
 from strategy.kits.data_controller import DataController
 from strategy.kits.factory import FactoryData
 
@@ -12,6 +13,9 @@ class FactoryStrategy:
     l_max = 20
     max_to = 500
 
+    lichens = []
+    last_water = 0
+
     #@time_wrapper('mean_water_getFactoryActions', 5)
     def getActions(self, step:int, env_cfg:EnvConfig, game_state:GameState, data:DataController, **kwargs):
         ''' Получить список действий для фабрик '''
@@ -23,7 +27,6 @@ class FactoryStrategy:
             item.energy_cost = 0
             fact_free_loc = item.getFreeLocation()
             if fact_free_loc[1][1] == 1:
-                #cnt = min(round(self.l_ts+self.max_to-step)/self.l_ts*self.l_max, self.l_max)
                 cnt = min(max(round(step-self.max_to)/self.l_ts*self.l_max, self.l_min), self.l_max)
                 if item.factory.power >= env_cfg.ROBOTS["HEAVY"].POWER_COST and \
                     item.factory.cargo.metal >= env_cfg.ROBOTS["HEAVY"].METAL_COST:
@@ -35,10 +38,26 @@ class FactoryStrategy:
                     actions[unit_id] = item.factory.build_light()
                     item.energy_cost = env_cfg.ROBOTS["LIGHT"].POWER_COST
                     continue
-            water_on_steps = item.getMeanWaterOnStep()*(1000-step) # сколько воды можно получить до конца игры
-            water_for_liches = item.factory.cargo.water-(1001-step) # сколько воды остаётся на лишайник
-            water_cost_to_end = max(item.factory.water_cost(game_state), 2) # минимум воды для лишайника
-            if water_cost_to_end*(1001-step) < water_for_liches + water_on_steps:
-                if water_cost_to_end < water_for_liches:
+            # --- расчёт времени полива лишайника ---
+            mean_water = item.getMeanWaterOnStep() # изменение воды в среднем
+            water_to_end = mean_water*(1000-step) # итоговое изменение количества воды к концу игры
+
+            water_cost = item.factory.water_cost(game_state) # нужно воды для лишайника
+            mean_lichen = sum(self.lichens)/ len(self.lichens) if len(self.lichens) > 0 else 1 # коэффициент увеличения стоимости лишайника
+            
+            need_water = 1001-step # сколько воды нужно для фабрики
+            water_for_liches = item.factory.cargo.water-need_water # сколько воды остаётся на лишайник
+
+            if (max(water_cost, 2)*need_water)*(1-(mean_lichen-1)) < water_for_liches + water_to_end:
+                if water_cost < water_for_liches:
                     actions[unit_id] = item.factory.water()
+                    if self.last_water > 0:
+                        if len(self.lichens) > 0:
+                            self.lichens.append((self.last_water+water_cost)/self.last_water)
+                        else:
+                            self.lichens.append(water_cost)
+                    self.last_water += water_cost
+            #if item.factory.unit_id == 'factory_5':
+            #    print('step', step, 'water', item.factory.cargo.water, 'mean_water', round(mean_water, 2), 'water_to_end', round(water_to_end, 2),
+            #          'mean_lichen', round(mean_lichen, 2), 'last_water', round(self.last_water, 2))
         return actions
