@@ -98,7 +98,8 @@ class FactoryData:
     def getMeanWaterOnStep(self, start:int=0) -> int:
         to = len(self.water[start:])
         to = 1 if to == 0 else to
-        return floor(sum(self.water[start:])/to)
+        v = sum(self.water[start:])
+        return v/to
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- На сколько ходов ещё хватит воды --------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
