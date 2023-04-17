@@ -137,7 +137,7 @@ class RobotStrategy:
                 # --- если расстояние до ресурса < n_n*2, то строим маршрут ---
                 if getDistance(pt, ct) < (TaskManager.i_n*2 if task == ROBOT_TASK.ICE_MINER else TaskManager.o_n*2):
                     # --- если расстояние от ближайшей свободной точки фабрики до ресурса меньше чем от позиции робота ---
-                    if getDistance(pt, ct) < getDistance(unit.pos, ct):
+                    if getDistance(unit.pos, pt) < getDistance(unit.pos, ct) and getDistance(pt, ct) < getDistance(unit.pos, ct):
                         # --- то идём от неё ---
                         if actions.buildMove(pt, lock_map=lock_map):
                             dec = pt
