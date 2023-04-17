@@ -17,6 +17,7 @@ class FactoryStrategy:
         ''' Получить список действий для фабрик '''
         f_data = data.getFactoryData()
         actions = {}
+        step -= 11
         for unit_id, item in f_data.items():
             item: FactoryData
             item.energy_cost = 0
