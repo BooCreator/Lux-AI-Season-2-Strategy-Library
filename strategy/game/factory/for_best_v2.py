@@ -45,7 +45,7 @@ class FactoryStrategy:
 
             lichens = np.where(game_state.board.lichen_strains == item.factory.strain_id, 1, 0).sum() if np.max(game_state.board.lichen_strains) > -1 else 0
             water_cost = item.factory.water_cost(game_state) # нужно воды для лишайника
-            mean_lichen = sum(self.lichens)/ len(self.lichens) if len(self.lichens) > 0 else 1 # коэффициент увеличения стоимости лишайника
+            mean_lichen = sum(self.lichens)/len(self.lichens) if len(self.lichens) > 0 else 1 # коэффициент увеличения стоимости лишайника
             
             need_water = 1001-step # сколько воды нужно для фабрики
             water_for_liches = item.factory.cargo.water-need_water # сколько воды остаётся на лишайник
@@ -55,10 +55,12 @@ class FactoryStrategy:
                 arr.append(0)
                 lichens = 12
             cost = lichens/item.factory.env_cfg.LICHEN_WATERING_COST_FACTOR
-            for i in range(min(200, 1000-step)):
+            for i in range(min(300, 1000-step)):
                 arr.append(ceil(cost + floor(i/20)*0.4))
             need_cost = sum(arr)
-            if step > 0 and water_for_liches + water_to_end > need_cost:#step >= 500: #(max(water_cost, 2)*need_water)*(1-(mean_lichen-1)) < water_for_liches + water_to_end:
+            mean_lichen = (1-(mean_lichen-1))
+            if mean_lichen == 0: mean_lichen = 1
+            if step > 0 and (water_for_liches + water_to_end)*mean_lichen > need_cost: # 
                 actions[unit_id] = item.factory.water()
                 if self.last_water > 0:
                     if len(self.lichens) > 0:
@@ -66,7 +68,4 @@ class FactoryStrategy:
                     else:
                         self.lichens.append(water_cost)
                 self.last_water += water_cost
-            #if item.factory.unit_id == 'factory_5':
-            #    print('step', step, 'water', item.factory.cargo.water, 'mean_water', round(mean_water, 2), 'water_to_end', round(water_to_end, 2),
-            #          'mean_lichen', round(mean_lichen, 2), 'last_water', round(self.last_water, 2))
         return actions

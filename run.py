@@ -22,6 +22,7 @@ from strategy.game.robot.next_generation import RobotStrategy as NextGenerationR
 from strategy.game.factory.default import FactoryStrategy as DefaultFactoryStrategy
 from strategy.game.factory.mean_water import FactoryStrategy as MeanWaterStrategy
 from strategy.game.factory.for_best import FactoryStrategy as ForBestFactoryStrategy
+from strategy.game.factory.for_best_v2 import FactoryStrategy as ForBestFactoryStrategyV2
 
 #Lux.loadCompetition(rw=True) # if not exists - load
 
@@ -33,7 +34,7 @@ ddf = {
     'early': BestEarly,
     'game': DefaultGame,
     'robot': NextGenerationRobots,
-    'factory': ForBestFactoryStrategy
+    'factory': ForBestFactoryStrategyV2
 }
 
 Lux.render_log_count=10
@@ -43,7 +44,7 @@ bots = [ {'file':'./bots/fourteen_bot/main.py', 'name':'fourteen_bot'},]
 
 agents = {'player_0':[Agent, ddf], 'player_1':[Agent, ddf]}
 
-seed = 598640900 # 598640900 (плато+горы) # 990277527 (каньон)
+seed = 990277527 # 598640900 (плато+горы) # 990277527 (каньон)
 
 
 #Lux.interact(agents, 1000, seed=seed, log=log.getLog(), show_steps=True, v=0)
