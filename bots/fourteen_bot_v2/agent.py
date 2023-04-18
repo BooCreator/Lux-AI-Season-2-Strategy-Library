@@ -28,7 +28,7 @@ ddf = {
     'early': BestEarly,
     'game': DefaultGame,
     'robot': NextGenerationRobots,
-    'factory': ForBestFactoryStrategy
+    'factory': ForBestFactoryStrategyV2
 }
 
 def initStrategy(env_cfg:EnvConfig, strategy:dict)->DefaultStrategy:
