@@ -45,8 +45,10 @@ class FactoryStrategy:
             water_cost = item.factory.water_cost(game_state) # нужно воды для лишайника
             mean_lichen = sum(self.lichens)/ len(self.lichens) if len(self.lichens) > 0 else 1 # коэффициент увеличения стоимости лишайника
             
-            water_for_liches = item.factory.cargo.water-(1001-step) # сколько воды остаётся на лишайник
-            if (max(water_cost, 2)*(1001-step))*(1-(mean_lichen-1)) < water_for_liches + water_to_end:
+            need_water = 1001-step # сколько воды нужно для фабрики
+            water_for_liches = item.factory.cargo.water-need_water # сколько воды остаётся на лишайник
+
+            if (max(water_cost, 2)*need_water)*(1-(mean_lichen-1)) < water_for_liches + water_to_end:
                 if water_cost < water_for_liches:
                     actions[unit_id] = item.factory.water()
                     if self.last_water > 0:
