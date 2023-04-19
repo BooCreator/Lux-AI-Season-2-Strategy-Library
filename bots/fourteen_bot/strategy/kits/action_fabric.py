@@ -77,7 +77,9 @@ class ActionsFabric:
     #@time_wrapper('af_buildTakeEnergy', 6)
     def buildTakeEnergy(self, count:int) -> bool:
         ''' Добавить действие "взять энергию" '''
-        if not self.check(): return False
+        if not (self.unit.robot.power >= self.action_cost \
+                and len(self.actions) < self.max_actions):
+            return False
         if count > self.action_cost:
             self.actions.append(self.unit.robot.pickup(RES.energy, count))
             self.energy_cost -= count
@@ -188,7 +190,7 @@ class ActionsFabric:
     # ----- Добавить действия "передать ресурсы" ----------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     #@time_wrapper('af_buildTransferResource', 6)
-    def buildTransferResource(self, res_id:int, to:np.ndarray, count_min:int=-1, count_max:int=10000) -> bool:
+    def buildTransferResource(self, res_id:int, to:np.ndarray, count_max:int=10000, count_min:int=-1) -> bool:
         ''' Добавить действия "передать ресурсы" '''
         if not self.check(): return False
         count, count_min = 0, max(count_min, self.unit.robot.unit_cfg.DIG_RESOURCE_GAIN)
@@ -201,7 +203,7 @@ class ActionsFabric:
         elif res_id == RES.metal:
             count = min(self.unit.robot.cargo.metal, count_max)
         elif res_id == RES.energy:
-            count = min(self.unit.robot.power, count_max)
+            count = min(self.unit.robot.power-self.energy_cost, count_max)
         if count < count_min: 
             return False
         self.actions.append(self.unit.robot.transfer(direction_to(self.unit.robot.pos, to), res_id, count))

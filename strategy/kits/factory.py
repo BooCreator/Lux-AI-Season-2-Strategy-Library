@@ -81,10 +81,10 @@ class FactoryData:
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Получить ближайшую ячейку фабрики -------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def getNeareastPoint(self, point:np.ndarray) -> np.ndarray:
+    def getNeareastPoint(self, point:np.ndarray, ignore:bool=False) -> np.ndarray:
         ''' Получить ближайшую ячейку фабрики '''
         points = getRect(self.factory.pos, 1)
-        lock_map = self.getFreeLocation(point)       
+        lock_map = np.ones((3, 3), dtype=int) if ignore else self.getFreeLocation(point)
         distances = np.mean((points - point) ** 2, 1)
         for i, point in enumerate(points):
             f_pt = point - (self.factory.pos-1)
@@ -111,6 +111,15 @@ class FactoryData:
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def getActionEnergyCost(self) -> int:
         return self.energy_cost
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Ищем связанного робота по позиции -------------------------------------------------------------------
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    def findRobotOnPos(self, pos:np.ndarray) -> Unit:
+        ''' Ищем связанного робота по позиции '''
+        for unit in self.robots.values():
+            if unit.robot.pos[0] == pos[0] and unit.robot.pos[1] == pos[1]:
+                return unit
+        return None
 # ===============================================================================================================
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ===============================================================================================================

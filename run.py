@@ -48,5 +48,5 @@ seed = 990277527 # 598640900 (плато+горы) # 990277527 (каньон)
 
 
 #Lux.interact(agents, 1000, seed=seed, log=log.getLog(), show_steps=True, v=0)
-#Lux.play(bots, seed=seed)
+Lux.play(bots, seed=seed)
 #Lux.tornament('bots/')

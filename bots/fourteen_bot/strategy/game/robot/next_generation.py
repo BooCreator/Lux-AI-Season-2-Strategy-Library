@@ -65,7 +65,7 @@ class RobotStrategy:
                 obs.removeReturn(unit.unit_id)
             elif robot.on_position(item.factory.pos, size=5) and (task != ROBOT_TASK.LEAVER and task != ROBOT_TASK.WARRION):
                 # --- выгружаем ресурс, если выгрузили, то удаляем из возвращающихся ---
-                if actions.buildResourceUnload(item.getNeareastPoint(unit.pos)):
+                if actions.buildResourceUnload(item.getNeareastPoint(unit.pos, ignore=True)):
                     obs.removeReturn(unit.unit_id)
 
             # --- формируем действия робота на основе задачи ---
@@ -91,19 +91,30 @@ class RobotStrategy:
         # --- если робот идёт на базу ---
         if task == ROBOT_TASK.RETURN:
             # --- находим ближайшую точку базы к роботу ---
-            ct = item.getNeareastPoint(unit.pos)
-            # --- строим маршрут к базе ---
-            m_actions, move_cost, move_map = findPathActions(unit, game_state, to=ct, lock_map=lock_map, get_move_map=True)
-            # --- если у робота есть ресурс и мы не стоим возле базы, то идём до базы, а не на базу ---
-            if robot.getResCount() > 0 and move_map[ct[0], ct[1]] > 0 and getDistance(ct, unit.pos) > 1:
-                m_actions[-1][-1] -= 1
-                if m_actions[-1][-1] == 0:
-                    del m_actions[-1]
-                    del move_cost[-1]
-                move_map[ct[0], ct[1]] = 0
-            # --- идём ---
-            actions.extend(m_actions, move_cost, move_map)
-            obs.addReturn(unit.unit_id)
+            ct = item.getNeareastPoint(unit.pos, ignore=True)
+            # --- если до базы нужно идти ---
+            if getDistance(unit.pos, ct) > 1:
+                # --- строим маршрут ---
+                m_actions, move_cost, move_map = findPathActions(unit, game_state, to=ct, lock_map=lock_map, get_move_map=True)
+                # --- если у робота есть ресурс и мы не стоим возле базы, то идём до базы, а не на базу ---
+                if robot.getResCount() > 0 and move_map[ct[0], ct[1]] > 0:
+                    m_actions[-1][-1] -= 1
+                    if m_actions[-1][-1] == 0:
+                        del m_actions[-1]
+                        del move_cost[-1]
+                    move_map[ct[0], ct[1]] = 0
+                # --- идём ---
+                actions.extend(m_actions, move_cost, move_map)
+                obs.addReturn(unit.unit_id)
+             # --- если мы стоим в притык ---
+            elif getDistance(unit.pos, ct) == 1:
+                # --- если роботов никаких нет в позиции, куда идём, то идём ---
+                if not actions.buildMove(ct, lock_map=lock_map):
+                    r: RobotData = item.findRobotOnPos(ct)
+                    # --- если это заряжатель, то выходим после того, как он отдаст энергию ---
+                    if (r is not None) and r.isTask(ROBOT_TASK.ENERGIZER) and (len(r.robot.action_queue) > 0) and r.robot.action_queue[0][0] != 1:
+                        actions = RobotStrategy.getActionsOnTask(robot, robot.robot_task, game_state, obs, actions)
+                        obs.removeReturn(unit.unit_id)
         # --- если робот заряжается ---
         elif task == ROBOT_TASK.RECHARGE:
             # --- заряжаемся, чтобы можно было сделать следующий шаг ---
@@ -122,11 +133,14 @@ class RobotStrategy:
                 space = unit.cargo.ice if task == ROBOT_TASK.ICE_MINER else unit.cargo.ore
                 max_res = 1000 if task == ROBOT_TASK.ICE_MINER else 150
                 # --- строим маршрут к фабрике ---
-                m_actions, move_cost, move_map = findPathActions(unit, game_state, to=item.getNeareastPoint(unit.pos), lock_map=lock_map, get_move_map=True)
+                __, move_cost, __ = findPathActions(unit, game_state, to=item.getNeareastPoint(unit.pos), lock_map=lock_map, get_move_map=True)
                 # --- если не можем ничего выкопать - идём на фабрику ---
                 if space >= max_res or not actions.buildDigResource(reserve=sum(move_cost)):
-                    actions.extend(m_actions, move_cost, move_map=move_map)
-                    obs.addReturn(unit.unit_id)
+                    npt = item.getNeareastPoint(unit.pos, ignore=True)
+                    if getDistance(unit.pos, npt) == 1:
+                        actions.buildResourceUnload(npt)
+                    else:
+                        obs.addReturn(unit.unit_id)
             # --- если робот где-то гуляет ---
             else:
                 # --- находим ближайший ресурс ---
@@ -142,7 +156,7 @@ class RobotStrategy:
                         if actions.buildMove(pt, lock_map=lock_map):
                             dec = pt
                     # --- строим маршрут к фабрике от ресурса ---
-                    m_actions, move_cost, move_map = findPathActions(unit, game_state, to=item.getNeareastPoint(unit.pos), lock_map=lock_map, dec=ct, get_move_map=True)
+                    __, move_cost, __ = findPathActions(unit, game_state, to=item.getNeareastPoint(unit.pos), lock_map=lock_map, dec=ct, get_move_map=True)
                     if actions.buildMove(ct, dec=dec, border=20, lock_map=lock_map):
                         move_map = actions.getMoveMap()[-1]
                         if move_map[ct[0]][ct[1]] > 0:
@@ -257,7 +271,29 @@ class RobotStrategy:
                     break
         # --- если робот заряжатель ---
         elif task == ROBOT_TASK.ENERGIZER:
-            pass
+            # --- если стоим на своей базе, то работаем ---
+            if robot.on_position(item.factory.pos, size=3):
+                # --- находим ближайшего робота ---
+                units = eyes.get('units')
+                units[unit.pos[0], unit.pos[1]] -= 1
+                ct = findClosestTile(unit.pos, eyes.get('units'), lock_map=np.where(eyes.get('u_factories') > 0, 0, 1))
+                units[unit.pos[0], unit.pos[1]] += 1
+                # --- находим ближайшую точку фабрики к роботу ---
+                pt = item.getNeareastPoint(ct)
+                # --- если робот близко к базе ---
+                if getDistance(pt, ct) < getDistance(unit.pos, pt)+1:
+                    # --- идём на точку базы ---
+                    actions.buildMove(pt, lock_map=lock_map)
+                # --- если я стою возле робота - передать ему энергию ---
+                elif getDistance(ct, unit.pos) == 1 and unit.power-actions.energy_cost > unit.unit_cfg.ACTION_QUEUE_POWER_COST*2:
+                    r: RobotData = item.findRobotOnPos(ct)
+                    if r is not None:
+                        n = r.robot.unit_cfg.BATTERY_CAPACITY-r.robot.power
+                        if n > unit.unit_cfg.ACTION_QUEUE_POWER_COST*2:
+                            actions.buildTransferResource(RES.energy, ct, min(n, unit.power-actions.energy_cost-unit.unit_cfg.ACTION_QUEUE_POWER_COST*2))
+            # --- иначе - ид1м на базу ---
+            else:
+                obs.addReturn(unit.unit_id)
         # --- если робот копатель траншей ---
         elif task == ROBOT_TASK.CARRIER:
             # --- находим ближайший ресурс ---
