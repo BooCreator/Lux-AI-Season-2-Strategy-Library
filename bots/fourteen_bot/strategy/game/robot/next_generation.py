@@ -54,8 +54,15 @@ class RobotStrategy:
             # --- если робот находится на своей фабрике ---
             elif robot.on_position(item.factory.pos, size=3):
                 # --- добавляем действия взятия энергии ---
+                max_on_task = 750 if robot.isType(ROBOT_TYPE.HEAVY) else 100
+                if robot.isTask(ROBOT_TASK.ENERGIZER):
+                    max_on_task = 100 if robot.isType(ROBOT_TYPE.HEAVY) else 100
+                #elif robot.isTask(ROBOT_TASK.CARRIER):
+                #    max_on_task = 250 if robot.isType(ROBOT_TYPE.HEAVY) else 150
+                #elif robot.isTask(ROBOT_TASK.CLEANER):
+                #    max_on_task = 500 if robot.isType(ROBOT_TYPE.HEAVY) else 150
                 take_energy = min(unit.unit_cfg.BATTERY_CAPACITY-unit.power, 
-                                  min(item.factory.power-f_energy.get(item.factory.unit_id, 0), 750))
+                                  min(item.factory.power-f_energy.get(item.factory.unit_id, 0), max_on_task))
                 # --- устанавливаем базовую задачу робота ---
                 task = robot.robot_task if task == ROBOT_TASK.RETURN else task
                 # --- если робот вернулся от куда-то, то удаляем его из массива ---
@@ -110,11 +117,14 @@ class RobotStrategy:
             elif getDistance(unit.pos, ct) == 1:
                 # --- если роботов никаких нет в позиции, куда идём, то идём ---
                 if not actions.buildMove(ct, lock_map=lock_map):
-                    r: RobotData = item.findRobotOnPos(ct)
-                    # --- если это заряжатель, то выходим после того, как он отдаст энергию ---
-                    if (r is not None) and r.isTask(ROBOT_TASK.ENERGIZER) and (len(r.robot.action_queue) > 0) and r.robot.action_queue[0][0] != 1:
-                        actions = RobotStrategy.getActionsOnTask(robot, robot.robot_task, game_state, obs, actions)
-                        obs.removeReturn(unit.unit_id)
+                    if robot.isTask(ROBOT_TASK.ICE_MINER) or robot.isTask(ROBOT_TASK.ORE_MINER):
+                        r: RobotData = item.findRobotOnPos(ct)
+                        # --- если это заряжатель, то выходим после того, как он отдаст энергию ---
+                        if (r is not None) and r.isTask(ROBOT_TASK.ENERGIZER) and (len(r.robot.action_queue) > 0) and r.robot.action_queue[0][0] != 1:
+                            actions = RobotStrategy.getActionsOnTask(robot, robot.robot_task, game_state, obs, actions)
+                            obs.removeReturn(unit.unit_id)
+                    else:
+                        actions.buildMove(item.getNeareastPoint(unit.pos), lock_map=lock_map)
         # --- если робот заряжается ---
         elif task == ROBOT_TASK.RECHARGE:
             # --- заряжаемся, чтобы можно было сделать следующий шаг ---
