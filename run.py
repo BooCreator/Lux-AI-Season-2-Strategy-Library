@@ -34,17 +34,17 @@ ddf = {
     'early': BestEarly,
     'game': DefaultGame,
     'robot': NextGenerationRobots,
-    'factory': ForBestFactoryStrategyV2
+    'factory': ForBestFactoryStrategy
 }
 
 Lux.render_log_count=10
-log = Log(video=False, frames=False, step_time=False, obs_time=False, step_render=1) 
+log = Log(video=False, frames=True, step_time=False, obs_time=False, step_render=1) 
 
 bots = [ {'file':'./bots/fourteen_bot/main.py', 'name':'fourteen_bot'},]
 
 agents = {'player_0':[Agent, ddf], 'player_1':[Agent, ddf]}
 
-seed = 598640900 # 598640900 (плато+горы) # 990277527 (каньон)
+seed = 990277527 # 598640900 (плато+горы) # 990277527 (каньон)
 
 
 #Lux.interact(agents, 1000, seed=seed, log=log.getLog(), show_steps=True, v=0)

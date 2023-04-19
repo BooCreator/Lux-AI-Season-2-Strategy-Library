@@ -36,7 +36,7 @@ class FactoryData:
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Выбрать роботов фабрики по условию ------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    def getRobots(self, *, type_is:int=-1, task_is:int=-1, condition=lambda x: x == x):
+    def getRobots(self, *, ignore: list=None, type_is:int=-1, task_is:int=-1, condition=lambda x: x == x):
         ''' Выбрать роботов фабрики по условию '''
         result = []
         if type(type_is) is str: type_is = ROBOT_TYPE.getType(type_is)
@@ -48,7 +48,9 @@ class FactoryData:
         elif task_is > -1:
             condition = lambda x: x.robot_task == task_is
         for unit in self.robots.values():
-            if condition(unit): result.append(unit)
+            if ignore is None or unit.robot.unit_id not in ignore:
+                if condition(unit): 
+                    result.append(unit)
         return result
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Получить количество роботов по условию ---------------------------------------------------------------
@@ -120,6 +122,14 @@ class FactoryData:
             if unit.robot.pos[0] == pos[0] and unit.robot.pos[1] == pos[1]:
                 return unit
         return None
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Ищем ближайшего робота без заряжателя ---------------------------------------------------------------
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    def findClosestRobot(self, pos:np.ndarray, task_is:ROBOT_TASK=-1, type_is:ROBOT_TYPE=-1):
+        result = None
+        for unit in self.robots.values():
+            unit.robot.pos - pos
+        return result
 # ===============================================================================================================
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ===============================================================================================================

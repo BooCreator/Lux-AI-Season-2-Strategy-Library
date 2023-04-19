@@ -273,24 +273,34 @@ class RobotStrategy:
         elif task == ROBOT_TASK.ENERGIZER:
             # --- если стоим на своей базе, то работаем ---
             if robot.on_position(item.factory.pos, size=3):
+                units = np.zeros((48, 48), dtype=int)
+                for t_robot in item.getRobots(task_is=ROBOT_TASK.ICE_MINER):
+                    [x, y] = t_robot.robot.pos
+                    units[x, y] = 2
+                for t_robot in item.getRobots(task_is=ROBOT_TASK.ORE_MINER):
+                    [x, y] = t_robot.robot.pos
+                    units[x, y] = 1
+                # --- убираем из поиска роботов, возле которых стоит ENERGIZER ---
+                for t_robot in item.getRobots(task_is=ROBOT_TASK.ENERGIZER, ignore=[unit.unit_id]):
+                    for [x, y] in getRad(t_robot.robot.pos):
+                        units[x, y] = 0
+                if np.max(units) == 2:
+                    units = np.where(units == 1, 0, units)
                 # --- находим ближайшего робота ---
-                units = eyes.get('units')
-                units[unit.pos[0], unit.pos[1]] -= 1
-                ct = findClosestTile(unit.pos, eyes.get('units'), lock_map=np.where(eyes.get('u_factories') > 0, 0, 1))
-                units[unit.pos[0], unit.pos[1]] += 1
-                # --- находим ближайшую точку фабрики к роботу ---
-                pt = item.getNeareastPoint(ct)
-                # --- если робот близко к базе ---
-                if getDistance(pt, ct) < getDistance(unit.pos, pt)+1:
-                    # --- идём на точку базы ---
-                    actions.buildMove(pt, lock_map=lock_map)
-                # --- если я стою возле робота - передать ему энергию ---
-                elif getDistance(ct, unit.pos) == 1 and unit.power-actions.energy_cost > unit.unit_cfg.ACTION_QUEUE_POWER_COST*2:
-                    r: RobotData = item.findRobotOnPos(ct)
-                    if r is not None:
-                        n = r.robot.unit_cfg.BATTERY_CAPACITY-r.robot.power
-                        if n > unit.unit_cfg.ACTION_QUEUE_POWER_COST*2:
-                            actions.buildTransferResource(RES.energy, ct, min(n, unit.power-actions.energy_cost-unit.unit_cfg.ACTION_QUEUE_POWER_COST*2))
+                if np.max(units) > 0:
+                    ct = findClosestTile(unit.pos, units, lock_map=np.where(eyes.get('u_factories') > 0, 0, 1))
+                    if getDistance(unit.pos, ct) == 1:
+                        if unit.power-actions.energy_cost > unit.unit_cfg.ACTION_QUEUE_POWER_COST*2:
+                            r: RobotData = item.findRobotOnPos(ct)
+                            if r is not None:
+                                n = r.robot.unit_cfg.BATTERY_CAPACITY-r.robot.power
+                                if n > unit.unit_cfg.ACTION_QUEUE_POWER_COST*2:
+                                    actions.buildTransferResource(RES.energy, ct, min(n, unit.power-actions.energy_cost-unit.unit_cfg.ACTION_QUEUE_POWER_COST*2))
+                    else:
+                        # --- находим ближайшую точку фабрики к роботу ---
+                        pt = item.getNeareastPoint(ct)
+                        # --- идём на точку базы ---
+                        actions.buildMove(pt, lock_map=lock_map)
             # --- иначе - ид1м на базу ---
             else:
                 obs.addReturn(unit.unit_id)
