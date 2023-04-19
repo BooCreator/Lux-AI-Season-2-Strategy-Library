@@ -26,7 +26,7 @@ from strategy.game.factory.for_best_v2 import FactoryStrategy as ForBestFactoryS
 
 #Lux.loadCompetition(rw=True) # if not exists - load
 
-zip_name = Lux.buildSubmission('fourteen_bot') # zip_name == 'example_2023-02-09_15-38-21.tar.gz'
+#zip_name = Lux.buildSubmission('fourteen_bot') # zip_name == 'example_2023-02-09_15-38-21.tar.gz'
 #Lux.sendSubmission(zip_name, 'third bot')
 
 ddf = {
@@ -44,7 +44,7 @@ bots = [ {'file':'./bots/fourteen_bot/main.py', 'name':'fourteen_bot'},]
 
 agents = {'player_0':[Agent, ddf], 'player_1':[Agent, ddf]}
 
-seed = 990277527 # 598640900 (плато+горы) # 990277527 (каньон)
+seed = 598640900 # 598640900 (плато+горы) # 990277527 (каньон)
 
 
 #Lux.interact(agents, 1000, seed=seed, log=log.getLog(), show_steps=True, v=0)
