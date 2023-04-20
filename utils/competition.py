@@ -11,15 +11,16 @@ class Log:
     mean_step_time:bool = True
     mean_obs_time:bool = True
     step_render:int = 1
-    def __init__(self, video=True, frames=True, step_time=True, obs_time=True, step_render=1) -> None:
+    def __init__(self, video=True, frames=True, step_time=True, obs_time=True, step_render=1, render_after=0) -> None:
         self.get_video=video
         self.get_frames=frames
         self.mean_step_time=step_time
         self.mean_obs_time=obs_time
         self.step_render=step_render
+        self.render_after=render_after
     
     def getLog(self)->list:
-        return [self.get_video, self.get_frames, self.mean_step_time, self.mean_obs_time, self.step_render]
+        return [self.get_video, self.get_frames, self.mean_step_time, self.mean_obs_time, self.step_render, self.render_after]
 
 
 def timed(func=lambda x: 0):
@@ -145,7 +146,7 @@ class LuxAI:
             else:
                 obs, rewards, dones, infos = env.step(actions)
             if log==True or log[0]==True or log[1]==True:
-                if log[0] == True or step % log[4] == 0:
+                if log[5] >= step and log[0] == True or step % log[4] == 0:
                     frame = env.render("rgb_array", width=640, height=640)
                     imgs += [frame]
                     if log[1]: toImage(frame, f'{log_path}frame', frames=min(steps, LuxAI.render_log_count))
@@ -175,7 +176,7 @@ class LuxAI:
             else:
                 obs, rewards, dones, infos = env.step(actions)
             if log==True or log[0]==True or log[1]==True:
-                if log[0] == True or step % log[4] == 0:
+                if log[5] >= step and log[0] == True or step % log[4] == 0:
                     frame = env.render("rgb_array", width=640, height=640)
                     imgs += [frame]
                     if log[1]: toImage(frame, f'{log_path}frame', frames=min(steps, LuxAI.render_log_count))
