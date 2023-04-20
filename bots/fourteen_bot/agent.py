@@ -9,6 +9,7 @@ from strategy.basic import DefaultStrategy
 from strategy.early.default import EarlyStrategy as DefaultEarly
 from strategy.early.from_kaggle_strategy import EarlyStrategy as OptimisedEarly
 from strategy.early.best_strategy import EarlyStrategy as BestEarly
+from strategy.early.next_generation import EarlyStrategy as NextGenerationEarly
 # ----- game -----
 from strategy.game.default import GameStrategy as DefaultGame
 from strategy.game.cautious import GameStrategy as CautiousStrategy

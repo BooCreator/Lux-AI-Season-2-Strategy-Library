@@ -9,6 +9,7 @@ from strategy.basic import DefaultStrategy
 from strategy.early.default import EarlyStrategy as DefaultEarly
 from strategy.early.from_kaggle_strategy import EarlyStrategy as OptimisedEarly
 from strategy.early.best_strategy import EarlyStrategy as BestEarly
+from strategy.early.next_generation import EarlyStrategy as NextGenerationEarly
 # ----- game -----
 from strategy.game.default import GameStrategy as DefaultGame
 from strategy.game.cautious import GameStrategy as CautiousStrategy
@@ -45,9 +46,9 @@ bots = [ {'file':'./bots/fourteen_bot/main.py', 'name':'fourteen_bot'},]
 
 agents = {'player_0':[Agent, ddf], 'player_1':[Agent, ddf]}
 
-seed = 598640900 # 598640900 (плато+горы) # 990277527 (каньон)
+seed = 598640900 # 598640900 (плато+горы) # 990277527 (каньон) 5335240
 
 
-#Lux.interact(agents, 1000, seed=seed, log=log.getLog(), show_steps=True, v=0)
-#Lux.play(bots, seed=seed)
-Lux.tornament('bots/')
+#Lux.interact(agents, 10, seed=seed, log=log.getLog(), show_steps=True, v=0)
+Lux.play(bots, seed=seed)
+#Lux.tornament('bots/')

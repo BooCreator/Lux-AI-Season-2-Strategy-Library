@@ -130,7 +130,8 @@ class RobotStrategy:
             # --- заряжаемся, чтобы можно было сделать следующий шаг ---
             actions.buildReharge(getNextMoveEnergyCost(game_state, unit))
             # --- идём на базу ---
-            obs.addReturn(unit.unit_id)
+            if robot.isTask(ROBOT_TASK.ICE_MINER) or robot.isTask(ROBOT_TASK.ORE_MINER) or robot.isTask(ROBOT_TASK.CLEANER):
+                obs.addReturn(unit.unit_id)
         # --- если робот не на фабрике и он - копатель ---
         elif task == ROBOT_TASK.ICE_MINER or task == ROBOT_TASK.ORE_MINER:
             # --- находим ближайший не занятый ресурс ---

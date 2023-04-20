@@ -30,7 +30,7 @@ class TaskManager:
     r_n = 13
 
     r_min = 5 # 1
-    r_max = 20 # 13
+    r_max = 15 # 13
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def __init__(self) -> None:
         self.res_count = defaultdict(dict)
