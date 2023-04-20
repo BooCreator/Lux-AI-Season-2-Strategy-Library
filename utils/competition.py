@@ -146,7 +146,7 @@ class LuxAI:
             else:
                 obs, rewards, dones, infos = env.step(actions)
             if log==True or log[0]==True or log[1]==True:
-                if log[5] >= step and log[0] == True or step % log[4] == 0:
+                if (log[0] == True or step % log[4] == 0) and log[5] >= step:
                     frame = env.render("rgb_array", width=640, height=640)
                     imgs += [frame]
                     if log[1]: toImage(frame, f'{log_path}frame', frames=min(steps, LuxAI.render_log_count))
@@ -176,7 +176,7 @@ class LuxAI:
             else:
                 obs, rewards, dones, infos = env.step(actions)
             if log==True or log[0]==True or log[1]==True:
-                if log[5] >= step and log[0] == True or step % log[4] == 0:
+                if (log[0] == True or step % log[4] == 0) and log[5] >= step:
                     frame = env.render("rgb_array", width=640, height=640)
                     imgs += [frame]
                     if log[1]: toImage(frame, f'{log_path}frame', frames=min(steps, LuxAI.render_log_count))
