@@ -22,13 +22,14 @@ from strategy.game.robot.next_generation import RobotStrategy as NextGenerationR
 from strategy.game.factory.mean_water import FactoryStrategy as MeanWaterStrategy
 from strategy.game.factory.for_best import FactoryStrategy as ForBestFactoryStrategy
 from strategy.game.factory.for_best_v2 import FactoryStrategy as ForBestFactoryStrategyV2
+from strategy.game.factory.no_limit import FactoryStrategy as NoLimit
 
 ddf = {
     'basic': DefaultStrategy,
     'early': BestEarly,
     'game': DefaultGame,
     'robot': NextGenerationRobots,
-    'factory': ForBestFactoryStrategy
+    'factory': NoLimit
 }
 
 def initStrategy(env_cfg:EnvConfig, strategy:dict)->DefaultStrategy:

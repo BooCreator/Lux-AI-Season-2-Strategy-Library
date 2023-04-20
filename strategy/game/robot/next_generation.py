@@ -246,9 +246,9 @@ class RobotStrategy:
         elif task == ROBOT_TASK.DESTROYER:
             # --- строим маршрут к фабрике ---
             target = lichen
-            __, f_move_cost = findPathActions(unit, game_state, to=item.getNeareastPoint(unit.pos), lock_map=lock_map)
+            #__, f_move_cost = findPathActions(unit, game_state, to=item.getNeareastPoint(unit.pos), lock_map=lock_map)
             lock_find_map = obs.getLockMap(unit, task, MAP_TYPE.FIND)
-            to_factory_cost = sum(f_move_cost)
+            to_factory_cost = 0 #sum(f_move_cost)
             start_pos = unit.pos
             while not actions.isFull():
                 # --- находим ближайший лишайник ---
@@ -277,7 +277,7 @@ class RobotStrategy:
                     start_pos = ct.copy()
                 # --- если не можем, то идём на базу ---
                 else:
-                    obs.addReturn(unit.unit_id)
+                    #obs.addReturn(unit.unit_id)
                     break
         # --- если робот заряжатель ---
         elif task == ROBOT_TASK.ENERGIZER:
