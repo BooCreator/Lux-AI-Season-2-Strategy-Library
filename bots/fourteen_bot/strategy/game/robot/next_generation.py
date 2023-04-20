@@ -217,7 +217,7 @@ class RobotStrategy:
         # --- если робот не на фабрике и он - давитель ---
         elif task == ROBOT_TASK.WARRION:
             # --- строим маршрут к фабрике ---
-            m_actions, move_cost, move_map = findPathActions(unit, game_state, to=item.getNeareastPoint(unit.pos), lock_map=lock_map, get_move_map=True)
+            #m_actions, move_cost, move_map = findPathActions(unit, game_state, to=item.getNeareastPoint(unit.pos), lock_map=lock_map, get_move_map=True)
             # --- ищем доступный шаг на врага ---
             next_pos = findClosestTile(unit.pos, eyes.get('e_move')*lock_map, dec_is_none=False)
             if next_pos is None:
@@ -228,12 +228,12 @@ class RobotStrategy:
                     next_pos = item.getNeareastPoint(unit.pos)
                     lock_map = np.ones(lock_map.shape, dtype=int)
             # --- если можем шагнуть на врага - шагаем ---
-            e_actions, e_move_cost, e_move_map = findPathActions(unit, game_state, to=next_pos, lock_map=lock_map, get_move_map=True)
+            m_actions, move_cost, move_map = findPathActions(unit, game_state, to=next_pos, lock_map=lock_map, get_move_map=True)
             # --- если энергии хватит ещё и вернуться домой, то давим ---
-            if unit.power - (sum(move_cost) + sum(e_move_cost)) > 1:
-                m_actions = e_actions
-                move_cost = e_move_cost
-                move_map  = e_move_map
+            #if unit.power - (sum(move_cost) + sum(e_move_cost)) > 1:
+            #    m_actions = e_actions
+            #    move_cost = e_move_cost
+            #    move_map  = e_move_map
             # --- делаем шаг, если можем сделать шаг ---
             if len(m_actions) > 0:
                 actions.extend(m_actions, move_cost, move_map)
