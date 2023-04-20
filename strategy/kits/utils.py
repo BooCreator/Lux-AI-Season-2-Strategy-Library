@@ -245,12 +245,34 @@ def getRad(dec:np.ndarray, rad:int=1, borders:bool=True, as_matrix:bool=False, s
                         result.append([dec[0]-k, dec[1]-r])
         return result
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+def getRadV2(dec:np.ndarray, rad:int=1, borders:bool=True, size:int=(48,48)):
+    ''' Получить круг координат вокруг точки (на основе формулы. Работает дольше, но точнее) '''
+    result = []
+    for r in range(-rad, rad+1):
+        for k in range(-rad, rad+1):
+            ny, nx = dec[0]-k, dec[1]-r
+            if radFunc(ny, nx, dec) <= pow(rad, 2):
+                result.append([dec[0]-k, dec[1]-r])
+    return result
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ----- Распространение ячейки ------------------------------------------------------------------------------
 # ------- Пример:    3  3    --- ищем find = 1 --------------------------------------------------------------
 # -------         2 [1, 1] 2 --- распространяем по val = 2 --------------------------------------------------
 # -------            3  3    --- ограничивая всё max = 3 ----------------------------------------------------
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 def spreadCell(matrix:np.ndarray, rad:int=3, *, find:int=1, val:int=1, max:int=100, func=getRad)->np.ndarray:
+    ''' Распространение ячейки '''
+    result = matrix.copy()
+    for z in range(rad, 0, -1):
+        for [x, y] in np.argwhere(matrix == find):
+            for [rx, ry] in func([x, y], z):
+                if (rx > -1 and ry > -1) and (rx < matrix.shape[0] and ry < matrix.shape[1]):
+                    result[rx,ry] += val
+    if val < 0: result *= -1
+    result = np.where(result <= abs(max), result, abs(max))
+    if val < 0: result *= -1
+    return result
+def spreadCellV2(matrix:np.ndarray, rad:int=3, *, find:int=1, val:int=1, max:int=100, func=getRadV2)->np.ndarray:
     ''' Распространение ячейки '''
     result = matrix.copy()
     for z in range(rad, 0, -1):

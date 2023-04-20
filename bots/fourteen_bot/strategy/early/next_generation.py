@@ -53,6 +53,9 @@ class EarlyStrategy:
     wgt = 0
     weighted:np.ndarray = None
     f_max = 0
+    spread_ice = (2, 60)
+    r_ice = None
+    r_ore = None
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def __init__(self, env_cfg:EnvConfig) -> None:
         self.env_cfg = env_cfg
@@ -72,31 +75,33 @@ class EarlyStrategy:
     def update(self, game_state, step:int):
         self.game_state = game_state
         self.step = step
-        if self.weighted is None:
-            self.calcWeightedMatrix()
+        if self.r_ice is None:
+            self.calcIceMap()
+        if self.r_ore is None:
+            self.calcOreMap()
         return self
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    # ----- Убрать зону для расстновки возле границ -------------------------------------------------------------
+    # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+    def setBorder(self, matrix:np.ndarray, border:int=-1):
+        if border < 1: border = self.border
+        matrix[:, 0:self.border] = -100
+        matrix[:, -self.border:] = -100
+        matrix[0:self.border, ]  = -100
+        matrix[-self.border:, ]  = -100
+        return matrix
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Рассчитываем матрицу весов для расстановки фабрик ---------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
-    #@time_wrapper('best_early_calcWeightedMatrix', 4)
-    def calcWeightedMatrix(self):
-        self.spread = {'ice':(2, 60), 'ore':(4, 5)}
-        # получаем массивы ресурсов
-        ice, ore, __, valid = getResFromState(self.game_state)
-        # получаем веса поля для установки фабрики
-        r_ice = spreadCell(ice, self.spread['ice'][0], val=self.spread['ice'][1])
-        r_ore = spreadCell(ore, self.spread['ore'][0], val=self.spread['ore'][1], max=self.spread['ice'][1]/3)
-        self.weighted = r_ice + r_ore
-        self.weighted[:, 0:self.border] = -100
-        self.weighted[:, -self.border:] = -100
-        self.weighted[0:self.border, ] = -100
-        self.weighted[-self.border:, ] = -100
-        # --- лог картинок ---
-        log_path = createFolder(['log', 'step'])
-        toImage(r_ice, f'{log_path}{self.player}_ice', render=True, frames=1)
-        toImage(r_ore, f'{log_path}{self.player}_ore', render=True, frames=1)
-        toImage(self.weighted, f'{log_path}{self.player}_weighted', render=True, frames=1)
-        toImage(self.weighted*valid + valid, f'{log_path}{self.player}_weighted_valid', render=True, frames=1)
+    def calcIceMap(self, spread:tuple=(2, 60)):
+        ice_map = self.game_state.board.ice
+        self.r_ice = spreadCellV2(ice_map, spread[0], val=spread[1])
+        self.r_ice = self.setBorder(self.r_ice)
+    # -----------------------------------------------------------------------------------------------------------
+    def calcOreMap(self, spread:tuple=(4, 5)):
+        ore_map = self.game_state.board.ore
+        self.r_ore = spreadCell(ore_map, spread[0], val=spread[1], max=20)
+        self.r_ore = self.setBorder(self.r_ore)
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Получить позицию расположения фабрики ---------------------------------------------------------------
     # ------- Возвращаем массив из двух значений ----------------------------------------------------------------
@@ -107,31 +112,39 @@ class EarlyStrategy:
         # если фабрики есть для расстановки
         n_factories = self.game_state.teams[self.player].factories_to_place
         if n_factories > 0:
-            if self.f_max < n_factories: self.f_max = n_factories
-            self.wgt = n_factories / self.f_max
-            # получаем матрицу свободных мест
-            valid = self.game_state.board.valid_spawns_mask.astype(int)
-            rubble = self.game_state.board.rubble
-            # определяем сколько ресурсов давать фабрике
+            # --- определяем сколько ресурсов давать фабрике ---
             metal = ceil(self.game_state.teams[self.player].metal / n_factories)
             water = ceil(self.game_state.teams[self.player].water / n_factories)
-            # получаем позицию для установки фабрики
-            res = self.weighted * valid + valid
+            # --- получаем веса ---
+            if self.f_max < n_factories: self.f_max = n_factories
+            #self.wgt = n_factories / self.f_max
+            # --- получаем матрицу свободных мест ---
+            valid = self.game_state.board.valid_spawns_mask.astype(int)
+            while np.max(self.r_ice*valid) <= 0:
+                self.spread_ice = (self.spread_ice[0]+1, round(120/self.spread_ice[0]))
+                self.calcIceMap(self.spread_ice)
+            # --- расчитываем итоговую матрицу ---
+            if np.max(self.r_ore) > np.max(self.r_ice): self.r_ore = normalize(self.r_ore, np.max(self.r_ice)/2)
+            res = (self.r_ice + self.r_ore)*valid+valid
             # правим веса на основе щебня
-            # TODO
+            rubble = self.game_state.board.rubble
+            # --- получаем позицию для установки фабрики ---
             potential_spawns = np.array(list(zip(*np.where(res==np.max(res)))))
-            spawn_i, min = 0, 1000
-            #for i, spawn in enumerate(potential_spawns):
-            #    slice = rubble[spawn[0]-1:spawn[0]+2, spawn[1]-1:spawn[1]+2]
-            #    sum = np.sum(slice)
-            #    if sum < min:
-            #        spawn_i = i
-            #        min = sum
+            spawn_i, spawn_min, spawn_ln = 0, 1000, 0
+            size_a, size_b = 7, 7
+            for i, spawn in enumerate(potential_spawns):
+                s_a = [max(spawn[0]-size_a, 3), min(spawn[0]+size_a+1, rubble.shape[0]-4)]
+                e_a = [max(spawn[1]-size_a, 3), min(spawn[1]+size_a+1, rubble.shape[1]-4)]
+                slice = rubble[s_a[0]:s_a[1], e_a[0]:e_a[1]]
+                s_b = [max(spawn[0]-size_b, 3), min(spawn[0]+size_b+1, rubble.shape[0]-4)]
+                e_b = [max(spawn[1]-size_b, 3), min(spawn[1]+size_b+1, rubble.shape[1]-4)]
+                ln = np.sum(res[s_b[0]:s_b[1], e_b[0]:e_b[1]])
+                sum = len(np.argwhere(slice > 25))
+                if sum < spawn_min or (sum == spawn_min and ln > spawn_ln):
+                    spawn_i = i
+                    spawn_min = sum
+                    spawn_ln = ln
             spawn_loc = potential_spawns[spawn_i]
-            
-            # --- лог картинок ---
-            log_path = createFolder(['log', 'step'])
-            toImage(res, f'{log_path}{self.player}_weighted_valid', render=True, frames=self.f_max)
             return dict(spawn=spawn_loc, metal=metal, water=water)
         return {}
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =

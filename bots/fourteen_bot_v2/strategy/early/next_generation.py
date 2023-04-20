@@ -101,7 +101,6 @@ class EarlyStrategy:
     def calcOreMap(self, spread:tuple=(4, 5)):
         ore_map = self.game_state.board.ore
         self.r_ore = spreadCell(ore_map, spread[0], val=spread[1], max=20)
-        self.r_ore = self.setBorder(self.r_ore)
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Получить позицию расположения фабрики ---------------------------------------------------------------
     # ------- Возвращаем массив из двух значений ----------------------------------------------------------------
@@ -117,7 +116,7 @@ class EarlyStrategy:
             water = ceil(self.game_state.teams[self.player].water / n_factories)
             # --- получаем веса ---
             if self.f_max < n_factories: self.f_max = n_factories
-            #self.wgt = n_factories / self.f_max
+            self.wgt = n_factories / self.f_max
             # --- получаем матрицу свободных мест ---
             valid = self.game_state.board.valid_spawns_mask.astype(int)
             while np.max(self.r_ice*valid) <= 0:
@@ -125,25 +124,21 @@ class EarlyStrategy:
                 self.calcIceMap(self.spread_ice)
             # --- расчитываем итоговую матрицу ---
             if np.max(self.r_ore) > np.max(self.r_ice): self.r_ore = normalize(self.r_ore, np.max(self.r_ice)/2)
-            res = (self.r_ice + self.r_ore)*valid+valid
+            res = (self.r_ice + self.r_ore/self.wgt)*valid+valid
             # правим веса на основе щебня
             rubble = self.game_state.board.rubble
             # --- получаем позицию для установки фабрики ---
             potential_spawns = np.array(list(zip(*np.where(res==np.max(res)))))
-            spawn_i, spawn_min, spawn_ln = 0, 1000, 0
-            size_a, size_b = 7, 7
+            spawn_i, spawn_min = 0, 1000
+            size = 9
             for i, spawn in enumerate(potential_spawns):
-                s_a = [max(spawn[0]-size_a, 3), min(spawn[0]+size_a+1, rubble.shape[0]-4)]
-                e_a = [max(spawn[1]-size_a, 3), min(spawn[1]+size_a+1, rubble.shape[1]-4)]
-                slice = rubble[s_a[0]:s_a[1], e_a[0]:e_a[1]]
-                s_b = [max(spawn[0]-size_b, 3), min(spawn[0]+size_b+1, rubble.shape[0]-4)]
-                e_b = [max(spawn[1]-size_b, 3), min(spawn[1]+size_b+1, rubble.shape[1]-4)]
-                ln = np.sum(res[s_b[0]:s_b[1], e_b[0]:e_b[1]])
-                sum = len(np.argwhere(slice > 25))
-                if sum < spawn_min or (sum == spawn_min and ln > spawn_ln):
+                start = [max(spawn[0]-size, 0), min(spawn[0]+size+1, rubble.shape[0])]
+                end = [max(spawn[1]-size, 0), min(spawn[1]+size+1, rubble.shape[1])]
+                slice = rubble[start[0]:start[1], end[0]:end[1]]
+                sum = np.sum(slice)/(slice.shape[0]*slice.shape[1])
+                if sum < spawn_min:
                     spawn_i = i
                     spawn_min = sum
-                    spawn_ln = ln
             spawn_loc = potential_spawns[spawn_i]
             return dict(spawn=spawn_loc, metal=metal, water=water)
         return {}

@@ -27,7 +27,7 @@ from strategy.game.factory.no_limit_v2 import FactoryStrategy as NoLimit
 
 ddf = {
     'basic': DefaultStrategy,
-    'early': BestEarly,
+    'early': NextGenerationEarly,
     'game': DefaultGame,
     'robot': NextGenerationRobots,
     'factory': NoLimit
