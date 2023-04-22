@@ -278,7 +278,6 @@ class RobotStrategy:
                     start_pos = ct.copy()
                 # --- если не можем, то идём на базу ---
                 else:
-                    #obs.addReturn(unit.unit_id)
                     break
         # --- если робот заряжатель ---
         elif task == ROBOT_TASK.ENERGIZER:
