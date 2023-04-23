@@ -40,7 +40,7 @@ ddf = {
 }
 
 Lux.render_log_count=10
-log = Log(video=False, frames=True, step_time=False, obs_time=False, step_render=1, render_after=275)
+log = Log(video=False, frames=True, step_time=False, obs_time=False, step_render=1, render_after=1000)
 
 bots = [ {'file':'./bots/fourteen_bot/main.py', 'name':'fourteen_bot'},]
 

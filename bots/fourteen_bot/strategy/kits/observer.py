@@ -179,7 +179,7 @@ class Observer:
         elif task == ROBOT_TASK.CLEANER:
             return self.findRubble(unit, move_map)
         elif task == ROBOT_TASK.DESTROYER:
-            return self.findLichen(unit)
+            return self.findLichen(unit, move_map)
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Расчёт матрицы поиска ближайшего ресурса ------------------------------------------------------------
     # ------- lock_map: 0 - lock, 1 - alloy ---------------------------------------------------------------------
@@ -205,10 +205,12 @@ class Observer:
     # ------- lock_map: 0 - lock, 1 - alloy ---------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     #@time_wrapper('obs_findLichen', 7)
-    def findLichen(self, unit:Unit):
+    def findLichen(self, unit:Unit, move_map:np.ndarray=None):
         eyes = self.eyes
         lichen = eyes.get('e_lichen')
-        return np.where(lichen > 10, 1, 0)
+        units = eyes.get('units')
+        units[unit.pos[0], unit.pos[1]] -= 1
+        return np.where(lichen > 10, 1, 0)*np.where(eyes.sum([units, move_map]) > 0, 0, 1)
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Расчёт матрицы возможных ходов для столкновения с противником ---------------------------------------
     # ------- lock_map: 0 - lock, 1 - alloy ---------------------------------------------------------------------

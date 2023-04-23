@@ -112,10 +112,13 @@ class TaskManager:
             robot.factory.getCount(unit=robot, task_is=ROBOT_TASK.CLEANER) < min(max(round(step-0)/1000*self.r_max, self.r_min), self.r_max):
             task_changed = robot.setTask(ROBOT_TASK.CLEANER)
             need_return = task_changed
-        elif np.max(eyes.get('e_lichen')) > 0:
-            task_changed = robot.setTask(ROBOT_TASK.DESTROYER)
+        elif robot.factory.getCount(type_is=ROBOT_TYPE.LIGHT) > 4:
+            if np.max(eyes.get('e_lichen')) > 0 :
+                task_changed = robot.setTask(ROBOT_TASK.DESTROYER)
+            else:
+                task_changed = robot.setTask(ROBOT_TASK.WARRION)
         else:
-            task_changed = robot.setTask(ROBOT_TASK.WARRION)
+            need_return = True
         return need_return, task_changed
 # ===============================================================================================================
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
