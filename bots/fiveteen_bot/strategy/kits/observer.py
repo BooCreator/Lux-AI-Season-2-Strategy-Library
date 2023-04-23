@@ -160,14 +160,14 @@ class Observer:
         ''' Вернуть матрицу возможных ходов
             lock_map: 0 - lock, 1 - alloy '''
         eyes = self.eyes
+        eyes.clear(['u_move', 'u_energy'])
+        eyes.update('u_move', unit.pos-1, getRad(unit.pos, as_matrix=True)*ROBOT_TYPE.getType(unit.unit_type))
+        eyes.update('u_energy', unit.pos-1, getRad(unit.pos, as_matrix=True)*unit.power)
+        move_map = eyes.diff(['e_move', 'u_move'])
+        energy_map = eyes.diff(['e_energy', 'u_energy'])
+        move_map = np.where(move_map == 0, energy_map, move_map)
+        move_map = np.where(move_map > 0, 1, 0)
         if map_type == MAP_TYPE.MOVE:
-            eyes.clear(['u_move', 'u_energy'])
-            eyes.update('u_move', unit.pos-1, getRad(unit.pos, as_matrix=True)*ROBOT_TYPE.getType(unit.unit_type))
-            eyes.update('u_energy', unit.pos-1, getRad(unit.pos, as_matrix=True)*unit.power)
-            move_map = eyes.diff(['e_move', 'u_move'])
-            energy_map = eyes.diff(['e_energy', 'u_energy']) # 
-            move_map = np.where(move_map == 0, energy_map, move_map)
-            move_map = np.where(move_map > 0, 1, 0)
             if task == ROBOT_TASK.WARRION or task == ROBOT_TASK.LEAVER:
                 return self.getWarriorLockMap(unit, move_map)
             else:
@@ -177,9 +177,9 @@ class Observer:
         elif task == ROBOT_TASK.ICE_MINER or task == ROBOT_TASK.ORE_MINER:
             return self.findResource(RES.ice if task == ROBOT_TASK.ICE_MINER else RES.ore)
         elif task == ROBOT_TASK.CLEANER:
-            return self.findRubble(unit)
+            return self.findRubble(unit, move_map)
         elif task == ROBOT_TASK.DESTROYER:
-            return self.findLichen(unit)
+            return self.findLichen(unit, move_map)
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Расчёт матрицы поиска ближайшего ресурса ------------------------------------------------------------
     # ------- lock_map: 0 - lock, 1 - alloy ---------------------------------------------------------------------
@@ -194,24 +194,23 @@ class Observer:
     # ------- lock_map: 0 - lock, 1 - alloy ---------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     #@time_wrapper('obs_findRubble', 7)
-    def findRubble(self, unit:Unit):
+    def findRubble(self, unit:Unit, move_map:np.ndarray=None):
         rubble_map = self.game_state.board.rubble
         ice_map = self.game_state.board.ice
         ore_map = self.game_state.board.ore
         eyes = self.eyes
-        return rubble_map*np.where(eyes.sum(['units', ore_map, ice_map]) > 0, 0, 1)
+        return rubble_map*np.where(eyes.sum(['units', move_map, ore_map, ice_map]) > 0, 0, 1)
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Расчёт матрицы поиска ближайшего лишайника ----------------------------------------------------------
     # ------- lock_map: 0 - lock, 1 - alloy ---------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     #@time_wrapper('obs_findLichen', 7)
-    def findLichen(self, unit:Unit):
+    def findLichen(self, unit:Unit, move_map:np.ndarray=None):
         eyes = self.eyes
-        lichen = eyes.get('e_lichen').copy()
-        if  ROBOT_TYPE.getType(unit.unit_type) == ROBOT_TYPE.LIGHT:
-            return np.where(lichen < max(np.min(lichen) * 1.25, 5), 1, 0)
-        else:
-            return np.where(lichen > np.max(lichen) * 0.75, 1, 0)
+        lichen = eyes.get('e_lichen')
+        units = eyes.get('units')
+        units[unit.pos[0], unit.pos[1]] -= 1
+        return np.where(lichen > 10, 1, 0)*np.where(eyes.sum([units, move_map]) > 0, 0, 1)
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Расчёт матрицы возможных ходов для столкновения с противником ---------------------------------------
     # ------- lock_map: 0 - lock, 1 - alloy ---------------------------------------------------------------------

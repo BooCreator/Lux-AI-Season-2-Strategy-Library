@@ -22,7 +22,7 @@ class Eyes:
         ''' Примеры аргументов: 48; [ 48, 48 ]; ( 48,48 ); 48,48 '''
         if axis is None:
             self.map_size = (48,48)
-        elif type(axis) is int:
+        elif type(axis) in [int, np.int8, np.int16, np.int32, np.int64]:
             self.map_size = (axis, axis if axis2 is None else axis2)
         elif type(axis) is tuple or type(axis) is list:
             self.map_size = (axis[0], axis[1])
@@ -80,7 +80,7 @@ class Eyes:
                     for ind in index:
                         self.update(name, ind, value, check_keys=check_keys)
                 else:
-                    if type(value) is int:
+                    if type(value) in [int, np.int8, np.int16, np.int32, np.int64]:
                         if index[0] < self.data[name].shape[0] and index[1] < self.data[name].shape[1]:
                             self.data[name][index[0], index[1]] = collision(self.data[name][index[0], index[1]],value)
                     elif type(value) is np.ndarray:
@@ -89,7 +89,7 @@ class Eyes:
                                 if index[0]+i < self.data[name].shape[0] and index[1]+j < self.data[name].shape[1]:
                                     self.data[name][index[0]+i, index[1]+j] = collision(self.data[name][index[0]+i, index[1]+j], value[i, j])
             elif type(index) is np.ndarray and len(index) == 2:
-                if type(value) is int:
+                if type(value) in [int, np.int8, np.int16, np.int32, np.int64]:
                     if index[0] < self.data[name].shape[0] and index[1] < self.data[name].shape[1]:
                         self.data[name][index[0], index[1]] = collision(self.data[name][index[0], index[1]], value)
                 elif type(value) is np.ndarray:
@@ -124,7 +124,7 @@ class Eyes:
         for name in names:
             if type(name) is str:
                 if name in self.data.keys():
-                    result = result - self.data.get(name) if result is not None else self.data.get(name)
+                    result = result - self.data.get(name) if result is not None else self.get(name)
             elif type(name) is np.ndarray:
                 result = result - name if result is not None else name
         return result
@@ -229,7 +229,8 @@ class Eyes:
     # ------- name - название матрицы ---------------------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def get(self, name:str) -> np.ndarray:
-        return self.data.get(name)
+        if name in self.data.keys():
+            return self.data.get(name).copy()
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Вернуть матрицу значений ----------------------------------------------------------------------------
     # ------- value - значение для заполнения -------------------------------------------------------------------

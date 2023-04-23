@@ -42,13 +42,13 @@ ddf = {
 Lux.render_log_count=10
 log = Log(video=False, frames=True, step_time=False, obs_time=False, step_render=1, render_after=1000)
 
-bots = [ {'file':'./bots/fourteen_bot/main.py', 'name':'fourteen_bot'},]
+bots = [ {'file':'./bots/fiveteen_bot_v2/main.py', 'name':'fiveteen_bot_v2'},]
 
 agents = {'player_0':[Agent, ddf], 'player_1':[Agent, ddf]}
 
-seed = 5335240 # 598640900 (плато+горы) # 990277527 (каньон) 5335240
+seed = 990277527 # 598640900 (плато+горы) # 990277527 (каньон) 5335240
 
 
 #Lux.interact(agents, 1000, seed=seed, log=log.getLog(), show_steps=True, v=0)
-Lux.play(bots, seed=seed)
-#Lux.tornament('bots/')
+#Lux.play(bots, seed=seed)
+Lux.tornament('bots/')

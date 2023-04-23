@@ -9,6 +9,7 @@ from strategy.basic import DefaultStrategy
 from strategy.early.default import EarlyStrategy as DefaultEarly
 from strategy.early.from_kaggle_strategy import EarlyStrategy as OptimisedEarly
 from strategy.early.best_strategy import EarlyStrategy as BestEarly
+from strategy.early.next_generation import EarlyStrategy as NextGenerationEarly
 # ----- game -----
 from strategy.game.default import GameStrategy as DefaultGame
 from strategy.game.cautious import GameStrategy as CautiousStrategy
@@ -22,13 +23,14 @@ from strategy.game.robot.next_generation import RobotStrategy as NextGenerationR
 from strategy.game.factory.mean_water import FactoryStrategy as MeanWaterStrategy
 from strategy.game.factory.for_best import FactoryStrategy as ForBestFactoryStrategy
 from strategy.game.factory.for_best_v2 import FactoryStrategy as ForBestFactoryStrategyV2
+from strategy.game.factory.no_limit import FactoryStrategy as NoLimit
 
 ddf = {
     'basic': DefaultStrategy,
-    'early': BestEarly,
+    'early': NextGenerationEarly,
     'game': DefaultGame,
     'robot': NextGenerationRobots,
-    'factory': ForBestFactoryStrategy
+    'factory': NoLimit
 }
 
 def initStrategy(env_cfg:EnvConfig, strategy:dict)->DefaultStrategy:

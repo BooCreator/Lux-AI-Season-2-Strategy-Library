@@ -245,12 +245,34 @@ def getRad(dec:np.ndarray, rad:int=1, borders:bool=True, as_matrix:bool=False, s
                         result.append([dec[0]-k, dec[1]-r])
         return result
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+def getRadV2(dec:np.ndarray, rad:int=1, borders:bool=True, size:int=(48,48)):
+    ''' Получить круг координат вокруг точки (на основе формулы. Работает дольше, но точнее) '''
+    result = []
+    for r in range(-rad, rad+1):
+        for k in range(-rad, rad+1):
+            ny, nx = dec[0]-k, dec[1]-r
+            if radFunc(ny, nx, dec) <= pow(rad, 2):
+                result.append([dec[0]-k, dec[1]-r])
+    return result
+# = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ----- Распространение ячейки ------------------------------------------------------------------------------
 # ------- Пример:    3  3    --- ищем find = 1 --------------------------------------------------------------
 # -------         2 [1, 1] 2 --- распространяем по val = 2 --------------------------------------------------
 # -------            3  3    --- ограничивая всё max = 3 ----------------------------------------------------
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 def spreadCell(matrix:np.ndarray, rad:int=3, *, find:int=1, val:int=1, max:int=100, func=getRad)->np.ndarray:
+    ''' Распространение ячейки '''
+    result = matrix.copy()
+    for z in range(rad, 0, -1):
+        for [x, y] in np.argwhere(matrix == find):
+            for [rx, ry] in func([x, y], z):
+                if (rx > -1 and ry > -1) and (rx < matrix.shape[0] and ry < matrix.shape[1]):
+                    result[rx,ry] += val
+    if val < 0: result *= -1
+    result = np.where(result <= abs(max), result, abs(max))
+    if val < 0: result *= -1
+    return result
+def spreadCellV2(matrix:np.ndarray, rad:int=3, *, find:int=1, val:int=1, max:int=100, func=getRadV2)->np.ndarray:
     ''' Распространение ячейки '''
     result = matrix.copy()
     for z in range(rad, 0, -1):
@@ -307,14 +329,14 @@ class Path:
         self.dec -= self.slice
         return to - self.slice
 
-    def find(self, to:np.ndarray) -> list:
+    def find(self, to:np.ndarray, trim:bool=True) -> list:
         if not self.find_basic(to):
             to = self.window(np.array(to) if type(to) is list else to)
             self.paths = [[self.dec]]
             while not self.is_end():
                 self.step += 1
                 self.move(to)
-        return self.get_result(to)
+        return self.get_result(to, trim)
 
     def checkSlice(self, s_x, s_y, e_x, e_y):
         slice = self.field[s_x:s_y, e_x:e_y]
@@ -393,15 +415,18 @@ class Path:
     def is_end(self) -> bool:
         return len(self.paths) == 0 or self.step > self.max_steps or np.min(self.field) == np.max(self.field)
 
-    def get_result(self, to:np.ndarray=None) -> np.ndarray:
+    def get_result(self, to:np.ndarray=None, trim:bool=True) -> np.ndarray:
         if len(self.result) == 0 and to is not None: 
             min_path, min_pos, min_len = 0, 0, 10_000
             for i, path in enumerate(self.paths):
-                for j, xy in enumerate(path):
-                    vec = np.array([xy[0] - to[0], xy[1] - to[1]], dtype=np.int32)
-                    vec_len = sqrt(vec[0]*vec[0] + vec[1]*vec[1])
-                    if vec_len < min_len:
-                        min_path, min_pos, min_len = i, j, vec_len
+                if trim:
+                    for j, xy in enumerate(path):
+                        vec = np.array([xy[0] - to[0], xy[1] - to[1]], dtype=np.int32)
+                        vec_len = sqrt(vec[0]*vec[0] + vec[1]*vec[1])
+                        if vec_len < min_len:
+                            min_path, min_pos, min_len = i, j, vec_len
+                else:
+                    pass # TODO
             self.result = self.paths[min_path][:min_pos+1]
         return np.array([item + self.slice for item in self.result])
 

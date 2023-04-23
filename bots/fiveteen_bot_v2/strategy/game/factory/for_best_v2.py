@@ -9,10 +9,10 @@ from lux.kit import EnvConfig
 class FactoryStrategy:
     ''' Класс для стратегии фабрик на стадии игры '''
 
-    l_ts = 300
-    l_min = 7
-    l_max = 100
-    max_to = 700
+    l_ts = 1000
+    l_min = 10
+    l_max = 20
+    max_to = 500
 
     lichens = []
     last_water = 0
@@ -22,7 +22,7 @@ class FactoryStrategy:
         ''' Получить список действий для фабрик '''
         f_data = data.getFactoryData()
         actions = {}
-        step -= kwargs.get('f_max', 0)*2+1
+        step -= 11
         for unit_id, item in f_data.items():
             item: FactoryData
             item.energy_cost = 0
@@ -30,7 +30,7 @@ class FactoryStrategy:
             if fact_free_loc[1][1] == 1:
                 cnt = min(max(round(step-self.max_to)/self.l_ts*self.l_max, self.l_min), self.l_max)
                 if item.factory.power >= env_cfg.ROBOTS["HEAVY"].POWER_COST and \
-                    item.factory.cargo.metal >= env_cfg.ROBOTS["HEAVY"].METAL_COST and item.getCount(type_is='HEAVY') < 6:
+                    item.factory.cargo.metal >= env_cfg.ROBOTS["HEAVY"].METAL_COST:
                     actions[unit_id] = item.factory.build_heavy()
                     item.energy_cost = env_cfg.ROBOTS["HEAVY"].POWER_COST
                     continue
