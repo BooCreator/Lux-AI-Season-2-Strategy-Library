@@ -252,7 +252,8 @@ def getRadV2(dec:np.ndarray, rad:int=1, borders:bool=True, size:int=(48,48)):
         for k in range(-rad, rad+1):
             ny, nx = dec[0]-k, dec[1]-r
             if radFunc(ny, nx, dec) <= pow(rad, 2):
-                result.append([dec[0]-k, dec[1]-r])
+                if not borders or nx > -1 and ny > -1 and nx < size[1] and ny < size[0]:
+                    result.append([dec[0]-k, dec[1]-r])
     return result
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 # ----- Распространение ячейки ------------------------------------------------------------------------------
