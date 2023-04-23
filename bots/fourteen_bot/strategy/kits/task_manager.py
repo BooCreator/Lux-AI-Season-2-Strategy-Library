@@ -31,6 +31,7 @@ class TaskManager:
 
     r_min = 5 # 1
     r_max = 20 # 13
+    step_max = 700
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     def __init__(self) -> None:
         self.res_count = defaultdict(dict)
@@ -74,6 +75,7 @@ class TaskManager:
         i_max = self.res_count[item.unit_id]['ice']
         o_max = self.res_count[item.unit_id]['ore']
         need_return, task_changed = False, False
+        step_val = -1000 if step > self.step_max else 0
         if step < 50 and getDistance(item.pos, findClosestTile(item.pos, gs.board.ore)) < self.o_n:
             task_changed = robot.setTask(ROBOT_TASK.CARRIER)
         elif robot.factory.getCount(unit=robot, type_is=ROBOT_TYPE.HEAVY, task_is=ROBOT_TASK.ICE_MINER) < i_max:
@@ -82,7 +84,7 @@ class TaskManager:
             task_changed = robot.setTask(ROBOT_TASK.ORE_MINER)
         elif getDistance(item.pos, findClosestTile(item.pos, gs.board.rubble)) < self.r_n and \
             getDistance(unit.pos, findClosestTile(item.pos, gs.board.rubble)) < self.r_n and \
-            robot.factory.getCount(unit=robot, task_is=ROBOT_TASK.CLEANER) < min(max(round(step-0)/1000*self.r_max, self.r_min), self.r_max):
+            robot.factory.getCount(unit=robot, task_is=ROBOT_TASK.CLEANER) < max(round(self.r_max/(self.step_max+step_val)*(step+step_val)), self.r_min): # min(max(round(step-0)/1000*self.r_max, self.r_min), self.r_max)
             task_changed = robot.setTask(ROBOT_TASK.CLEANER)
             need_return = task_changed
         elif np.max(eyes.get('e_lichen')) > 0:
@@ -100,6 +102,7 @@ class TaskManager:
         i_max = self.res_count[item.unit_id]['ice']
         o_max = min(self.res_count[item.unit_id]['ore'], floor(robot.factory.getCount(type_is=ROBOT_TYPE.LIGHT)/2))
         need_return, task_changed = False, False
+        step_val = -1000 if step > self.step_max else 0
         if robot.factory.getCount(unit=robot, task_is=ROBOT_TASK.ENERGIZER) < min(robot.factory.getCount(unit=robot, task_is=ROBOT_TASK.ICE_MINER), 6):
             task_changed = robot.setTask(ROBOT_TASK.ENERGIZER)
             need_return = task_changed
@@ -109,7 +112,7 @@ class TaskManager:
             task_changed = robot.setTask(ROBOT_TASK.ORE_MINER)
         elif getDistance(item.pos, findClosestTile(item.pos, gs.board.rubble)) < self.r_n and \
             getDistance(unit.pos, findClosestTile(item.pos, gs.board.rubble)) < self.r_n and \
-            robot.factory.getCount(unit=robot, task_is=ROBOT_TASK.CLEANER) < min(max(round(step-0)/1000*self.r_max, self.r_min), self.r_max):
+            robot.factory.getCount(unit=robot, task_is=ROBOT_TASK.CLEANER) < max(round(self.r_max/(self.step_max+step_val)*(step+step_val)), self.r_min):
             task_changed = robot.setTask(ROBOT_TASK.CLEANER)
             need_return = task_changed
         elif robot.factory.getCount(type_is=ROBOT_TYPE.LIGHT) > 4:
