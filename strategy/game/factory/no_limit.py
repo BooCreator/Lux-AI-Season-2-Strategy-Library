@@ -16,6 +16,14 @@ class FactoryStrategy:
     lichens = []
     last_water = 0
 
+    def __init__(self) -> None:
+        self.l_ts = 300
+        self.l_min = 7
+        self.l_max = 100
+        self.max_to = 700
+        self.lichens = []
+        self.last_water = 0
+
     #@time_wrapper('mean_water_getFactoryActions', 5)
     def getActions(self, step:int, env_cfg:EnvConfig, game_state:GameState, data:DataController, **kwargs):
         ''' Получить список действий для фабрик '''
@@ -47,7 +55,6 @@ class FactoryStrategy:
             
             need_water = 1001-step # сколько воды нужно для фабрики
             water_for_liches = item.factory.cargo.water-need_water # сколько воды остаётся на лишайник
-
             if (max(water_cost, 2)*need_water)*(1-(mean_lichen-1)) < water_for_liches + water_to_end:
                 if water_cost < water_for_liches:
                     actions[unit_id] = item.factory.water()

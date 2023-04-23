@@ -27,7 +27,7 @@ class TaskManager:
     res_count = defaultdict(dict)
     i_n = 3
     o_n = 9
-    r_n = 14
+    r_n = 14 # 16
 
     r_min = 5 # 1
     r_max = 20 # 13

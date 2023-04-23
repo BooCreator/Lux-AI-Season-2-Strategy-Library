@@ -329,14 +329,14 @@ class Path:
         self.dec -= self.slice
         return to - self.slice
 
-    def find(self, to:np.ndarray) -> list:
+    def find(self, to:np.ndarray, trim:bool=True) -> list:
         if not self.find_basic(to):
             to = self.window(np.array(to) if type(to) is list else to)
             self.paths = [[self.dec]]
             while not self.is_end():
                 self.step += 1
                 self.move(to)
-        return self.get_result(to)
+        return self.get_result(to, trim)
 
     def checkSlice(self, s_x, s_y, e_x, e_y):
         slice = self.field[s_x:s_y, e_x:e_y]
@@ -415,15 +415,18 @@ class Path:
     def is_end(self) -> bool:
         return len(self.paths) == 0 or self.step > self.max_steps or np.min(self.field) == np.max(self.field)
 
-    def get_result(self, to:np.ndarray=None) -> np.ndarray:
+    def get_result(self, to:np.ndarray=None, trim:bool=True) -> np.ndarray:
         if len(self.result) == 0 and to is not None: 
             min_path, min_pos, min_len = 0, 0, 10_000
             for i, path in enumerate(self.paths):
-                for j, xy in enumerate(path):
-                    vec = np.array([xy[0] - to[0], xy[1] - to[1]], dtype=np.int32)
-                    vec_len = sqrt(vec[0]*vec[0] + vec[1]*vec[1])
-                    if vec_len < min_len:
-                        min_path, min_pos, min_len = i, j, vec_len
+                if trim:
+                    for j, xy in enumerate(path):
+                        vec = np.array([xy[0] - to[0], xy[1] - to[1]], dtype=np.int32)
+                        vec_len = sqrt(vec[0]*vec[0] + vec[1]*vec[1])
+                        if vec_len < min_len:
+                            min_path, min_pos, min_len = i, j, vec_len
+                else:
+                    pass # TODO
             self.result = self.paths[min_path][:min_pos+1]
         return np.array([item + self.slice for item in self.result])
 
