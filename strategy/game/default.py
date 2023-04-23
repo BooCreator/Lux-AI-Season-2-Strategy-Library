@@ -41,8 +41,8 @@ class GameStrategy:
     # ----- Получить массив действий для фабрик -----------------------------------------------------------------
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     #@time_wrapper('game_getFactoryActions', 4)
-    def getFactoryActions(self) -> dict:
-        actions = self.factoryStrategy.getActions(self.step, self.env_cfg, self.game_state, data=self.data)
+    def getFactoryActions(self, f_max:int = 0) -> dict:
+        actions = self.factoryStrategy.getActions(self.step, self.env_cfg, self.game_state, data=self.data, f_max=f_max)
         return actions
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     # ----- Получить массив действий для роботов ----------------------------------------------------------------

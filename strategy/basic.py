@@ -10,6 +10,8 @@ class DefaultStrategy:
     ''' Базовый общий класс для стратегий. Объединяет в себя обе стратегии. '''
     early: EarlyStrategy = None
     game: GameStrategy = None
+    player:str = ''
+    f_max:int = 0
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
     #@time_wrapper('basic_init', 3)
     def __init__(self, env_cfg, early:EarlyStrategy=None, game:GameStrategy=None) -> None:
@@ -22,6 +24,7 @@ class DefaultStrategy:
     #@time_wrapper('basic_update', 3)
     def update(self, game_state, step, early=False):
         ''' Обновить состояние стратегии '''
+        if early: self.f_max = max(game_state.teams[self.player].factories_to_place, self.f_max)
         strategy = self.early if early else self.game
         return strategy.update(game_state, step)
     # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
@@ -47,7 +50,7 @@ class DefaultStrategy:
     def getActions(self) -> dict:
         actions = dict()
         # получаем список действий для фабрик
-        for key, value in self.game.getFactoryActions().items():
+        for key, value in self.game.getFactoryActions(self.f_max).items():
             actions[key] = value
         # получаем список действий для роботов
         for key, value in self.game.getRobotActions().items():
@@ -59,6 +62,7 @@ class DefaultStrategy:
     def setPlayer(self, player:str):
         self.early.setPlayer(player)
         self.game.setPlayer(player)
+        self.player = player
         return self
 # ===============================================================================================================
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
