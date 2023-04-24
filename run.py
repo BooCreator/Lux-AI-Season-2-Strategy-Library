@@ -29,7 +29,7 @@ from strategy.game.factory.no_limit import FactoryStrategy as NoLimit
 
 #Lux.loadCompetition(rw=True) # if not exists - load
 
-zip_name = Lux.buildSubmission('fiveteen_bot') # zip_name == 'example_2023-02-09_15-38-21.tar.gz'
+zip_name = Lux.buildSubmission('sixteen_bot') # zip_name == 'example_2023-02-09_15-38-21.tar.gz'
 #Lux.sendSubmission(zip_name, 'third bot')
 
 ddf = {
@@ -43,13 +43,13 @@ ddf = {
 Lux.render_log_count=10
 log = Log(video=False, frames=True, step_time=False, obs_time=False, step_render=1, render_after=0)
 
-bots = [ {'file':'./bots/fiveteen_bot_v2/main.py', 'name':'fiveteen_bot_v2'},]
+bots = [ {'file':'./bots/sixteen_bot/main.py', 'name':'sixteen_bot'},]
 
 agents = {'player_0':[Agent, ddf], 'player_1':[Agent, ddf]}
 
-seed = 8383481 # 598640900 (плато+горы) # 990277527 (каньон) 5335240
+seed = 990277527 # 598640900 (плато+горы) # 990277527 (каньон) 5335240
 
 
-#Lux.interact(agents, 7, seed=seed, log=log.getLog(), show_steps=True, v=0)
+#Lux.interact(agents, 1000, seed=seed, log=log.getLog(), show_steps=True, v=0)
 #Lux.play(bots, seed=seed)
 #Lux.tornament('bots/')
