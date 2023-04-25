@@ -57,7 +57,4 @@ class FactoryStrategy:
                         else:
                             self.lichens.append(water_cost)
                     self.last_water += water_cost
-            #if item.factory.unit_id == 'factory_5':
-            #    print('step', step, 'water', item.factory.cargo.water, 'mean_water', round(mean_water, 2), 'water_to_end', round(water_to_end, 2),
-            #          'mean_lichen', round(mean_lichen, 2), 'last_water', round(self.last_water, 2))
         return actions
