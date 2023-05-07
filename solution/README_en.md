@@ -121,7 +121,7 @@ The picture below shows an example of a window mode:
 
 ## Solution Links
 
-* You can see the complete solution code [here](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library).
+* [Here](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library)  you can see the full code of the solution.
 * [Here](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/strategy) is the implementation of the solution strategies
 * [Here](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/bots) is the implementation of the latest uploaded bots
 * [Here](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/strategy/kits) is the implementation of all helpers and classes
