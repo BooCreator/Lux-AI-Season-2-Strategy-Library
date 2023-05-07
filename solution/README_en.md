@@ -8,10 +8,10 @@ Many thanks to [@kerrit](https://www.kaggle.com/kerrit), a member of our QuData 
 The solution is a library of several strategies for different stages of the game and active units, as well as some auxiliary functions.
 Each strategy is a set of rules on the basis of which the behavior of robots and factories is built.
 
-В основе решения лежит класс **DefaultStrategy** из файла basic.py. Он имеет набор обязательных методов для реализации полноценной стратегии игры, в частности:
-* *getBid(...)* - выбор ставки
-* *getSpawnPos(...)* - выбор позиции фабрики
-* *getActions(...)* - определений действий для фабрик и роботов
+The solution is based on the **DefaultStrategy** class from the basic.py file. It has a set of mandatory methods for implementing a full-fledged game strategy, in particular:
+* *getBid(...)* - bid selection
+* *getSpawnPos(...)* - select the position of the factory
+* *getActions(...)* - action definitions for factories and robots
 
 A complete strategy can be implemented in the **DefaultStrategy** class.
 
@@ -27,7 +27,7 @@ Each of the strategies has a set of mandatory methods for implementing the strat
 In total, 6 **Early** strategies were implemented, located in the corresponding files.
 * *default* - Basic strategy of the factory placement library. The position for the factory is chosen randomly based on a previously compiled weight matrix. An example of the algorithm can be viewed [here](https://docs.google.com/spreadsheets/d/e/2PACX-1vSxd6FtgHrewPwfVBQtcwuRW0I46YdhTiy38FRarN9gOhW1b9-N3miff7Gg5rfQ92cEzD_BzV99Htkc/pubhtml?gid=986897905&single=true).
 * *from_kaggle_strategy* - This strategy is an extension of *default*. The strategy for calculating the weights uses algorithms from the notebook [@istinetz](https://www.kaggle.com/code/istinetz/picking-a-good-starting-location).
-* *best_strategy* - Данная стратегия является улучшением *default* в части выбора позиции. Самым важным изменением было устранение случайности при выборе позиции. В данной стратегии позиция фабрики выбирается на основе количества щебня в квадрате 3x3 вокруг точки. Кроме этого были немного изменены коэффициенты матрицы весов.
+* *best_strategy* - This strategy is an improvement *default* in terms of position selection. The most important change was the elimination of randomness in position selection. In this strategy, the position of the factory is chosen based on the amount of rubble in the 3x3 square around the point. In addition, the coefficients of the weight matrix have been slightly changed.
 * *single_strategy* - Strategy for test training of RL model. Based on *best_strategy*. A distinctive feature is that only one factory is exposed in the strategy.
 * *new_from_kaggle* - Strategy using algorithms from notebook [@istinetz](https://www.kaggle.com/code/istinetz/picking-a-good-starting-location). A distinctive feature is that the ratio of the total number of cells around the factory to the "bad" (> 25) cells is used as weights.
 * *next_generation* - The last and, according to tests, the best strategy implemented in the library. The strategy calculates separate weight matrices for ice and ore, and when choosing a factory position, the amount of rubble in a 7x7 square around the point is taken into account. In addition, if all the best positions adjacent to the ice are occupied, the weight matrix for ice is recalculated.
@@ -110,7 +110,7 @@ Permanent tasks are assigned to the robot and are redefined when the robot has r
 * *next_generation* - This strategy fully implemented all the tasks of the robots, in addition, many errors were fixed. In the strategy, thanks to **TaskManager**, the number of robots on tasks was regulated, in particular, the ICE_MINER task was not assigned to three robots if there were only two ices next to us, etc. In addition, the number of ENERGIZER robots was controlled so that there were no more of them than ICE_MINER. CARRIER cleared the path to the resource only in the first 50 steps, and then went to extract the resource. For the ICE_MINER task, priority was given to heavy robots, if there were none, then light ones took their place. The amount of CLEANER was controlled. If the distance to the nearest rubble is > 14, then the robots become DESTROYER or WARRIOR if the enemy did not have lichen. In addition, the total number of MINER robots depended on the current step.
 
 
-##### Helper Functions
+##### Auxiliary Functions
 
 The **Path** class was implemented to search for the path of bots.
 A distinctively and unexpectedly useful feature of pathfinding is the added window mode. Its essence boiled down to the fact that we are looking for a path not on the entire map, but on a cut-out area with a minimum size of 5x5. The starting point of the route and the end point were located in the corners of this area.
@@ -121,7 +121,7 @@ The picture below shows an example of a window mode:
 
 ## Solution Links
 
-* [Here](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library) можно посмотреть полный код решения
-* [Here](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/strategy) находится реализация стратегий решения
-* [Here](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/bots) находится реализация последних загруженных ботов
-* [Here](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/strategy/kits) находится реализация всех вспомогательных средств и классов
+* You can see the complete solution code [here](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library).
+* [Here](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/strategy) is the implementation of the solution strategies
+* [Here](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/bots) is the implementation of the latest uploaded bots
+* [Here](https://github.com/BooCreator/Lux-AI-Season-2-Strategy-Library/tree/main/strategy/kits) is the implementation of all helpers and classes
