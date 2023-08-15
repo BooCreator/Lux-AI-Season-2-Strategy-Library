@@ -8,7 +8,7 @@ class ROBOT_TYPE:
         return 1 if type_name == 'LIGHT' else 2
 # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 class ROBOT_TASK:
-    ''' Тип работы робота: MINER - 0, CLEANER - 1'''
+    ''' Тип работы роботов'''
     # временные - одноразовые задачи, зависящие от обстоятельств
     RETURN    = 0 # возвращается на базу
     LEAVER    = 1 # убегает от противников
@@ -24,6 +24,7 @@ class ROBOT_TASK:
     CARRIER   = 10 # если не хватает энергии, чтобы сделать шаг
     # общие - задачи, которые могут как назначаться одноразово, так и быть постоянными
     WARRION   = 11 # давит противников
+    
     def getTask(task_name:str) -> int:
         if type(task_name) is int: return task_name 
         return -1
